@@ -2,7 +2,7 @@
  * Exact calculation of the overlap volume of spheres and mesh elements.
  * http://dx.doi.org/10.1016/j.jcp.2016.02.003
  *
- * Copyright (C) 2015,2016 Severin Strobl <severin.strobl@fau.de>
+ * Copyright (C) 2015-2017 Severin Strobl <severin.strobl@fau.de>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -814,6 +814,13 @@ class Sphere {
 				return scalar_t(pi / 3.0) * h * h * (scalar_t(3) * radius - h);
 		}
 
+		scalar_t diskArea(scalar_t h) const {
+			if(h <= scalar_t(0) || h >= scalar_t(2) * radius)
+				return scalar_t(0);
+			else
+				return pi * h * (scalar_t(2) * radius - h);
+		}
+
 	public:
 		vector_t center;
 		scalar_t radius;
@@ -1560,6 +1567,270 @@ scalar_t overlap(const Sphere& s, Iterator eBegin, Iterator eEnd) {
 		sum += overlap(s, *it);
 
 	return sum;
+}
+
+template<typename Element, size_t NrFaces = element_trait<Element>::nrFaces +
+	1>
+auto overlapArea(const Sphere& sOrig, const Element& elementOrig) ->
+	std::array<scalar_t, NrFaces> {
+
+	static_assert(NrFaces == element_trait<Element>::nrFaces + 1,
+		"Invalid number of faces for the element provided.");
+
+	static_assert(std::is_same<Element, Tetrahedron>::value ||
+		std::is_same<Element, Wedge>::value ||
+		std::is_same<Element, Hexahedron>::value,
+		"Invalid element type detected.");
+
+	// Constants: Number of vertices and faces.
+	static const size_t nrVertices = element_trait<Element>::nrVertices;
+	static const size_t nrFaces = element_trait<Element>::nrFaces;
+
+	// Initial value: Zero overlap.
+	std::array<scalar_t, nrFaces + 1> result;
+	result.fill(0);
+
+	// Construct AABBs and perform a coarse overlap detection.
+	AABB sAABB(sOrig.center - vector_t::Constant(sOrig.radius), sOrig.center +
+		vector_t::Constant(sOrig.radius));
+
+	AABB eAABB;
+	eAABB.include(elementOrig.vertices);
+
+	if(!sAABB.intersects(eAABB))
+		return result;
+
+	// Use scaled and shifted versions of the sphere and the element.
+	Transformation transformation(-sOrig.center, scalar_t(1) / sOrig.radius);
+
+	Sphere s(vector_t::Zero(), scalar_t(1));
+
+	Element element(elementOrig);
+	element.apply(transformation);
+
+	size_t vOverlap = 0;
+	// Check whether the vertices lie on or outside of the sphere.
+	for(const auto& vertex : element.vertices)
+		if((s.center - vertex).squaredNorm() <= s.radius * s.radius)
+			++vOverlap;
+
+	// Check for trivial case: All vertices inside of the sphere, resulting in
+	// a full coverage of all faces.
+	if(vOverlap == nrVertices) {
+		for(size_t n = 0; n < nrFaces; ++n) {
+			result[n] = elementOrig.faces[n].area;
+			result[nrFaces] += elementOrig.faces[n].area;
+		}
+
+		return result;
+	}
+
+	// Sanity check: All faces of the mesh element have to be planar.
+	for(const auto& face : element.faces)
+		if(!face.isPlanar())
+			throw std::runtime_error("Non-planer face detected in element!");
+
+	// Sets of overlapping primitives.
+	std::bitset<nrVertices> vMarked;
+	std::bitset<nrEdges<Element>()> eMarked;
+	std::bitset<nrFaces> fMarked;
+
+	// The intersection points between the single edges and the sphere, this
+	// is needed later on.
+	std::array<std::array<vector_t, 2>, nrEdges<Element>()> eIntersections;
+
+	// Cache the squared radius of the disk formed by the intersection between
+	// the planes defined by each face and the sphere.
+	std::array<scalar_t, nrFaces> intersectionRadiusSq;
+
+	// Process all edges of the element.
+	for(size_t n = 0; n < nrEdges<Element>(); ++n) {
+		vector_t start(element.vertices[Element::edge_mapping[n][0][0]]);
+		vector_t direction(element.vertices[Element::edge_mapping[n][0][1]] -
+			start);
+
+		auto solutions = lineSphereIntersection(start, direction, s);
+
+		// No intersection between the edge and the sphere, where intersection
+		// points close to the surface of the sphere are ignored.
+		// Or:
+		// The sphere cuts the edge twice, no vertex is inside of the
+		// sphere, but the case of the edge only touching the sphere has to
+		// be avoided.
+		if(!solutions.second ||
+			solutions.first[0] >= scalar_t(1) - detail::mediumEpsilon ||
+			solutions.first[1] <= detail::mediumEpsilon ||
+			(solutions.first[0] > scalar_t(0) &&
+			solutions.first[1] < scalar_t(1) &&
+			solutions.first[1] - solutions.first[0] <
+			detail::largeEpsilon)) {
+
+			continue;
+		} else {
+			vMarked[Element::edge_mapping[n][0][0]] =
+				solutions.first[0] < scalar_t(0);
+
+			vMarked[Element::edge_mapping[n][0][1]] =
+				solutions.first[1] > scalar_t(1);
+		}
+
+		// Store the two intersection points of the edge with the sphere for
+		// later usage.
+		eIntersections[n][0] = solutions.first[0] * direction + (start -
+			element.vertices[Element::edge_mapping[n][0][0]]);
+
+		eIntersections[n][1] = solutions.first[1] * direction + (start -
+			element.vertices[Element::edge_mapping[n][0][1]]);
+
+		eMarked[n] = true;
+
+		// If the edge is marked as having an overlap, the two faces forming it
+		// have to be marked as well.
+		fMarked[Element::edge_mapping[n][1][0]] = true;
+		fMarked[Element::edge_mapping[n][1][1]] = true;
+	}
+
+	// Check whether the dependencies for a vertex intersection are fulfilled.
+	for(size_t n = 0; n < nrVertices; ++n) {
+		if(!vMarked[n])
+			continue;
+
+		bool edgesValid = true;
+		for(size_t eN = 0; eN < 3; ++eN) {
+			size_t edgeId = Element::vertex_mapping[n][0][eN];
+			edgesValid &= eMarked[edgeId];
+		}
+
+		// If not all three edges intersecting at this vertex where marked, the
+		// sphere is only touching.
+		if(!edgesValid)
+			vMarked[n] = false;
+	}
+
+	// Process all faces of the element, ignoring the edges as those where
+	// already checked above.
+	for(size_t n = 0; n < nrFaces; ++n)
+		if(intersect(s, element.faces[n]))
+			fMarked[n] = true;
+
+	// Trivial case: The center of the sphere overlaps the element, but the
+	// sphere does not intersect any of the faces of the element, meaning the
+	// sphere is completely contained within the element.
+	if(!fMarked.count() && contains(element, s.center))
+		return result;
+
+	// Spurious intersection: The initial intersection test was positive, but
+	// the detailed checks revealed no overlap.
+	if(!vMarked.count() && !eMarked.count() && !fMarked.count())
+		return result;
+
+	// Iterate over all the marked faces and calculate the area of the disk
+	// defined by the plane.
+	for(size_t n = 0; n < nrFaces; ++n) {
+		if(!fMarked[n])
+			continue;
+
+		const auto& f = element.faces[n];
+		scalar_t dist = f.normal.dot(s.center - f.center);
+		result[n] = s.diskArea(s.radius + dist);
+	}
+
+	// Handle the edges and subtract the area of the respective disk cut off by
+	// the edge.
+	for(size_t n = 0; n < nrEdges<Element>(); ++n) {
+		if(!eMarked[n])
+			continue;
+
+		if(result[Element::edge_mapping[n][1][0]] <= scalar_t(0) ||
+			result[Element::edge_mapping[n][1][1]] <= scalar_t(0))
+			throw std::runtime_error("Entered inconsistent state.");
+
+		// The intersection points are relative to the vertices forming the
+		// edge.
+		const scalar_t chordLength =
+			((element.vertices[Element::edge_mapping[n][0][0]] +
+			eIntersections[n][0]) -
+			(element.vertices[Element::edge_mapping[n][0][1]] +
+			eIntersections[n][1])).norm();
+
+		// Each edge belongs to two faces, indexed via
+		// Element::edge_mapping[n][1][0] and Element::edge_mapping[n][1][1].
+		for(size_t e = 0; e < 2; ++e) {
+			const auto faceIdx = Element::edge_mapping[n][1][e];
+			const auto& f = element.faces[faceIdx];
+			const scalar_t dist = f.normal.dot(s.center - f.center) + s.radius;
+
+			intersectionRadiusSq[faceIdx] = dist * (scalar_t(2) * s.radius -
+				dist);
+
+			const scalar_t theta = scalar_t(2) * std::atan2(chordLength,
+				scalar_t(2) * std::sqrt(intersectionRadiusSq[faceIdx] -
+				scalar_t(0.25) * chordLength * chordLength));
+
+			const scalar_t area = scalar_t(0.5) *
+				intersectionRadiusSq[faceIdx] * (theta - std::sin(theta));
+
+			result[Element::edge_mapping[n][1][e]] -= area;
+		}
+	}
+
+	// Handle the vertices and add the area subtracted twice above in the
+	// processing of the edges.
+	for(size_t n = 0; n < nrVertices; ++n) {
+		if(!vMarked[n])
+			continue;
+
+		// Iterate over all the faces joining at this vertex.
+		for(size_t f = 0; f < 3; ++f) {
+			// Determine the two edges of this faces intersecting at the
+			// vertex.
+			std::array<uint32_t, 2> edgeIndices = {{
+				Element::vertex_mapping[n][0][f],
+				Element::vertex_mapping[n][0][(f + 1) % 3]
+			}};
+
+			// Extract the (relative) interesction points of these edges with
+			// the sphere closest to the vertex.
+			std::array<vector_t, 2> intersectionPoints = {{
+				eIntersections[edgeIndices[0]][
+					Element::vertex_mapping[n][1][f]],
+
+				eIntersections[edgeIndices[1]][
+					Element::vertex_mapping[n][1][(f + 1) % 3]],
+			}};
+
+			// Together with the vertex, this determines the triangle
+			// representing one part of the correction.
+			const scalar_t triaArea = scalar_t(0.5) *
+				(intersectionPoints[0].cross(intersectionPoints[1])).norm();
+
+			// The second component is the segment defined by the face and the
+			// intersection points.
+			const scalar_t chordLength = (intersectionPoints[0] -
+				intersectionPoints[1]).norm();
+
+			const auto faceIdx = Element::vertex_mapping[n][2][f];
+			const scalar_t theta = scalar_t(2) * std::atan2(chordLength,
+				scalar_t(2) * std::sqrt(intersectionRadiusSq[faceIdx] -
+				scalar_t(0.25) * chordLength * chordLength));
+
+			const scalar_t segmentArea = scalar_t(0.5) *
+				intersectionRadiusSq[faceIdx] * (theta - std::sin(theta));
+
+			result[Element::vertex_mapping[n][2][f]] += triaArea +
+				segmentArea;
+		}
+	}
+
+	result.back() = std::accumulate(result.begin(), result.end() - 1,
+		scalar_t(0));
+
+	// Scale the overlap volume back for the original objects.
+	const scalar_t scaling = sOrig.radius / s.radius;
+	for(auto& value : result)
+		value = value * (scaling * scaling);
+
+	return result;
 }
 
 #endif // OVERLAP_HPP
