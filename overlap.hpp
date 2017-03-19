@@ -316,9 +316,12 @@ class Transformation {
 
 template<size_t VertexCount>
 class Polygon {
+	private:
+		static_assert(VertexCount >= 3 && VertexCount <= 4,
+			"Only triangles and quadrilateral are supported.");
+
 	public:
 		static const size_t vertex_count = VertexCount;
-		static_assert(VertexCount > 2, "At least three vertices required.");
 
 	protected:
 		Polygon() : vertices(), center(), normal(), area() {
@@ -332,7 +335,7 @@ class Polygon {
 				std::accumulate(vertices.begin(), vertices.end(),
 				vector_t::Zero().eval());
 
-			// For a quadrilateral Newell's method can be simplified
+			// For a quadrilateral, Newell's method can be simplified
 			// significantly.
 			// Ref: Christer Ericson - Real-Time Collision Detection (2005)
 			if(VertexCount == 4) {
@@ -1770,7 +1773,8 @@ auto overlapArea(const Sphere& sOrig, const Element& elementOrig) ->
 			const scalar_t area = scalar_t(0.5) *
 				intersectionRadiusSq[faceIdx] * (theta - std::sin(theta));
 
-			result[Element::edge_mapping[n][1][e]] -= area;
+			result[faceIdx] -= (dist <= s.radius) ? area :
+				intersectionRadiusSq[faceIdx] * pi - area;
 		}
 	}
 
