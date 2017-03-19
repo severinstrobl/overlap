@@ -1793,7 +1793,7 @@ auto overlapArea(const Sphere& sOrig, const Element& elementOrig) ->
 				Element::vertex_mapping[n][0][(f + 1) % 3]
 			}};
 
-			// Extract the (relative) interesction points of these edges with
+			// Extract the (relative) intersection points of these edges with
 			// the sphere closest to the vertex.
 			std::array<vector_t, 2> intersectionPoints = {{
 				eIntersections[edgeIndices[0]][
@@ -1818,11 +1818,19 @@ auto overlapArea(const Sphere& sOrig, const Element& elementOrig) ->
 				scalar_t(2) * std::sqrt(intersectionRadiusSq[faceIdx] -
 				scalar_t(0.25) * chordLength * chordLength));
 
-			const scalar_t segmentArea = scalar_t(0.5) *
+			scalar_t segmentArea = scalar_t(0.5) *
 				intersectionRadiusSq[faceIdx] * (theta - std::sin(theta));
 
-			result[Element::vertex_mapping[n][2][f]] += triaArea +
-				segmentArea;
+			// Determine if the (projected) center of the sphere lies within
+			// the triangle or not. If not, the segment area has to be
+			// corrected.
+			const vector_t d(scalar_t(0.5) * (intersectionPoints[0] +
+				intersectionPoints[1]));
+
+			if(d.dot((s.center - element.vertices[n]) - d) > scalar_t(0))
+				segmentArea = intersectionRadiusSq[faceIdx] * pi - segmentArea;
+
+			result[faceIdx] += triaArea + segmentArea;
 		}
 	}
 
