@@ -1,4 +1,4 @@
-# Exact calculation of the overlap volume of spheres and mesh elements.
+# Exact calculation of the overlap volume of spheres and mesh elements
 
 Calculating the intersection or overlapping volume of a sphere and one of the
 typically used mesh elements such as a tetrahedron or hexahedron is
@@ -56,9 +56,9 @@ configuration.
 To obtain the overlap area of a sphere and the facets of a tetrahedron, the
 function *overlapArea* can be employed as such:
 ```
-vector_t v0{std::sqrt(3) / 3.0, 0, 0};
-vector_t v1{-std::sqrt(3) / 6.0, +1.0 / 2.0, 0};
-vector_t v2{-std::sqrt(3) / 6.0, -1.0 / 2.0, 0};
+vector_t v0{-std::sqrt(3) / 6.0, -1.0 / 2.0, 0};
+vector_t v1{std::sqrt(3) / 3.0, 0, 0};
+vector_t v2{-std::sqrt(3) / 6.0, +1.0 / 2.0, 0};
 vector_t v3{0, 0, std::sqrt(6) / 3.0};
 
 Tetrahedron tet{v0, v1, v2, v3};

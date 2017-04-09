@@ -480,6 +480,12 @@ class Tetrahedron : public detail::tet_mappings {
 		Tetrahedron(const vector_t& v0, Types... verts) : vertices{{v0,
 			verts...}}, faces(), center(), volume() {
 
+#ifndef NDEBUG
+			// Make sure the ordering of the vertices is correct.
+			assert((vertices[1] - vertices[0]).cross(vertices[2] -
+				vertices[0]).dot(vertices[3] - vertices[0]) >= scalar_t(0));
+#endif // NDEBUG
+
 			init();
 		}
 
@@ -1325,12 +1331,12 @@ scalar_t overlap(const Sphere& sOrig, const Element& elementOrig) {
 		// sphere, but the case of the edge only touching the sphere has to
 		// be avoided.
 		if(!solutions.second ||
-			solutions.first[0] >= scalar_t(1) - detail::mediumEpsilon ||
+			(solutions.first[0] >= scalar_t(1) - detail::mediumEpsilon) ||
 			solutions.first[1] <= detail::mediumEpsilon ||
 			(solutions.first[0] > scalar_t(0) &&
 			solutions.first[1] < scalar_t(1) &&
-			solutions.first[1] - solutions.first[0] <
-			detail::largeEpsilon)) {
+				(solutions.first[1] - solutions.first[0] <
+				detail::largeEpsilon))) {
 
 			continue;
 		} else {
