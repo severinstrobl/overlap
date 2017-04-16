@@ -22,7 +22,8 @@ matrix:
       env: COMPILER=gcc CC=gcc-5 CXX=g++-5
 
 script:
-  - find /usr/share/cmake*
+  - mkdir cmake
+  - ln -s /usr/share/cmake-2.8/Modules/FindEigen3.cmake cmake/
   - mkdir build
   - cd build
   - cmake ..

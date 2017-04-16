@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8)
 project(overlap)
 
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+
 # Header-only library.
 include_directories(${PROJECT_SOURCE_DIR})
 
