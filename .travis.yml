@@ -19,9 +19,9 @@ matrix:
             - libstdc++-5-dev
             - libeigen3-dev
             - libboost-test-dev
-      env:
-        - CC=gcc-5
-        - CXX=g++-5
+            - cmake
+            - cmake-data
+      env: CC=gcc-5 CXX=g++-5
 
 script:
   - mkdir build
