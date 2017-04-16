@@ -1,0 +1,35 @@
+sudo: false
+language: cpp
+
+compiler:
+  - gcc
+
+os:
+  - linux
+
+branches:
+  only:
+    - testing
+
+matrix:
+  include:
+    - os: linux
+      compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-5
+            - libstdc++-5-dev
+            - libeigen3-dev
+            - libboost-test-dev
+      env:
+        - COMPILER=g++-5
+
+script:
+  - mkdir build
+  - cd build
+  - cmake ..
+  - make
+  - make test
