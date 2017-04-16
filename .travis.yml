@@ -15,11 +15,34 @@ matrix:
           sources:
             - ubuntu-toolchain-r-test
           packages:
+            - libeigen3-dev
+            - libboost-test-dev
+      env: COMPILER=gcc CC=gcc CXX=g++
+
+    - os: linux
+      compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
             - g++-5
             - libstdc++-5-dev
             - libeigen3-dev
             - libboost-test-dev
       env: COMPILER=gcc CC=gcc-5 CXX=g++-5
+
+    - os: linux
+      compiler: clang
+      addons:
+        apt:
+          sources:
+            - llvm-toolchain-trusty-3.9
+          packages:
+            - clang-3.9
+            - libeigen3-dev
+            - libboost-test-dev
+      env: COMPILER=clang CC=clang-3.9 CXX=clang++-3.9
 
 script:
   - mkdir cmake
