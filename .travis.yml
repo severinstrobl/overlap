@@ -1,12 +1,6 @@
 sudo: false
 language: cpp
 
-compiler:
-  - gcc
-
-os:
-  - linux
-
 branches:
   only:
     - testing
@@ -25,7 +19,8 @@ matrix:
             - libeigen3-dev
             - libboost-test-dev
       env:
-        - COMPILER=g++-5
+        - CC=gcc-5
+        - CXX=g++-5
 
 script:
   - mkdir build
