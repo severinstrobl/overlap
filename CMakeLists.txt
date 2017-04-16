@@ -5,18 +5,18 @@ project(overlap)
 include_directories(${PROJECT_SOURCE_DIR})
 
 # Add compiler flags for C++11.
-if(${CMAKE_VERSION} VERSION_GREATER "3.1.0")
-    set(CMAKE_CXX_STANDARD 11)
-    set(CMAKE_CXX_STANDARD_REQUIRED ON)
-    set(CMAKE_CXX_EXTENSIONS OFF)
-else()
+if(${CMAKE_VERSION} VERSION_LESS "3.1")
     if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR
         "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-        add_compile_options(-std=c++11)
+        set(CMAKE_CXX_FLAGS "--std=c++11 ${CMAKE_CXX_FLAGS}")
     else()
         message(FATAL_ERROR
             "Unsupported compiler detected: ${CMAKE_CXX_COMPILER_ID}")
     endif()
+else()
+    set(CMAKE_CXX_STANDARD 11)
+    set(CMAKE_CXX_STANDARD_REQUIRED ON)
+    set(CMAKE_CXX_EXTENSIONS OFF)
 endif()
 
 # Set up the Eigen3 library.
