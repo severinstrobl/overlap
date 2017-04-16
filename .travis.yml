@@ -1,6 +1,6 @@
 dist: trusty
 sudo: false
-language: cpp
+language: generic
 
 branches:
   only:
@@ -19,11 +19,10 @@ matrix:
             - libstdc++-5-dev
             - libeigen3-dev
             - libboost-test-dev
-            - cmake
-            - cmake-data
-      env: CC=gcc-5 CXX=g++-5
+      env: COMPILER=gcc CC=gcc-5 CXX=g++-5
 
 script:
+  - find /usr/share/cmake*
   - mkdir build
   - cd build
   - cmake ..
