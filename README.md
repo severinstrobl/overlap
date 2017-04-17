@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/severinstrobl/overlap.svg?branch=testing)](https://travis-ci.org/severinstrobl/overlap)
+
 # Exact calculation of the overlap volume of spheres and mesh elements
 
 Calculating the intersection or overlapping volume of a sphere and one of the
