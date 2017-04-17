@@ -69,6 +69,26 @@ matrix:
       compiler: clang
       addons:
         apt:
+          packages:
+            - clang-3.6
+            - libeigen3-dev
+            - libboost-test-dev
+      env: COMPILER=clang CC=clang-3.6 CXX=clang++-3.6
+
+    - os: linux
+      compiler: clang
+      addons:
+        apt:
+          packages:
+            - clang-3.8
+            - libeigen3-dev
+            - libboost-test-dev
+      env: COMPILER=clang CC=clang-3.8 CXX=clang++-3.8
+
+    - os: linux
+      compiler: clang
+      addons:
+        apt:
           sources:
             - llvm-toolchain-trusty-3.9
           packages:
