@@ -282,10 +282,10 @@ inline vector_t triangleNormal(const vector_t& a, const vector_t& b, const
 // Ref: http://www.plunk.org/~hatch/rightway.php
 inline scalar_t angle(const vector_t& v0, const vector_t& v1) {
 	if(v0.dot(v1) < scalar_t(0))
-		return pi - scalar_t(2) * std::asin(scalar_t(0.5) * (-v0 -
-			v1).norm());
+		return pi - scalar_t(2) * std::asin(scalar_t(0.5) * (v0 +
+			v1).stableNorm());
 	else
-		return scalar_t(2) * std::asin(scalar_t(0.5) * (v0 - v1).norm());
+		return scalar_t(2) * std::asin(scalar_t(0.5) * (v0 - v1).stableNorm());
 }
 
 template<typename Derived0, typename Derived1>
@@ -1760,7 +1760,7 @@ auto overlapArea(const Sphere& sOrig, const Element& elementOrig) ->
 			((element.vertices[Element::edge_mapping[n][0][0]] +
 			eIntersections[n][0]) -
 			(element.vertices[Element::edge_mapping[n][0][1]] +
-			eIntersections[n][1])).norm();
+			eIntersections[n][1])).stableNorm();
 
 		// Each edge belongs to two faces, indexed via
 		// Element::edge_mapping[n][1][0] and Element::edge_mapping[n][1][1].
@@ -1817,7 +1817,7 @@ auto overlapArea(const Sphere& sOrig, const Element& elementOrig) ->
 			// The second component is the segment defined by the face and the
 			// intersection points.
 			const scalar_t chordLength = (intersectionPoints[0] -
-				intersectionPoints[1]).norm();
+				intersectionPoints[1]).stableNorm();
 
 			const auto faceIdx = Element::vertex_mapping[n][2][f];
 			const scalar_t theta = scalar_t(2) * std::atan2(chordLength,
