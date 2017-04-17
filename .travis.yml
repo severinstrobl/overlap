@@ -12,12 +12,23 @@ matrix:
       compiler: gcc
       addons:
         apt:
-          sources:
-            - ubuntu-toolchain-r-test
           packages:
             - libeigen3-dev
             - libboost-test-dev
       env: COMPILER=gcc CC=gcc CXX=g++
+
+    - os: linux
+      compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-4.9
+            - libstdc++-4.9-dev
+            - libeigen3-dev
+            - libboost-test-dev
+      env: COMPILER=gcc CC=gcc-4.9 CXX=g++-4.9
 
     - os: linux
       compiler: gcc
@@ -33,6 +44,28 @@ matrix:
       env: COMPILER=gcc CC=gcc-5 CXX=g++-5
 
     - os: linux
+      compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-6
+            - libstdc++-6-dev
+            - libeigen3-dev
+            - libboost-test-dev
+      env: COMPILER=gcc CC=gcc-6 CXX=g++-6
+
+    - os: linux
+      compiler: clang
+      addons:
+        apt:
+          packages:
+            - libeigen3-dev
+            - libboost-test-dev
+      env: COMPILER=clang CC=clang CXX=clang++
+
+    - os: linux
       compiler: clang
       addons:
         apt:
@@ -43,6 +76,18 @@ matrix:
             - libeigen3-dev
             - libboost-test-dev
       env: COMPILER=clang CC=clang-3.9 CXX=clang++-3.9
+
+    - os: linux
+      compiler: clang
+      addons:
+        apt:
+          sources:
+            - llvm-toolchain-trusty-4.0
+          packages:
+            - clang-4.0
+            - libeigen3-dev
+            - libboost-test-dev
+      env: COMPILER=clang CC=clang-4.0 CXX=clang++-4.0
 
 script:
   - mkdir cmake
