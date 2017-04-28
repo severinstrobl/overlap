@@ -5,6 +5,13 @@ language: generic
 branches:
   only:
     - testing
+    - coverity_scan
+
+env:
+  global:
+    # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+    #   via the "travis encrypt" command using the project repo's public key
+    - secure: "PaEoixN0LiRuwPyhG4ljxjskVhk364Plft2lSzTwOkZe5ajr6vEOJvKw1IFVhiUS5QNppyphuo60pqCwWEAJ/QmJRbrD6jeB1Ddjuxg8RcYLHhPWhtOYfvDcn9ywxEE2TqwoTe37QJj0EbiQBD/P7ds2pbhMlTxMfGPI5TrO2ft9mb/YsbIQJ8whsHXgAvIBg0tJW57qKlO37a4FUk/ZUF3rN6X4EEPrAWk+0DVXNY1t16clfFLJiwPWcVuqIepG5o6W9lfJ9W9n80YTQlJMmqJjFUcB4wzpMDkoMAkV5ibxUptyMAO9zrknPCY8m+HYBZV+GLo5UDOUVY/5TG5obVMXEHPOrvi+WzFXi6MoAb302+pyAhyJHLlBDsFcWScGKMdyQD5+RRLdh2F4bBLqmYqgirlFo4eBSUfpoalWiJT7TNh9PnrpNU4AUY1ZLnCUYFAGVDzizqPLNyCXMBwdWWhkjn5R6Z3sYdDv+Sxhx4p/unuQXW37nS+n0mEYPJU/FigP1UO7CgVJegvWXC8lLA7zle7pA9Y+qStDd+lR/LaSLKclGu0OUwRtUiJJEJWu2eCleOic4YyqM24ey7WkFMWXL4YSCB0o1SyYOEn9MZbGUCexjn3ISWDEF2pJ1Gfwy+N+5D2v3+3XCO0qQd9SKBKSUZEaNh7YGunc1JVRKm8="
 
 matrix:
   include:
@@ -109,11 +116,38 @@ matrix:
             - libboost-test-dev
       env: COMPILER=clang CC=clang-4.0 CXX=clang++-4.0
 
-script:
+    - os: linux
+      compiler: gcc
+      addons:
+        apt:
+          packages:
+            - libeigen3-dev
+            - libboost-test-dev
+        coverity_scan:
+          project:
+            name: "severinstrobl/overlap"
+            description: "Build submitted via Travis CI"
+          notification_email:
+            secure: "F4ceywMDhkglJjzSWOM1R49+26SUadnghv0skCgDs6lr88QXrB72Uzv2+BmkqVGY7PjA9XHcw/TldyqAT3r078J7lNzpkZnh2tb/9Nxq+T5fP7s+JgetY3ExL4mv4jaWCK0dqjDm+goR0Qv1b5+ZgPfVx6t6BMvmuAmbapHkB5ucKrvcg1/fPexbTX21SaU+XdVN7rHe9TjcMzldLxm/8Rm2SRbfWn2h+9jNTrXKrUEpRVSpoLJPEiKr1lK3YVCRbQ64JpXhawI5TOklRF7HldFyBNCNJid9p5J04sffmyW6Vq+80FUFk9gHaL25ajF0Krw80sZRALHdoMLSHPEJabB6kQn85MURGzRCPU1SWoHEZ6U8UKOJc834dXXfFhAmEePsqLTnnxhLoVyOTCRql/RLyuaXIW465162Q36YALSDQFOPer6Iaujim7R6LMN8LfmDH+Sg5JM59hCH8aDsuBrzJdj1BtC/ckb/QU9j7nUh8TqudJpPDadFB3son0DmkMYZmGszcmWgMbckdGUsJHm+sX02yEUM3ENtEg2ASEtpkniXZtEWlxVclB88233GZLL0SXw9POQej6O+640j3QI78jLmbSW4SpvsgVmePEK5TPkkEnFDs7vdiuCx9nUltqZPml1pcs/835zv2/AWejfRji0EnFuMpgnmijcWfQc="
+          build_command_prepend: "cmake .."
+          build_command: "make"
+          branch_pattern: coverity_scan
+      env: COMPILER=gcc CC=gcc CXX=g++
+
+before_install:
   - mkdir cmake
   - ln -s /usr/share/cmake-2.8/Modules/FindEigen3.cmake cmake/
   - mkdir build
   - cd build
+
+before_script:
   - cmake ..
+
+script:
+  - if [[ "${COVERITY_SCAN_BRANCH}" == 1 ]];
+      then
+        echo "Skipping building and testing on Coverity Scan run.";
+        exit 0;
+    fi
   - make
   - make test
