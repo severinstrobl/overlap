@@ -49,8 +49,12 @@ inline Hexahedron unitHexahedron(scalar_t scaling = scalar_t(1)) {
 \
 	scalar_t overlapCalcHex = overlap(s, hex);\
 \
-	if(exactResult != scalar_t(-1))\
-		BOOST_CHECK_CLOSE(overlapCalcHex, exactResult, delta);\
+	if(exactResult != scalar_t(-1)) {\
+        if(std::abs(exactResult - delta) <= delta)\
+            BOOST_CHECK_SMALL(overlapCalcHex, delta);\
+        else\
+            BOOST_CHECK_CLOSE(overlapCalcHex, exactResult, delta);\
+    }\
 \
 	scalar_t overlapCalcWedges = 0;\
 	scalar_t overlapCalcTets5 = 0;\
