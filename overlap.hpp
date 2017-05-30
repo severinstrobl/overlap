@@ -1840,13 +1840,24 @@ auto overlapArea(const Sphere& sOrig, const Element& elementOrig) ->
 		}
 	}
 
+	// Scale the overlap volume back for the original objects and clamp
+	// values within reasonable limits.
+	const scalar_t scaling = sOrig.radius / s.radius;
+	const scalar_t limit(std::sqrt(std::numeric_limits<scalar_t>::epsilon()) *
+		element.surfaceArea());
+
+	for(size_t f = 0; f < nrFaces; ++f) {
+		auto& value = result[f];
+		value = (value < scalar_t(0) && value > -limit) ? scalar_t(0) : value;
+		value = (value > element.faces[f].area &&
+			value < element.faces[f].area + limit) ? element.faces[f].area :
+			value;
+
+		value = value * (scaling * scaling);
+	}
+
 	result.back() = std::accumulate(result.begin(), result.end() - 1,
 		scalar_t(0));
-
-	// Scale the overlap volume back for the original objects.
-	const scalar_t scaling = sOrig.radius / s.radius;
-	for(auto& value : result)
-		value = value * (scaling * scaling);
 
 	return result;
 }
