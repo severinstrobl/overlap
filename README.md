@@ -70,7 +70,7 @@ auto result = overlapArea(s, tet);
 
 std::cout << "overlap areas per face:" << std::endl;
 for(size_t f = 0; f < result.size() - 1; ++f)
-    std::cout << "  face #" << f << ": " << result[f] << std::endl
+    std::cout << "  face #" << f << ": " << result[f] << std::endl;
 
 std::cout << "total overlap area: " << result.back() << std::endl;
 ```
