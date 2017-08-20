@@ -302,6 +302,17 @@ inline std::array<vector_t, 2> gramSchmidt(const Eigen::MatrixBase<Derived0>&
 	return result;
 }
 
+inline scalar_t clamp(scalar_t value, scalar_t min, scalar_t max, scalar_t
+	limit) {
+
+	assert(min <= max && limit >= scalar_t(0));
+
+	value = (value < min && value > (min - limit)) ? min : value;
+	value = (value > max && value < (max + limit)) ? max : value;
+
+	return value;
+}
+
 } // namespace detail
 
 class Transformation {
@@ -1768,13 +1779,20 @@ auto overlapArea(const Sphere& sOrig, const Element& elementOrig) ->
 	// Trivial case: The center of the sphere overlaps the element, but the
 	// sphere does not intersect any of the faces of the element, meaning the
 	// sphere is completely contained within the element.
-	if(!fMarked.count() && contains(element, s.center))
+	if(!fMarked.count() && contains(element, s.center)) {
+		result[0] = sOrig.surfaceArea();
+
 		return result;
+	}
 
 	// Spurious intersection: The initial intersection test was positive, but
 	// the detailed checks revealed no overlap.
 	if(!vMarked.count() && !eMarked.count() && !fMarked.count())
 		return result;
+
+	// Initial value for the surface of the sphere: Surface area of the full
+	// sphere.
+	result[0] = s.surfaceArea();
 
 	// Iterate over all the marked faces and calculate the area of the disk
 	// defined by the plane as well as the cap surfaces.
@@ -1884,18 +1902,24 @@ auto overlapArea(const Sphere& sOrig, const Element& elementOrig) ->
 		}
 	}
 
-	// Scale the overlap volume back for the original objects and clamp
+	// Scale the surface areas back for the original objects and clamp
 	// values within reasonable limits.
 	const scalar_t scaling = sOrig.radius / s.radius;
-	const scalar_t limit(std::sqrt(std::numeric_limits<scalar_t>::epsilon()) *
+	const scalar_t sLimit(std::sqrt(std::numeric_limits<scalar_t>::epsilon()) *
+		s.surfaceArea());
+
+	const scalar_t fLimit(std::sqrt(std::numeric_limits<scalar_t>::epsilon()) *
 		element.surfaceArea());
 
+	// Surface of the sphere.
+	result[0] = detail::clamp(result[0], scalar_t(0), s.surfaceArea(), sLimit);
+	result[0] *= (scaling * scaling);
+
+	// Surface of the mesh element.
 	for(size_t f = 0; f < nrFaces; ++f) {
 		auto& value = result[f + 1];
-		value = (value < scalar_t(0) && value > -limit) ? scalar_t(0) : value;
-		value = (value > element.faces[f].area &&
-			value < element.faces[f].area + limit) ? element.faces[f].area :
-			value;
+		value = detail::clamp(value, scalar_t(0), element.faces[f].area,
+			fLimit);
 
 		value = value * (scaling * scaling);
 	}
