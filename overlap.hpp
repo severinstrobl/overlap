@@ -1615,12 +1615,18 @@ scalar_t overlap(const Sphere& s, Iterator eBegin, Iterator eEnd) {
 	return sum;
 }
 
+// Calculate the surface area of the sphere and the element that are contained
+// within the common or intersecting part of the geometries, respectively.
+// The returned array contains:
+//   - surface area of the region of the sphere intersecting the element
+//   - for each face of the element: area contained within the sphere
+//   - total surface area of the element intersecting the sphere
 template<typename Element, size_t NrFaces = element_trait<Element>::nrFaces +
-	1>
+	2>
 auto overlapArea(const Sphere& sOrig, const Element& elementOrig) ->
 	std::array<scalar_t, NrFaces> {
 
-	static_assert(NrFaces == element_trait<Element>::nrFaces + 1,
+	static_assert(NrFaces == element_trait<Element>::nrFaces + 2,
 		"Invalid number of faces for the element provided.");
 
 	static_assert(std::is_same<Element, Tetrahedron>::value ||
@@ -1633,8 +1639,8 @@ auto overlapArea(const Sphere& sOrig, const Element& elementOrig) ->
 	static const size_t nrFaces = element_trait<Element>::nrFaces;
 
 	// Initial value: Zero overlap.
-	std::array<scalar_t, nrFaces + 1> result;
-	result.fill(0);
+	std::array<scalar_t, nrFaces + 2> result;
+	result.fill(scalar_t(0));
 
 	// Construct AABBs and perform a coarse overlap detection.
 	AABB sAABB(sOrig.center - vector_t::Constant(sOrig.radius), sOrig.center +
@@ -1664,8 +1670,8 @@ auto overlapArea(const Sphere& sOrig, const Element& elementOrig) ->
 	// a full coverage of all faces.
 	if(vOverlap == nrVertices) {
 		for(size_t n = 0; n < nrFaces; ++n) {
-			result[n] = elementOrig.faces[n].area;
-			result[nrFaces] += elementOrig.faces[n].area;
+			result[n + 1] = elementOrig.faces[n].area;
+			result[nrFaces + 1] += elementOrig.faces[n].area;
 		}
 
 		return result;
@@ -1771,24 +1777,25 @@ auto overlapArea(const Sphere& sOrig, const Element& elementOrig) ->
 		return result;
 
 	// Iterate over all the marked faces and calculate the area of the disk
-	// defined by the plane.
+	// defined by the plane as well as the cap surfaces.
 	for(size_t n = 0; n < nrFaces; ++n) {
 		if(!fMarked[n])
 			continue;
 
 		const auto& f = element.faces[n];
 		scalar_t dist = f.normal.dot(s.center - f.center);
-		result[n] = s.diskArea(s.radius + dist);
+		result[n + 1] = s.diskArea(s.radius + dist);
 	}
 
 	// Handle the edges and subtract the area of the respective disk cut off by
-	// the edge.
+	// the edge and add back the surface area of the spherical wedge defined
+	// by the edge.
 	for(size_t n = 0; n < nrEdges<Element>(); ++n) {
 		if(!eMarked[n])
 			continue;
 
-		if(result[Element::edge_mapping[n][1][0]] <= scalar_t(0) ||
-			result[Element::edge_mapping[n][1][1]] <= scalar_t(0))
+		if(result[Element::edge_mapping[n][1][0] + 1] <= scalar_t(0) ||
+			result[Element::edge_mapping[n][1][1] + 1] <= scalar_t(0))
 			throw std::runtime_error("Entered inconsistent state.");
 
 		// The intersection points are relative to the vertices forming the
@@ -1816,7 +1823,7 @@ auto overlapArea(const Sphere& sOrig, const Element& elementOrig) ->
 			const scalar_t area = scalar_t(0.5) *
 				intersectionRadiusSq[faceIdx] * (theta - std::sin(theta));
 
-			result[faceIdx] -= (dist <= s.radius) ? area :
+			result[faceIdx + 1] -= (dist <= s.radius) ? area :
 				intersectionRadiusSq[faceIdx] * pi - area;
 		}
 	}
@@ -1873,7 +1880,7 @@ auto overlapArea(const Sphere& sOrig, const Element& elementOrig) ->
 			if(d.dot((s.center - element.vertices[n]) - d) > scalar_t(0))
 				segmentArea = intersectionRadiusSq[faceIdx] * pi - segmentArea;
 
-			result[faceIdx] += triaArea + segmentArea;
+			result[faceIdx + 1] += triaArea + segmentArea;
 		}
 	}
 
@@ -1884,7 +1891,7 @@ auto overlapArea(const Sphere& sOrig, const Element& elementOrig) ->
 		element.surfaceArea());
 
 	for(size_t f = 0; f < nrFaces; ++f) {
-		auto& value = result[f];
+		auto& value = result[f + 1];
 		value = (value < scalar_t(0) && value > -limit) ? scalar_t(0) : value;
 		value = (value > element.faces[f].area &&
 			value < element.faces[f].area + limit) ? element.faces[f].area :
@@ -1893,7 +1900,7 @@ auto overlapArea(const Sphere& sOrig, const Element& elementOrig) ->
 		value = value * (scaling * scaling);
 	}
 
-	result.back() = std::accumulate(result.begin(), result.end() - 1,
+	result.back() = std::accumulate(result.begin() + 1, result.end() - 1,
 		scalar_t(0));
 
 	return result;

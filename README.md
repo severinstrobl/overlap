@@ -69,8 +69,9 @@ Sphere s{{0, 0, 1.5}, 1.25};
 auto result = overlapArea(s, tet);
 
 std::cout << "overlap areas per face:" << std::endl;
-for(size_t f = 0; f < result.size() - 1; ++f)
-    std::cout << "  face #" << f << ": " << result[f] << std::endl;
+// The indices of the faces are NOT zero-based here!
+for(size_t f = 1; f < result.size() - 1; ++f)
+    std::cout << "  face #" << (f - 1) << ": " << result[f] << std::endl;
 
 std::cout << "total overlap area: " << result.back() << std::endl;
 ```
