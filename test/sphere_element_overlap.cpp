@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE(sphere_element_overlap_face_touching) {
 
 	scalar_t delta(std::sqrt(std::numeric_limits<scalar_t>::epsilon()));
 
-	overlapWorker(s, unitHexahedron(), delta, 0);
+	overlapWorker(s, unitHexahedron(), delta, scalar_t(0));
 }
 
 // Sphere outside of hexahedron, touching one vertex.
@@ -60,7 +60,7 @@ BOOST_AUTO_TEST_CASE(sphere_element_overlap_vertex_touching) {
 
 	scalar_t delta(std::sqrt(std::numeric_limits<scalar_t>::epsilon()));
 
-	overlapWorker(s, unitHexahedron(), delta, 0);
+	overlapWorker(s, unitHexahedron(), delta, scalar_t(0));
 }
 
 // Sphere outside of hexahedron, slightly overlapping one vertex.
@@ -69,5 +69,5 @@ BOOST_AUTO_TEST_CASE(sphere_element_overlap_vertex_edgecase) {
 
 	scalar_t delta(std::sqrt(std::numeric_limits<scalar_t>::epsilon()));
 
-	overlapWorker(s, unitHexahedron(), delta, 0);
+	overlapWorker(s, unitHexahedron(), delta, scalar_t(0));
 }
