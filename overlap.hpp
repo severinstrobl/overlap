@@ -512,6 +512,14 @@ class Tetrahedron : public detail::tet_mappings {
 			volume = calcVolume();
 		}
 
+		scalar_t surfaceArea() const {
+			scalar_t area(0);
+			for(const auto& f : faces)
+				area += f.area;
+
+			return area;
+		}
+
 	private:
 		void init() {
 			// 0: v2, v1, v0
@@ -622,6 +630,14 @@ class Wedge : public detail::wedge_mappings {
 				vertices.end(), vector_t::Zero().eval());
 
 			volume = calcVolume();
+		}
+
+		scalar_t surfaceArea() const {
+			scalar_t area(0);
+			for(const auto& f : faces)
+				area += f.area;
+
+			return area;
 		}
 
 	private:
@@ -758,6 +774,14 @@ class Hexahedron : public detail::hex_mappings {
 			volume = calcVolume();
 		}
 
+		scalar_t surfaceArea() const {
+			scalar_t area(0);
+			for(const auto& f : faces)
+				area += f.area;
+
+			return area;
+		}
+
 	private:
 		void init() {
 			// 0: v3, v2, v1, v0
@@ -823,11 +847,24 @@ class Sphere {
 				return scalar_t(pi / 3.0) * h * h * (scalar_t(3) * radius - h);
 		}
 
+		scalar_t capSurfaceArea(scalar_t h) const {
+			if(h <= scalar_t(0))
+				return scalar_t(0);
+			else if(h >= scalar_t(2) * radius)
+				return surfaceArea();
+			else
+				return scalar_t(2 * pi) * radius * h;
+		}
+
 		scalar_t diskArea(scalar_t h) const {
 			if(h <= scalar_t(0) || h >= scalar_t(2) * radius)
 				return scalar_t(0);
 			else
 				return pi * h * (scalar_t(2) * radius - h);
+		}
+
+		scalar_t surfaceArea() const {
+			return (scalar_t(4) * pi) * (radius * radius);
 		}
 
 	public:
