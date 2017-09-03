@@ -18,14 +18,14 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_MODULE regularized_wedge
+#define BOOST_TEST_MODULE detail_regularizedWedge
 #define BOOST_TEST_DYN_LINK
 
 #include <boost/test/unit_test.hpp>
 
 #include "overlap.hpp"
 
-BOOST_AUTO_TEST_CASE(regularized_wedge) {
+BOOST_AUTO_TEST_CASE(detail_regularizedWedge) {
 	scalar_t delta(2e2 * std::numeric_limits<scalar_t>::epsilon());
 	using namespace detail;
 
@@ -53,7 +53,7 @@ BOOST_AUTO_TEST_CASE(regularized_wedge) {
 		delta);
 }
 
-BOOST_AUTO_TEST_CASE(regularized_wedge_pi_half) {
+BOOST_AUTO_TEST_CASE(detail_regularizedWedge_pi_half) {
 	const scalar_t delta(std::numeric_limits<scalar_t>::epsilon());
 	const scalar_t alpha = 0.5 * M_PI;
 
