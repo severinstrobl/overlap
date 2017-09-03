@@ -1812,9 +1812,8 @@ auto overlapArea(const Sphere& sOrig, const Element& elementOrig) ->
 		if(!eMarked[n])
 			continue;
 
-		if(result[Element::edge_mapping[n][1][0] + 1] <= scalar_t(0) ||
-			result[Element::edge_mapping[n][1][1] + 1] <= scalar_t(0))
-			throw std::runtime_error("Entered inconsistent state.");
+		assert(result[Element::edge_mapping[n][1][0] + 1] >= scalar_t(0) &&
+			result[Element::edge_mapping[n][1][1] + 1] >= scalar_t(0));
 
 		// The intersection points are relative to the vertices forming the
 		// edge.
@@ -1834,9 +1833,12 @@ auto overlapArea(const Sphere& sOrig, const Element& elementOrig) ->
 			intersectionRadiusSq[faceIdx] = dist * (scalar_t(2) * s.radius -
 				dist);
 
+			const scalar_t factor = std::sqrt(std::max(scalar_t(0),
+				intersectionRadiusSq[faceIdx] - scalar_t(0.25) * chordLength *
+				chordLength));
+
 			const scalar_t theta = scalar_t(2) * std::atan2(chordLength,
-				scalar_t(2) * std::sqrt(intersectionRadiusSq[faceIdx] -
-				scalar_t(0.25) * chordLength * chordLength));
+				scalar_t(2) * factor);
 
 			const scalar_t area = scalar_t(0.5) *
 				intersectionRadiusSq[faceIdx] * (theta - std::sin(theta));
