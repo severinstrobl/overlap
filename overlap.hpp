@@ -1182,6 +1182,39 @@ inline scalar_t regularizedWedge(scalar_t r, scalar_t d, scalar_t alpha,
 	}
 }
 
+// Calculate the surface area of a regularized spherical wedge defined by the
+// radius, the distance of the intersection point from the center of the sphere
+// and the angle.
+// Ref: Gibson, K. D. & Scheraga, H. A.: Exact calculation of the volume and
+//      surface area of fused hard-sphere molecules with unequal atomic radii,
+//      Molecular Physics, 1987, 62, 1247-1265
+inline scalar_t regularizedWedgeArea(scalar_t r, scalar_t z, scalar_t alpha) {
+#ifndef NDEBUG
+	// Clamp slight deviations of the angle to valid range.
+	if(alpha < scalar_t(0) && alpha > -detail::tinyEpsilon)
+		alpha = scalar_t(0);
+
+	if(alpha > scalar_t(0.5 * pi) && alpha < scalar_t(0.5 * pi) + tinyEpsilon)
+		alpha = scalar_t(0.5 * pi);
+#endif
+
+	// Check the parameters for validity (debug version only).
+	assert(r > scalar_t(0));
+	assert(z >= -r && z <= r);
+	assert(alpha >= scalar_t(0) && alpha <= pi);
+
+	if(alpha < tinyEpsilon || std::abs(r * r - z * z) <= tinyEpsilon)
+		return scalar_t(0);
+
+	const scalar_t sinAlpha = std::sin(alpha);
+	const scalar_t cosAlpha = std::cos(alpha);
+
+	const scalar_t factor = scalar_t(1) / std::sqrt(std::abs(r * r - z * z));
+
+	return scalar_t(2) * r * r * std::acos(r * cosAlpha * factor) -
+		scalar_t(2) * r * z * std::acos((z * cosAlpha * factor) / sinAlpha);
+}
+
 } // namespace detail
 
 inline scalar_t generalWedge(const Sphere& s, const Plane& p0, const Plane& p1,
