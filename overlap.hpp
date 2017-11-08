@@ -1208,8 +1208,8 @@ inline scalar_t regularizedWedgeArea(scalar_t r, scalar_t z, scalar_t alpha) {
 	if(alpha < scalar_t(0) && alpha > -detail::tinyEpsilon)
 		alpha = scalar_t(0);
 
-	if(alpha > scalar_t(0.5 * pi) && alpha < scalar_t(0.5 * pi) + tinyEpsilon)
-		alpha = scalar_t(0.5 * pi);
+	if(alpha > pi && alpha < pi + tinyEpsilon)
+		alpha = pi;
 #endif
 
 	// Check the parameters for validity (debug version only).
@@ -1222,26 +1222,47 @@ inline scalar_t regularizedWedgeArea(scalar_t r, scalar_t z, scalar_t alpha) {
 
 	const scalar_t sinAlpha = std::sin(alpha);
 	const scalar_t cosAlpha = std::cos(alpha);
-
 	const scalar_t factor = scalar_t(1) / std::sqrt(std::abs(r * r - z * z));
 
-	return scalar_t(2) * r * r * std::acos(r * cosAlpha * factor) -
-		scalar_t(2) * r * z * std::acos((z * cosAlpha * factor) / sinAlpha);
+    // Clamp slight deviations of the argument to acos() to valid range.
+    const scalar_t arg0 = clamp(r * cosAlpha * factor, scalar_t(-1),
+        scalar_t(1), detail::tinyEpsilon);
+
+    const scalar_t arg1 = clamp((z * cosAlpha * factor) / sinAlpha,
+        scalar_t(-1), scalar_t(1), detail::tinyEpsilon);
+
+	// Check the argument to acos() for validity (debug version only).
+	assert(scalar_t(-1) <= arg0 && arg0 <= scalar_t(1));
+	assert(scalar_t(-1) <= arg1 && arg1 <= scalar_t(1));
+
+	return scalar_t(2) * r * r * std::acos(arg0) -
+        scalar_t(2) * r * z * std::acos(arg1);
 }
 
 } // namespace detail
 
+// Depending on the dimensionality, either the volume or external surface area
+// of the general wedge is computed.
+template<size_t Dim>
 inline scalar_t generalWedge(const Sphere& s, const Plane& p0, const Plane& p1,
 	const vector_t& d) {
 
-	scalar_t dist(d.norm());
+	static_assert(Dim == 2 || Dim == 3,
+		"Invalid dimensionality, must be 2 or 3.");
+
+	scalar_t dist(d.stableNorm());
 
 	if(dist < detail::tinyEpsilon) {
 		// The wedge (almost) touches the center, the volume depends only on
 		// the angle.
 		scalar_t angle = pi - detail::angle(p0.normal, p1.normal);
 
-		return scalar_t(2.0 / 3.0) * s.radius * s.radius * s.radius * angle;
+		if(Dim == 2) {
+			return scalar_t(2) * s.radius * s.radius * angle;
+		} else {
+			return scalar_t(2.0 / 3.0) * s.radius * s.radius * s.radius *
+				angle;
+		}
 	}
 
 	scalar_t s0 = d.dot(p0.normal);
@@ -1254,8 +1275,13 @@ inline scalar_t generalWedge(const Sphere& s, const Plane& p0, const Plane& p1,
 
 		scalar_t angle = pi - detail::angle(p0.normal, p1.normal);
 
-		return detail::regularizedWedge(s.radius, dist, angle,
-			std::abs(s0) > std::abs(s1) ? s0 : s1);
+		if(Dim == 2) {
+			return detail::regularizedWedgeArea(s.radius,
+				std::abs(s0) > std::abs(s1) ? s0 : s1, angle);
+		} else {
+			return detail::regularizedWedge(s.radius, dist, angle,
+				std::abs(s0) > std::abs(s1) ? s0 : s1);
+		}
 	}
 
 	vector_t dUnit(d * (scalar_t(1) / dist));
@@ -1278,8 +1304,13 @@ inline scalar_t generalWedge(const Sphere& s, const Plane& p0, const Plane& p1,
 		alpha0 = scalar_t(0.5 * pi) - std::copysign(alpha0, dir0);
 		alpha1 = scalar_t(0.5 * pi) - std::copysign(alpha1, dir1);
 
-		return detail::regularizedWedge(s.radius, dist, alpha0, s0) +
-			detail::regularizedWedge(s.radius, dist, alpha1, s1);
+		if(Dim == 2) {
+			return detail::regularizedWedgeArea(s.radius, s0, alpha0) +
+				detail::regularizedWedgeArea(s.radius, s1, alpha1);
+		} else {
+			return detail::regularizedWedge(s.radius, dist, alpha0, s0) +
+				detail::regularizedWedge(s.radius, dist, alpha1, s1);
+		}
 	} else if(s0 < scalar_t(0) && s1 < scalar_t(0)) {
 		alpha0 = scalar_t(0.5 * pi) + std::copysign(scalar_t(1), dir0) *
 			(alpha0 - pi);
@@ -1287,8 +1318,14 @@ inline scalar_t generalWedge(const Sphere& s, const Plane& p0, const Plane& p1,
 		alpha1 = scalar_t(0.5 * pi) + std::copysign(scalar_t(1), dir1) *
 			(alpha1 - pi);
 
-		return s.volume - (detail::regularizedWedge(s.radius, dist, alpha0,
-			-s0) + detail::regularizedWedge(s.radius, dist, alpha1, -s1));
+		if(Dim == 2) {
+			return s.surfaceArea() -
+				(detail::regularizedWedgeArea(s.radius, -s0, alpha0) +
+				detail::regularizedWedgeArea(s.radius, -s1, alpha1));
+		} else {
+			return s.volume - (detail::regularizedWedge(s.radius, dist, alpha0,
+				-s0) + detail::regularizedWedge(s.radius, dist, alpha1, -s1));
+		}
 	} else {
 		alpha0 = scalar_t(0.5 * pi) - std::copysign(scalar_t(1), dir0 * s0) *
 			(alpha0 - (s0 < scalar_t(0) ? pi : scalar_t(0)));
@@ -1296,13 +1333,23 @@ inline scalar_t generalWedge(const Sphere& s, const Plane& p0, const Plane& p1,
 		alpha1 = scalar_t(0.5 * pi) - std::copysign(scalar_t(1), dir1 * s1) *
 			(alpha1 - (s1 < scalar_t(0) ? pi : scalar_t(0)));
 
-		scalar_t volume0 = detail::regularizedWedge(s.radius, dist, alpha0,
-			std::abs(s0));
+		if(Dim == 2) {
+			scalar_t area0 = detail::regularizedWedgeArea(s.radius,
+				std::abs(s0), alpha0);
 
-		scalar_t volume1 = detail::regularizedWedge(s.radius, dist, alpha1,
-			std::abs(s1));
+			scalar_t area1 = detail::regularizedWedgeArea(s.radius,
+				std::abs(s1), alpha1);
 
-		return std::max(volume0, volume1) - std::min(volume0, volume1);
+			return std::max(area0, area1) - std::min(area0, area1);
+		} else {
+			scalar_t volume0 = detail::regularizedWedge(s.radius, dist, alpha0,
+				std::abs(s0));
+
+			scalar_t volume1 = detail::regularizedWedge(s.radius, dist, alpha1,
+				std::abs(s1));
+
+			return std::max(volume0, volume1) - std::min(volume0, volume1);
+		}
 	}
 }
 
@@ -1335,10 +1382,15 @@ struct element_trait {
 		array_size<decltype(Element::faces)>::value();
 };
 
-template<typename Element>
+// Depending on the dimensionality, either the volume or external surface area
+// of the general wedge is computed.
+template<size_t Dim, typename Element>
 scalar_t generalWedge(const Sphere& sphere, const Element& element, size_t
 	edge, const std::array<std::array<vector_t, 2>, nrEdges<Element>()>&
 	intersections) {
+
+	static_assert(Dim == 2 || Dim == 3,
+		"Invalid dimensionality, must be 2 or 3.");
 
 	const auto& f0 = element.faces[Element::edge_mapping[edge][1][0]];
 	const auto& f1 = element.faces[Element::edge_mapping[edge][1][1]];
@@ -1351,7 +1403,7 @@ scalar_t generalWedge(const Sphere& sphere, const Element& element, size_t
 	Plane p0(f0.center, f0.normal);
 	Plane p1(f1.center, f1.normal);
 
-	return generalWedge(sphere, p0, p1, edgeCenter - sphere.center);
+	return generalWedge<Dim>(sphere, p0, p1, edgeCenter - sphere.center);
 }
 
 template<typename Element>
@@ -1511,7 +1563,7 @@ scalar_t overlap(const Sphere& sOrig, const Element& elementOrig) {
 		if(!eMarked[n])
 			continue;
 
-		scalar_t edgeCorrection = generalWedge<Element>(s, element, n,
+		scalar_t edgeCorrection = generalWedge<3, Element>(s, element, n,
 			eIntersections);
 
 		result += edgeCorrection;
@@ -1572,7 +1624,7 @@ scalar_t overlap(const Sphere& sOrig, const Element& elementOrig) {
 			// Use the general spherical wedge defined by the edge with the
 			// non-degenerated intersection point and the normals of the
 			// two faces forming it.
-			scalar_t correction = generalWedge<Element>(s, element,
+			scalar_t correction = generalWedge<3, Element>(s, element,
 				Element::vertex_mapping[n][0][distances[2].first],
 				eIntersections);
 
@@ -1621,7 +1673,7 @@ scalar_t overlap(const Sphere& sOrig, const Element& elementOrig) {
 			vector_t center(scalar_t(0.5) * (intersectionPoints[e0] +
 				intersectionPoints[e1]));
 
-			scalar_t wedgeVolume = generalWedge(s, plane, Plane(f.center,
+			scalar_t wedgeVolume = generalWedge<3>(s, plane, Plane(f.center,
 				-f.normal), center - s.center);
 
 			segmentVolume += wedgeVolume;
@@ -1675,7 +1727,8 @@ scalar_t overlap(const Sphere& s, Iterator eBegin, Iterator eEnd) {
 
 // Calculate the surface area of the sphere and the element that are contained
 // within the common or intersecting part of the geometries, respectively.
-// The returned array contains:
+// The returned array of size (N + 2), with N being the number of vertices,
+// holds (in this order):
 //   - surface area of the region of the sphere intersecting the element
 //   - for each face of the element: area contained within the sphere
 //   - total surface area of the element intersecting the sphere
@@ -1859,8 +1912,7 @@ auto overlapArea(const Sphere& sOrig, const Element& elementOrig) ->
 		if(!eMarked[n])
 			continue;
 
-		assert(result[Element::edge_mapping[n][1][0] + 1] >= scalar_t(0) &&
-			result[Element::edge_mapping[n][1][1] + 1] >= scalar_t(0));
+		result[0] += generalWedge<2, Element>(s, element, n, eIntersections);
 
 		// The intersection points are relative to the vertices forming the
 		// edge.
