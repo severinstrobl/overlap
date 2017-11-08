@@ -31,12 +31,11 @@
 #include <bitset>
 #include <cassert>
 #include <cmath>
-#include <iomanip>
-#include <iostream>
 #include <iterator>
 #include <limits>
 #include <numeric>
 #include <stdexcept>
+#include <type_traits>
 #include <utility>
 
 // typedefs
