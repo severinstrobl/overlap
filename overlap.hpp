@@ -101,7 +101,7 @@ struct double_prec_constant<double> {
 	static const uint32_t value = 134217729;
 };
 
-// For GCC an attribute has to be used to control the FP precision...
+// For GCC and Clang an attribute can be used to control the FP precision...
 #if defined(__GNUC__) && !defined(__clang__) && !defined(__ICC) && \
 	!defined(__INTEL_COMPILER)
 #define ENFORCE_EXACT_FPMATH_ATTR __attribute__((__target__("ieee-fp")))
@@ -116,21 +116,36 @@ struct double_prec_constant<double> {
 #endif
 
 template<typename T>
+class double_prec;
+
+template<typename T>
+inline double_prec<T> operator+(const double_prec<T>& lhs, const
+	double_prec<T>& rhs) ENFORCE_EXACT_FPMATH_ATTR;
+
+template<typename T>
+inline double_prec<T> operator-(const double_prec<T>& lhs, const
+	double_prec<T>& rhs) ENFORCE_EXACT_FPMATH_ATTR;
+
+template<typename T>
+inline double_prec<T> operator*(const double_prec<T>& lhs, const
+	double_prec<T>& rhs) ENFORCE_EXACT_FPMATH_ATTR;
+
+template<typename T>
 class double_prec {
 	private:
 		static const uint32_t c = detail::double_prec_constant<T>::value;
 
 		template<typename TF>
 		friend double_prec<TF> operator+(const double_prec<TF>&, const
-			double_prec<TF>&) ENFORCE_EXACT_FPMATH_ATTR;
+			double_prec<TF>&);
 
 		template<typename TF>
 		friend double_prec<TF> operator-(const double_prec<TF>&, const
-			double_prec<TF>&) ENFORCE_EXACT_FPMATH_ATTR;
+			double_prec<TF>&);
 
 		template<typename TF>
 		friend double_prec<TF> operator*(const double_prec<TF>&, const
-			double_prec<TF>&) ENFORCE_EXACT_FPMATH_ATTR;
+			double_prec<TF>&);
 
 	public:
 		inline double_prec() : h_(0), l_(0) {
@@ -158,20 +173,20 @@ class double_prec {
 		}
 
 	public:
-		const T& high() const {
+		inline const T& high() const {
 			return h_;
 		}
 
-		const T& low() const {
+		inline const T& low() const {
 			return l_;
 		}
 
-		T value() const {
+		inline T value() const {
 			return h_ + l_;
 		}
 
 		template<typename TOther>
-		TOther convert() const {
+		inline TOther convert() const {
 			return TOther(h_) + TOther(l_);
 		}
 
