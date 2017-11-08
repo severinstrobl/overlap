@@ -1902,6 +1902,7 @@ auto overlapArea(const Sphere& sOrig, const Element& elementOrig) ->
 
 		const auto& f = element.faces[n];
 		scalar_t dist = f.normal.dot(s.center - f.center);
+		result[0] -= s.capSurfaceArea(s.radius + dist);
 		result[n + 1] = s.diskArea(s.radius + dist);
 	}
 
@@ -1916,22 +1917,28 @@ auto overlapArea(const Sphere& sOrig, const Element& elementOrig) ->
 
 		// The intersection points are relative to the vertices forming the
 		// edge.
-		const scalar_t chordLength =
-			((element.vertices[Element::edge_mapping[n][0][0]] +
+        const vector_t chord =
+            ((element.vertices[Element::edge_mapping[n][0][0]] +
 			eIntersections[n][0]) -
 			(element.vertices[Element::edge_mapping[n][0][1]] +
-			eIntersections[n][1])).stableNorm();
+			eIntersections[n][1]));
+
+		const scalar_t chordLength = chord.stableNorm();
 
 		// Each edge belongs to two faces, indexed via
-		// Element::edge_mapping[n][1][0] and Element::edge_mapping[n][1][1].
+		// Element::edge_mapping[n][1][{0,1}].
 		for(size_t e = 0; e < 2; ++e) {
 			const auto faceIdx = Element::edge_mapping[n][1][e];
 			const auto& f = element.faces[faceIdx];
-			const scalar_t dist = f.normal.dot(s.center - f.center) + s.radius;
 
+            // Height of the spherical cap cut off by the plane containing the
+            // face.
+			const scalar_t dist = f.normal.dot(s.center - f.center) + s.radius;
 			intersectionRadiusSq[faceIdx] = dist * (scalar_t(2) * s.radius -
 				dist);
 
+            // Calculate the height of the triangular segment in the plane of
+            // the base.
 			const scalar_t factor = std::sqrt(std::max(scalar_t(0),
 				intersectionRadiusSq[faceIdx] - scalar_t(0.25) * chordLength *
 				chordLength));
@@ -1939,37 +1946,170 @@ auto overlapArea(const Sphere& sOrig, const Element& elementOrig) ->
 			const scalar_t theta = scalar_t(2) * std::atan2(chordLength,
 				scalar_t(2) * factor);
 
-			const scalar_t area = scalar_t(0.5) *
-				intersectionRadiusSq[faceIdx] * (theta - std::sin(theta));
+            scalar_t area = scalar_t(0.5) * intersectionRadiusSq[faceIdx] *
+                (theta - std::sin(theta));
 
-			result[faceIdx + 1] -= (dist <= s.radius) ? area :
-				intersectionRadiusSq[faceIdx] * pi - area;
+            // FIXME: Might not be necessary to use the center of the chord.
+            const vector_t chordCenter = scalar_t(0.5) * 
+                ((element.vertices[Element::edge_mapping[n][0][0]] +
+                eIntersections[n][0]) +
+                (element.vertices[Element::edge_mapping[n][0][1]] +
+                eIntersections[n][1]));
+            
+	        const vector_t proj(s.center - f.normal.dot(s.center - f.center) *
+                f.normal);
+
+            // If the projected sphere center and the face center fall on
+            // opposite sides of the edge, the area has to be inverted.
+            if(chord.cross(proj - chordCenter).dot(
+                chord.cross(f.center - chordCenter)) < scalar_t(0)) {
+
+				area = intersectionRadiusSq[faceIdx] * pi - area;
+            }
+
+			result[faceIdx + 1] -= area;
 		}
 	}
 
 	// Handle the vertices and add the area subtracted twice above in the
 	// processing of the edges.
+
+	// First, handle the spherical surface area of the intersection.
+	// This is to a large part code duplicated from the volume calculation.
+	// TODO: Unify the area and volume calculation to remove duplicate code.
+	for(size_t n = 0; n < nrVertices; ++n) {
+		if(!vMarked[n])
+			continue;
+
+		// Collect the points where the three edges intersecting at this
+		// vertex intersect the sphere.
+		// Both the relative and the absolute positions are required.
+		std::array<vector_t, 3> intersectionPointsRelative;
+		std::array<vector_t, 3> intersectionPoints;
+		for(size_t e = 0; e < 3; ++e) {
+			auto edgeIdx = Element::vertex_mapping[n][0][e];
+			intersectionPointsRelative[e] =
+				eIntersections[edgeIdx][Element::vertex_mapping[n][1][e]];
+
+			intersectionPoints[e] = intersectionPointsRelative[e] +
+				element.vertices[n];
+		}
+
+		// This triangle is constructed by hand to have more freedom of how
+		// the normal vector is calculated.
+		Triangle coneTria;
+		coneTria.vertices = {{ intersectionPoints[0], intersectionPoints[1],
+			intersectionPoints[2] }};
+
+		coneTria.center = scalar_t(1.0 / 3.0) *
+			std::accumulate(intersectionPoints.begin(),
+			intersectionPoints.end(), vector_t::Zero().eval());
+
+		// Calculate the normal of the triangle defined by the intersection
+		// points in relative coordinates to improve accuracy.
+		// Also use double the normal precision to calculate this normal.
+		coneTria.normal = detail::triangleNormal(intersectionPointsRelative[0],
+			intersectionPointsRelative[1], intersectionPointsRelative[2]);
+
+		// The area of this triangle is never needed, so it is set to an
+		// invalid value.
+		coneTria.area = std::numeric_limits<scalar_t>::infinity();
+
+		std::array<std::pair<size_t, scalar_t>, 3> distances;
+		for(size_t i = 0; i < 3; ++i)
+			distances[i] = std::make_pair(i,
+				intersectionPointsRelative[i].squaredNorm());
+
+		std::sort(distances.begin(), distances.end(),
+			[](const std::pair<size_t, scalar_t>& a,
+				const std::pair<size_t, scalar_t>& b) -> bool {
+				return a.second < b.second;
+			});
+
+		if(distances[1].second < distances[2].second * detail::largeEpsilon) {
+			// Use the general spherical wedge defined by the edge with the
+			// non-degenerated intersection point and the normals of the
+			// two faces forming it.
+			scalar_t correction = generalWedge<2, Element>(s, element,
+				Element::vertex_mapping[n][0][distances[2].first],
+				eIntersections);
+
+			result[0] -= correction;
+
+			continue;
+		}
+
+		// Make sure the normal points in the right direction, i.e., away from
+		// the center of the element.
+		if(coneTria.normal.dot(element.center - coneTria.center) >
+			scalar_t(0)) {
+
+			coneTria.normal = -coneTria.normal;
+		}
+
+		Plane plane(coneTria.center, coneTria.normal);
+
+		scalar_t dist = coneTria.normal.dot(s.center - coneTria.center);
+		scalar_t capSurface = s.capSurfaceArea(s.radius + dist);
+
+		// If cap surface area is small, the corrections will be even smaller.
+		// There is no way to actually calculate them with reasonable
+		// precision, so they are just ignored.
+		if(capSurface < detail::largeEpsilon)
+			continue;
+
+		// Calculate the surface area of the three spherical segments between
+		// the faces joining at the vertex and the plane through the
+		// intersection points.
+		scalar_t segmentSurface = 0;
+		for(size_t e = 0; e < 3; ++e) {
+			const auto& f = element.faces[Element::vertex_mapping[n][2][e]];
+			uint32_t e0 = Element::face_mapping[e][0];
+			uint32_t e1 = Element::face_mapping[e][1];
+
+			vector_t center(scalar_t(0.5) * (intersectionPoints[e0] +
+				intersectionPoints[e1]));
+
+			segmentSurface += generalWedge<2>(s, plane, Plane(f.center,
+				-f.normal), center - s.center);
+		}
+
+		// Calculate the surface area of the cone and clamp it to zero.
+		scalar_t coneSurface = std::max(capSurface - segmentSurface,
+			scalar_t(0));
+
+		result[0] -= coneSurface;
+
+        // Sanity checks: detect negative/excessively large intermediate
+        // result.
+		assert(result[0] > -std::sqrt(detail::tinyEpsilon));
+        assert(result[0] < s.surfaceArea() + detail::tinyEpsilon);
+	}
+
+	// Second, correct the intersection area of the facets.
 	for(size_t n = 0; n < nrVertices; ++n) {
 		if(!vMarked[n])
 			continue;
 
 		// Iterate over all the faces joining at this vertex.
 		for(size_t f = 0; f < 3; ++f) {
-			// Determine the two edges of this faces intersecting at the
+			// Determine the two edges of this face intersecting at the
 			// vertex.
+            uint32_t e0 = Element::face_mapping[f][0];
+            uint32_t e1 = Element::face_mapping[f][1];
 			std::array<uint32_t, 2> edgeIndices = {{
-				Element::vertex_mapping[n][0][f],
-				Element::vertex_mapping[n][0][(f + 1) % 3]
+				Element::vertex_mapping[n][0][e0],
+				Element::vertex_mapping[n][0][e1]
 			}};
 
 			// Extract the (relative) intersection points of these edges with
-			// the sphere closest to the vertex.
+			// the sphere furthest from the vertex.
 			std::array<vector_t, 2> intersectionPoints = {{
 				eIntersections[edgeIndices[0]][
-					Element::vertex_mapping[n][1][f]],
+					Element::vertex_mapping[n][1][e0]],
 
 				eIntersections[edgeIndices[1]][
-					Element::vertex_mapping[n][1][(f + 1) % 3]],
+					Element::vertex_mapping[n][1][e1]]
 			}};
 
 			// Together with the vertex, this determines the triangle
@@ -1984,9 +2124,12 @@ auto overlapArea(const Sphere& sOrig, const Element& elementOrig) ->
 				intersectionPoints[1]).stableNorm();
 
 			const auto faceIdx = Element::vertex_mapping[n][2][f];
+
+            // TODO: Cache theta for each edge.
 			const scalar_t theta = scalar_t(2) * std::atan2(chordLength,
-				scalar_t(2) * std::sqrt(intersectionRadiusSq[faceIdx] -
-				scalar_t(0.25) * chordLength * chordLength));
+				scalar_t(2) * std::sqrt(std::max(scalar_t(0),
+				intersectionRadiusSq[faceIdx] -
+				scalar_t(0.25) * chordLength * chordLength)));
 
 			scalar_t segmentArea = scalar_t(0.5) *
 				intersectionRadiusSq[faceIdx] * (theta - std::sin(theta));
@@ -1997,10 +2140,19 @@ auto overlapArea(const Sphere& sOrig, const Element& elementOrig) ->
 			const vector_t d(scalar_t(0.5) * (intersectionPoints[0] +
 				intersectionPoints[1]));
 
-			if(d.dot((s.center - element.vertices[n]) - d) > scalar_t(0))
+            const auto& face = element.faces[faceIdx];
+	        const vector_t proj(s.center - face.normal.dot(s.center -
+                face.center) * face.normal);
+
+			if(d.dot((proj - element.vertices[n]) - d) > scalar_t(0)) {
 				segmentArea = intersectionRadiusSq[faceIdx] * pi - segmentArea;
+            }
 
 			result[faceIdx + 1] += triaArea + segmentArea;
+
+            // Sanity checks: detect excessively large intermediate result.
+            assert(result[faceIdx + 1] < element.faces[faceIdx].area +
+                std::sqrt(detail::largeEpsilon));
 		}
 	}
 
@@ -2010,8 +2162,21 @@ auto overlapArea(const Sphere& sOrig, const Element& elementOrig) ->
 	const scalar_t sLimit(std::sqrt(std::numeric_limits<scalar_t>::epsilon()) *
 		s.surfaceArea());
 
-	const scalar_t fLimit(std::sqrt(std::numeric_limits<scalar_t>::epsilon()) *
-		element.surfaceArea());
+    // As the precision of the area calculation deteriorates quickly with a
+    // increasing size ratio between the element and the sphere, the precision
+    // limit applied to the sphere is used as the lower limit for the facets.
+	const scalar_t fLimit(std::max(sLimit,
+        std::sqrt(std::numeric_limits<scalar_t>::epsilon()) *
+		element.surfaceArea()));
+
+    // Sanity checks: detect negative/excessively large results for the
+    // surface area of the facets.
+#ifndef NDEBUG
+	for(size_t n = 0; n < nrFaces; ++n) {
+        assert(result[n + 1] > -fLimit);
+        assert(result[n + 1] <= element.faces[n].area + fLimit);
+    }
+#endif // NDEBUG
 
 	// Surface of the sphere.
 	result[0] = detail::clamp(result[0], scalar_t(0), s.surfaceArea(), sLimit);
@@ -2028,6 +2193,13 @@ auto overlapArea(const Sphere& sOrig, const Element& elementOrig) ->
 
 	result.back() = std::accumulate(result.begin() + 1, result.end() - 1,
 		scalar_t(0));
+
+    // Perform some more sanity checks on the final result (debug version
+    // only).
+	assert(scalar_t(0) <= result[0] && result[0] <= sOrig.surfaceArea());
+
+	assert(scalar_t(0) <= result.back() && result.back() <=
+		elementOrig.surfaceArea());
 
 	return result;
 }

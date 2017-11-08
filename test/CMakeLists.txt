@@ -4,12 +4,15 @@ include_directories(${Boost_INCLUDE_DIR})
 
 # Register the individual unit tests.
 set(TEST_SOURCES
+    decompose_elements.cpp
     detail_regularizedWedge.cpp
     detail_regularizedWedgeArea.cpp
-    decompose_elements.cpp
     normal_newell.cpp
+    sphere_element_area_edgecases.cpp
     sphere_element_overlap.cpp
     sphere_element_overlap_edgecases.cpp
+    sphere_hex_area.cpp
+    sphere_tet_area.cpp
     sphere_tet_overlap_edgecases.cpp
 )
 
