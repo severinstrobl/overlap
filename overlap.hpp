@@ -72,7 +72,7 @@ inline vector_t normalNewell(Iterator begin, Iterator end, const vector_t&
 		n += (*(begin + i) - center).cross(*(begin + ((i + 1) % count)) -
 			center);
 
-	scalar_t length = n.norm();
+	scalar_t length = n.stableNorm();
 
 	if(length)
 		return n / length;
@@ -403,7 +403,7 @@ class Triangle : public Polygon<3> {
 	private:
 		void init() {
 			area = scalar_t(0.5) * ((vertices[1] - vertices[0]).cross(
-				vertices[2] - vertices[0])).norm();
+				vertices[2] - vertices[0])).stableNorm();
 		}
 };
 
@@ -427,9 +427,9 @@ class Quadrilateral : public Polygon<4> {
 	private:
 		void init() {
 			area = scalar_t(0.5) * (((vertices[1] - vertices[0]).cross(
-				vertices[2] - vertices[0])).norm() +
+				vertices[2] - vertices[0])).stableNorm() +
 				((vertices[2] - vertices[0]).cross(
-				vertices[3] - vertices[0])).norm());
+				vertices[3] - vertices[0])).stableNorm());
 		}
 };
 
@@ -1908,7 +1908,8 @@ auto overlapArea(const Sphere& sOrig, const Element& elementOrig) ->
 			// Together with the vertex, this determines the triangle
 			// representing one part of the correction.
 			const scalar_t triaArea = scalar_t(0.5) *
-				(intersectionPoints[0].cross(intersectionPoints[1])).norm();
+				(intersectionPoints[0].cross(
+                intersectionPoints[1])).stableNorm();
 
 			// The second component is the segment defined by the face and the
 			// intersection points.
