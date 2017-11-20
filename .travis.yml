@@ -3,9 +3,7 @@ sudo: false
 language: generic
 
 branches:
-  only:
-    - master
-    - coverity_scan
+  except:
 
 env:
   global:

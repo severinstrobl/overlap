@@ -90,4 +90,50 @@ inline Hexahedron unitHexahedron(scalar_t scaling = scalar_t(1)) {
 	BOOST_CHECK_CLOSE(overlapCalcTets6, overlapCalcTets24, delta);\
 }\
 
+#define sphereAreaWorker(s, hex, delta) {\
+	std::array<Tetrahedron, 4> subTets;\
+	std::array<Tetrahedron, 5> tets5;\
+	std::array<Tetrahedron, 6> tets6;\
+	std::array<Wedge, 2> wedges;\
+\
+	decompose(hex, tets5);\
+	decompose(hex, tets6);\
+	decompose(hex, wedges);\
+\
+	scalar_t areaCalcHex = overlapArea(s, hex)[0];\
+\
+	scalar_t areaCalcWedges = 0;\
+	scalar_t areaCalcTets5 = 0;\
+	scalar_t areaCalcTets6 = 0;\
+	scalar_t areaCalcTets24 = 0;\
+\
+	for(const auto& tet : tets5)\
+		areaCalcTets5 += overlapArea(s, tet)[0];\
+\
+	for(const auto& tet : tets6) {\
+		decompose(tet, subTets);\
+\
+		for(const auto& subTet : subTets)\
+			areaCalcTets24 += overlapArea(s, subTet)[0];\
+			areaCalcTets6 += overlapArea(s, tet)[0];\
+	}\
+\
+	for(const auto& wedge : wedges)\
+		areaCalcWedges += overlapArea(s, wedge)[0];\
+\
+	std::cout << "sphere surface hex:    " << areaCalcHex << std::endl;\
+	std::cout << "sphere surface wedges: " << areaCalcWedges << std::endl;\
+	std::cout << "sphere surface tets5:  " << areaCalcTets5 << std::endl;\
+	std::cout << "sphere surface tets6:  " << areaCalcTets6 << std::endl;\
+	std::cout << "sphere surface tets24: " << areaCalcTets24 << std::endl;\
+\
+	BOOST_CHECK_CLOSE(areaCalcHex, areaCalcWedges, delta);\
+	BOOST_CHECK_CLOSE(areaCalcHex, areaCalcTets5, delta);\
+	BOOST_CHECK_CLOSE(areaCalcHex, areaCalcTets6, delta);\
+	BOOST_CHECK_CLOSE(areaCalcHex, areaCalcTets24, delta);\
+	BOOST_CHECK_CLOSE(areaCalcTets5, areaCalcTets6, delta);\
+	BOOST_CHECK_CLOSE(areaCalcTets5, areaCalcTets24, delta);\
+	BOOST_CHECK_CLOSE(areaCalcTets6, areaCalcTets24, delta);\
+}\
+
 #endif // COMMON_HPP

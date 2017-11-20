@@ -1,6 +1,6 @@
-[![Build Status](https://travis-ci.org/severinstrobl/overlap.svg?branch=testing)](https://travis-ci.org/severinstrobl/overlap)
+[![Build Status](https://travis-ci.org/severinstrobl/overlap.svg?branch=master)](https://travis-ci.org/severinstrobl/overlap)
 
-# Exact calculation of the overlap volume of spheres and mesh elements
+# Exact calculation of the overlap volume and area of spheres and mesh elements
 
 Calculating the intersection or overlapping volume of a sphere and one of the
 typically used mesh elements such as a tetrahedron or hexahedron is
@@ -25,9 +25,9 @@ The compile-time dependencies of this code are:
 
 The software was successfully compiled and tested using the following
 compilers:
-- GNU G++ compiler (versions 4.8.4, 4.9.3 and 5.4.0)
+- GNU G++ compiler (versions 4.8.4, 4.9.3, and 5.4.0)
 - Intel C++ compiler (version 15.0.2)
-- Clang C++ compiler (versions 3.6.1 and 3.9.1)
+- Clang C++ compiler (versions 3.6.1, 3.9.1, and 5.0.0)
 
 ## Usage
 
@@ -68,9 +68,14 @@ Sphere s{{0, 0, 1.5}, 1.25};
 
 auto result = overlapArea(s, tet);
 
-std::cout << "overlap areas per face:" << std::endl;
-for(size_t f = 0; f < result.size() - 1; ++f)
-    std::cout << "  face #" << f << ": " << result[f] << std::endl;
+std::cout << "surface area of sphere intersecting tetrahedron: " <<
+    result[0] << std::endl;
 
-std::cout << "total overlap area: " << result.back() << std::endl;
+std::cout << "overlap areas per face:" << std::endl;
+// The indices of the faces are NOT zero-based here!
+for(size_t f = 1; f < result.size() - 1; ++f)
+    std::cout << "  face #" << (f - 1) << ": " << result[f] << std::endl;
+
+std::cout << "total surface area of tetrahedron intersecting sphere: " <<
+    result.back() << std::endl;
 ```
