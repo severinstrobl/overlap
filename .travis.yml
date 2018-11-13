@@ -1,5 +1,5 @@
 dist: xenial
-sudo: false
+sudo: true
 language: generic
 
 branches:
@@ -163,6 +163,7 @@ matrix:
       env: COMPILER=gcc CC=gcc CXX=g++
 
 before_install:
+  - sudo apt-get update
   - mkdir build
   - cd build
 
