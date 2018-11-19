@@ -28,18 +28,6 @@ matrix:
           sources:
             - ubuntu-toolchain-r-test
           packages:
-            - g++-4.9
-            - libstdc++-4.9-dev
-            - libboost-test-dev
-      env: COMPILER=gcc CC=gcc-4.9 CXX=g++-4.9
-
-    - os: linux
-      compiler: gcc
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
             - g++-5
             - libstdc++-5-dev
             - libboost-test-dev
