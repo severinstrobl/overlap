@@ -18,7 +18,6 @@ matrix:
       addons:
         apt:
           packages:
-            - libeigen3-dev
             - libboost-test-dev
       env: COMPILER=gcc CC=gcc CXX=g++
 
@@ -31,7 +30,6 @@ matrix:
           packages:
             - g++-4.9
             - libstdc++-4.9-dev
-            - libeigen3-dev
             - libboost-test-dev
       env: COMPILER=gcc CC=gcc-4.9 CXX=g++-4.9
 
@@ -44,7 +42,6 @@ matrix:
           packages:
             - g++-5
             - libstdc++-5-dev
-            - libeigen3-dev
             - libboost-test-dev
       env: COMPILER=gcc CC=gcc-5 CXX=g++-5
 
@@ -57,7 +54,6 @@ matrix:
           packages:
             - g++-6
             - libstdc++-6-dev
-            - libeigen3-dev
             - libboost-test-dev
       env: COMPILER=gcc CC=gcc-6 CXX=g++-6
 
@@ -70,7 +66,6 @@ matrix:
           packages:
             - g++-7
             - libstdc++-7-dev
-            - libeigen3-dev
             - libboost-test-dev
       env: COMPILER=gcc CC=gcc-7 CXX=g++-7
 
@@ -83,7 +78,6 @@ matrix:
           packages:
             - g++-8
             - libstdc++-8-dev
-            - libeigen3-dev
             - libboost-test-dev
       env: COMPILER=gcc CC=gcc-8 CXX=g++-8
 
@@ -92,7 +86,6 @@ matrix:
       addons:
         apt:
           packages:
-            - libeigen3-dev
             - libboost-test-dev
       env: COMPILER=clang CC=clang CXX=clang++
 
@@ -104,7 +97,6 @@ matrix:
             - llvm-toolchain-xenial-3.9
           packages:
             - clang-3.9
-            - libeigen3-dev
             - libboost-test-dev
       env: COMPILER=clang CC=clang-3.9 CXX=clang++-3.9
 
@@ -116,7 +108,6 @@ matrix:
             - llvm-toolchain-xenial-4.0
           packages:
             - clang-4.0
-            - libeigen3-dev
             - libboost-test-dev
       env: COMPILER=clang CC=clang-4.0 CXX=clang++-4.0
 
@@ -128,7 +119,6 @@ matrix:
             - llvm-toolchain-xenial-5.0
           packages:
             - clang-5.0
-            - libeigen3-dev
             - libboost-test-dev
       env: COMPILER=clang CC=clang-5.0 CXX=clang++-5.0
 
@@ -140,7 +130,6 @@ matrix:
             - llvm-toolchain-xenial-6.0
           packages:
             - clang-6.0
-            - libeigen3-dev
             - libboost-test-dev
       env: COMPILER=clang CC=clang-6.0 CXX=clang++-6.0
 
@@ -149,7 +138,6 @@ matrix:
       addons:
         apt:
           packages:
-            - libeigen3-dev
             - libboost-test-dev
         coverity_scan:
           project:
@@ -163,7 +151,7 @@ matrix:
       env: COMPILER=gcc CC=gcc CXX=g++
 
 before_install:
-  - sudo apt-get update
+  - wget http://security.ubuntu.com/ubuntu/pool/universe/e/eigen3/libeigen3-dev_3.3.5-2_all.deb && sudo dpkg -i libeigen3-dev_3.3.5-2_all.deb
   - mkdir build
   - cd build
 
