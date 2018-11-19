@@ -1,5 +1,5 @@
-dist: trusty
-sudo: false
+dist: xenial
+sudo: true
 language: generic
 
 branches:
@@ -18,7 +18,6 @@ matrix:
       addons:
         apt:
           packages:
-            - libeigen3-dev
             - libboost-test-dev
       env: COMPILER=gcc CC=gcc CXX=g++
 
@@ -29,22 +28,8 @@ matrix:
           sources:
             - ubuntu-toolchain-r-test
           packages:
-            - g++-4.9
-            - libstdc++-4.9-dev
-            - libeigen3-dev
-            - libboost-test-dev
-      env: COMPILER=gcc CC=gcc-4.9 CXX=g++-4.9
-
-    - os: linux
-      compiler: gcc
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
             - g++-5
             - libstdc++-5-dev
-            - libeigen3-dev
             - libboost-test-dev
       env: COMPILER=gcc CC=gcc-5 CXX=g++-5
 
@@ -57,16 +42,38 @@ matrix:
           packages:
             - g++-6
             - libstdc++-6-dev
-            - libeigen3-dev
             - libboost-test-dev
       env: COMPILER=gcc CC=gcc-6 CXX=g++-6
+
+    - os: linux
+      compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-7
+            - libstdc++-7-dev
+            - libboost-test-dev
+      env: COMPILER=gcc CC=gcc-7 CXX=g++-7
+
+    - os: linux
+      compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-8
+            - libstdc++-8-dev
+            - libboost-test-dev
+      env: COMPILER=gcc CC=gcc-8 CXX=g++-8
 
     - os: linux
       compiler: clang
       addons:
         apt:
           packages:
-            - libeigen3-dev
             - libboost-test-dev
       env: COMPILER=clang CC=clang CXX=clang++
 
@@ -74,31 +81,10 @@ matrix:
       compiler: clang
       addons:
         apt:
-          packages:
-            - clang-3.6
-            - libeigen3-dev
-            - libboost-test-dev
-      env: COMPILER=clang CC=clang-3.6 CXX=clang++-3.6
-
-    - os: linux
-      compiler: clang
-      addons:
-        apt:
-          packages:
-            - clang-3.8
-            - libeigen3-dev
-            - libboost-test-dev
-      env: COMPILER=clang CC=clang-3.8 CXX=clang++-3.8
-
-    - os: linux
-      compiler: clang
-      addons:
-        apt:
           sources:
-            - llvm-toolchain-trusty-3.9
+            - llvm-toolchain-xenial-3.9
           packages:
             - clang-3.9
-            - libeigen3-dev
             - libboost-test-dev
       env: COMPILER=clang CC=clang-3.9 CXX=clang++-3.9
 
@@ -107,19 +93,39 @@ matrix:
       addons:
         apt:
           sources:
-            - llvm-toolchain-trusty-4.0
+            - llvm-toolchain-xenial-4.0
           packages:
             - clang-4.0
-            - libeigen3-dev
             - libboost-test-dev
       env: COMPILER=clang CC=clang-4.0 CXX=clang++-4.0
+
+    - os: linux
+      compiler: clang
+      addons:
+        apt:
+          sources:
+            - llvm-toolchain-xenial-5.0
+          packages:
+            - clang-5.0
+            - libboost-test-dev
+      env: COMPILER=clang CC=clang-5.0 CXX=clang++-5.0
+
+    - os: linux
+      compiler: clang
+      addons:
+        apt:
+          sources:
+            - llvm-toolchain-xenial-6.0
+          packages:
+            - clang-6.0
+            - libboost-test-dev
+      env: COMPILER=clang CC=clang-6.0 CXX=clang++-6.0
 
     - os: linux
       compiler: gcc
       addons:
         apt:
           packages:
-            - libeigen3-dev
             - libboost-test-dev
         coverity_scan:
           project:
@@ -127,19 +133,18 @@ matrix:
             description: "Build submitted via Travis CI"
           notification_email:
             secure: "F4ceywMDhkglJjzSWOM1R49+26SUadnghv0skCgDs6lr88QXrB72Uzv2+BmkqVGY7PjA9XHcw/TldyqAT3r078J7lNzpkZnh2tb/9Nxq+T5fP7s+JgetY3ExL4mv4jaWCK0dqjDm+goR0Qv1b5+ZgPfVx6t6BMvmuAmbapHkB5ucKrvcg1/fPexbTX21SaU+XdVN7rHe9TjcMzldLxm/8Rm2SRbfWn2h+9jNTrXKrUEpRVSpoLJPEiKr1lK3YVCRbQ64JpXhawI5TOklRF7HldFyBNCNJid9p5J04sffmyW6Vq+80FUFk9gHaL25ajF0Krw80sZRALHdoMLSHPEJabB6kQn85MURGzRCPU1SWoHEZ6U8UKOJc834dXXfFhAmEePsqLTnnxhLoVyOTCRql/RLyuaXIW465162Q36YALSDQFOPer6Iaujim7R6LMN8LfmDH+Sg5JM59hCH8aDsuBrzJdj1BtC/ckb/QU9j7nUh8TqudJpPDadFB3son0DmkMYZmGszcmWgMbckdGUsJHm+sX02yEUM3ENtEg2ASEtpkniXZtEWlxVclB88233GZLL0SXw9POQej6O+640j3QI78jLmbSW4SpvsgVmePEK5TPkkEnFDs7vdiuCx9nUltqZPml1pcs/835zv2/AWejfRji0EnFuMpgnmijcWfQc="
-          build_command_prepend: "cmake .."
+          build_command_prepend: "cmake -DCMAKE_BUILD_TYPE=Debug.."
           build_command: "make"
           branch_pattern: coverity_scan
       env: COMPILER=gcc CC=gcc CXX=g++
 
 before_install:
-  - mkdir cmake
-  - ln -s /usr/share/cmake-2.8/Modules/FindEigen3.cmake cmake/
+  - wget http://security.ubuntu.com/ubuntu/pool/universe/e/eigen3/libeigen3-dev_3.3.5-2_all.deb && sudo dpkg -i libeigen3-dev_3.3.5-2_all.deb
   - mkdir build
   - cd build
 
 before_script:
-  - cmake ..
+  - cmake -DCMAKE_BUILD_TYPE=Debug ..
 
 script:
   - if [[ "${COVERITY_SCAN_BRANCH}" == 1 ]];
