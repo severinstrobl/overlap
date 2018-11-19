@@ -2,7 +2,7 @@
  * Exact calculation of the overlap volume of spheres and mesh elements.
  * http://dx.doi.org/10.1016/j.jcp.2016.02.003
  *
- * Copyright (C) 2015-2017 Severin Strobl <severin.strobl@fau.de>
+ * Copyright (C) 2015-2018 Severin Strobl <git@severin-strobl.de>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1496,12 +1496,8 @@ scalar_t overlap(const Sphere& sOrig, const Element& elementOrig) {
 
 		// Store the two intersection points of the edge with the sphere for
 		// later usage.
-		eIntersections[n][0] = solutions.first[0] * direction + (start -
-			element.vertices[Element::edge_mapping[n][0][0]]);
-
-		eIntersections[n][1] = solutions.first[1] * direction + (start -
-			element.vertices[Element::edge_mapping[n][0][1]]);
-
+		eIntersections[n][0] = solutions.first[0] * direction;
+		eIntersections[n][1] = (solutions.first[1] - scalar_t(1)) * direction;
 		eMarked[n] = true;
 
 		// If the edge is marked as having an overlap, the two faces forming it
@@ -1839,11 +1835,8 @@ auto overlapArea(const Sphere& sOrig, const Element& elementOrig) ->
 
 		// Store the two intersection points of the edge with the sphere for
 		// later usage.
-		eIntersections[n][0] = solutions.first[0] * direction + (start -
-			element.vertices[Element::edge_mapping[n][0][0]]);
-
-		eIntersections[n][1] = solutions.first[1] * direction + (start -
-			element.vertices[Element::edge_mapping[n][0][1]]);
+        eIntersections[n][0] = solutions.first[0] * direction;
+		eIntersections[n][1] = (solutions.first[1] - scalar_t(1)) * direction;
 
 		eMarked[n] = true;
 
