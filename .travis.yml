@@ -1,6 +1,5 @@
-dist: xenial
-sudo: true
-language: generic
+dist: bionic
+language: cpp
 
 branches:
   except:
@@ -19,55 +18,57 @@ matrix:
         apt:
           packages:
             - libboost-test-dev
+            - libeigen3-dev
+      # The system compiler for bionic is gcc 7.4.0.
       env: COMPILER=gcc CC=gcc CXX=g++
 
     - os: linux
       compiler: gcc
       addons:
         apt:
-          sources:
-            - ubuntu-toolchain-r-test
           packages:
+            - libboost-test-dev
+            - libeigen3-dev
             - g++-5
             - libstdc++-5-dev
-            - libboost-test-dev
       env: COMPILER=gcc CC=gcc-5 CXX=g++-5
 
     - os: linux
       compiler: gcc
       addons:
         apt:
-          sources:
-            - ubuntu-toolchain-r-test
           packages:
+            - libboost-test-dev
+            - libeigen3-dev
             - g++-6
             - libstdc++-6-dev
-            - libboost-test-dev
       env: COMPILER=gcc CC=gcc-6 CXX=g++-6
 
     - os: linux
       compiler: gcc
       addons:
         apt:
-          sources:
-            - ubuntu-toolchain-r-test
           packages:
-            - g++-7
-            - libstdc++-7-dev
             - libboost-test-dev
-      env: COMPILER=gcc CC=gcc-7 CXX=g++-7
-
-    - os: linux
-      compiler: gcc
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
+            - libeigen3-dev
             - g++-8
             - libstdc++-8-dev
-            - libboost-test-dev
       env: COMPILER=gcc CC=gcc-8 CXX=g++-8
+
+#     Contrary to the documentation, APT sources seem to be not yet supported
+#     for Bionic.
+#    - os: linux
+#      compiler: gcc
+#      addons:
+#        apt:
+#          sources:
+#            - ubuntu-toolchain-r-test
+#          packages:
+#            - libboost-test-dev
+#            - libeigen3-dev
+#            - g++-9
+#            - libstdc++-9-dev
+#      env: COMPILER=gcc CC=gcc-9 CXX=g++-9
 
     - os: linux
       compiler: clang
@@ -75,28 +76,28 @@ matrix:
         apt:
           packages:
             - libboost-test-dev
+            - libeigen3-dev
+      # The packaged version of clang for bionic is 7.0.0.
       env: COMPILER=clang CC=clang CXX=clang++
 
     - os: linux
       compiler: clang
       addons:
         apt:
-          sources:
-            - llvm-toolchain-xenial-3.9
           packages:
-            - clang-3.9
             - libboost-test-dev
+            - libeigen3-dev
+            - clang-3.9
       env: COMPILER=clang CC=clang-3.9 CXX=clang++-3.9
 
     - os: linux
       compiler: clang
       addons:
         apt:
-          sources:
-            - llvm-toolchain-xenial-4.0
           packages:
-            - clang-4.0
             - libboost-test-dev
+            - libeigen3-dev
+            - clang-4.0
       env: COMPILER=clang CC=clang-4.0 CXX=clang++-4.0
 
     - os: linux
@@ -104,10 +105,11 @@ matrix:
       addons:
         apt:
           sources:
-            - llvm-toolchain-xenial-5.0
+            - llvm-toolchain-bionic-5.0
           packages:
-            - clang-5.0
             - libboost-test-dev
+            - libeigen3-dev
+            - clang-5.0
       env: COMPILER=clang CC=clang-5.0 CXX=clang++-5.0
 
     - os: linux
@@ -115,18 +117,40 @@ matrix:
       addons:
         apt:
           sources:
-            - llvm-toolchain-xenial-6.0
+            - llvm-toolchain-bionic-6.0
           packages:
-            - clang-6.0
             - libboost-test-dev
+            - libeigen3-dev
+            - clang-6.0
       env: COMPILER=clang CC=clang-6.0 CXX=clang++-6.0
+
+    - os: linux
+      compiler: clang
+      addons:
+        apt:
+          sources:
+            - llvm-toolchain-bionic-7
+          packages:
+            - libboost-test-dev
+            - libeigen3-dev
+            - clang-7
+      env: COMPILER=clang CC=clang-7 CXX=clang++-7
+
+    - os: linux
+      compiler: clang
+      addons:
+        apt:
+          sources:
+            - llvm-toolchain-bionic-8
+          packages:
+            - libboost-test-dev
+            - libeigen3-dev
+            - clang-8
+      env: COMPILER=clang CC=clang-8 CXX=clang++-8
 
     - os: linux
       compiler: gcc
       addons:
-        apt:
-          packages:
-            - libboost-test-dev
         coverity_scan:
           project:
             name: "severinstrobl/overlap"
@@ -136,10 +160,13 @@ matrix:
           build_command_prepend: "cmake -DCMAKE_BUILD_TYPE=Debug.."
           build_command: "make"
           branch_pattern: coverity_scan
+        apt:
+          packages:
+            - libboost-test-dev
+            - libeigen3-dev
       env: COMPILER=gcc CC=gcc CXX=g++
 
 before_install:
-  - wget http://security.ubuntu.com/ubuntu/pool/universe/e/eigen3/libeigen3-dev_3.3.5-2_all.deb && sudo dpkg -i libeigen3-dev_3.3.5-2_all.deb
   - mkdir build
   - cd build
 
