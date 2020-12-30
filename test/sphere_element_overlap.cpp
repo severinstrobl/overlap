@@ -2,7 +2,7 @@
  * Exact calculation of the overlap volume of spheres and mesh elements.
  * http://dx.doi.org/10.1016/j.jcp.2016.02.003
  *
- * Copyright (C) 2015-2017 Severin Strobl <severin.strobl@fau.de>
+ * Copyright (C) 2015-2020 Severin Strobl <severin.strobl@fau.de>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,56 +18,46 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_MODULE sphere_element_overlap
-#define BOOST_TEST_DYN_LINK
-
-#include <boost/test/unit_test.hpp>
+#include "gtest/gtest.h"
 
 #include "overlap.hpp"
 
 #include "common.hpp"
 
+static const scalar_t epsilon =
+	std::sqrt(std::numeric_limits<scalar_t>::epsilon());
+
+// Sphere outside of hexahedron, touching one face.
+TEST(SphereElementOverlap, Face) {
+	Sphere s(vector_t{0, 2, 0}, 1);
+
+	overlap(s, unitHexahedron(), epsilon, scalar_t{0});
+}
+
 // Sphere intersects one edge (and thus 2 faces).
-BOOST_AUTO_TEST_CASE(sphere_element_overlap_edge) {
+TEST(SphereElementOverlap, Edge) {
 	Sphere s(vector_t{0, -1, 1}, 1);
 
-	scalar_t delta(std::sqrt(std::numeric_limits<scalar_t>::epsilon()));
-
-	overlapWorker(s, unitHexahedron(), delta, 0.25 * s.volume);
+	overlap(s, unitHexahedron(), epsilon, 0.25 * s.volume);
 }
 
 // Sphere intersects one vertex (and thus 3 edges and 3 faces)
-BOOST_AUTO_TEST_CASE(sphere_element_overlap_vertex) {
+TEST(SphereElementOverlap, Vertex) {
 	Sphere s(vector_t{1, -1, 1}, 1);
 
-	scalar_t delta(std::sqrt(std::numeric_limits<scalar_t>::epsilon()));
-
-	overlapWorker(s, unitHexahedron(), delta, 0.125 * s.volume);
-}
-
-// Sphere outside of hexahedron, touching one face.
-BOOST_AUTO_TEST_CASE(sphere_element_overlap_face_touching) {
-	Sphere s(vector_t{0, 2, 0}, 1);
-
-	scalar_t delta(std::sqrt(std::numeric_limits<scalar_t>::epsilon()));
-
-	overlapWorker(s, unitHexahedron(), delta, scalar_t(0));
+	overlap(s, unitHexahedron(), epsilon, 0.125 * s.volume);
 }
 
 // Sphere outside of hexahedron, touching one vertex.
-BOOST_AUTO_TEST_CASE(sphere_element_overlap_vertex_touching) {
+TEST(SphereElementOverlap, VertexTouching) {
 	Sphere s(vector_t{2, -1, 1}, 1);
 
-	scalar_t delta(std::sqrt(std::numeric_limits<scalar_t>::epsilon()));
-
-	overlapWorker(s, unitHexahedron(), delta, scalar_t(0));
+	overlap(s, unitHexahedron(), epsilon, scalar_t{0});
 }
 
 // Sphere outside of hexahedron, slightly overlapping one vertex.
-BOOST_AUTO_TEST_CASE(sphere_element_overlap_vertex_edgecase) {
+TEST(SphereElementOverlap, Vertex2) {
 	Sphere s(vector_t{2 - 10 * detail::tinyEpsilon, -1, 1}, 1);
 
-	scalar_t delta(std::sqrt(std::numeric_limits<scalar_t>::epsilon()));
-
-	overlapWorker(s, unitHexahedron(), delta, scalar_t(0));
+	overlap(s, unitHexahedron(), epsilon, scalar_t{0});
 }

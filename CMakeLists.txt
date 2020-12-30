@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.10)
 project(overlap)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
@@ -26,5 +26,8 @@ find_package(Eigen3 3.0.0 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
 
 # Activate the unit tests.
-enable_testing()
-add_subdirectory(test)
+option(OVERLAP_TESTS "Build the tests" ON)
+if(OVERLAP_TESTS)
+    enable_testing()
+    add_subdirectory(test)
+endif()

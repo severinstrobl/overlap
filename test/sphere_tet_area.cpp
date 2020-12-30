@@ -2,7 +2,7 @@
  * Exact calculation of the overlap volume of spheres and mesh elements.
  * http://dx.doi.org/10.1016/j.jcp.2016.02.003
  *
- * Copyright (C) 2015-2017 Severin Strobl <severin.strobl@fau.de>
+ * Copyright (C) 2015-2020 Severin Strobl <severin.strobl@fau.de>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,10 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_MODULE sphere_tet_area
-#define BOOST_TEST_DYN_LINK
-
-#include <boost/test/unit_test.hpp>
+#include "gtest/gtest.h"
 
 #include <cmath>
 
@@ -30,7 +27,7 @@
 #include "common.hpp"
 
 // Sphere inside of element.
-BOOST_AUTO_TEST_CASE(sphere_tet_area_sphere_contained) {
+TEST(SphereTetAreaTest, SphereInTet) {
 	vector_t v0{-std::sqrt(3) / 6.0, -1.0 / 2.0, 0};
 	vector_t v1{std::sqrt(3) / 3.0, 0, 0};
 	vector_t v2{-std::sqrt(3) / 6.0, +1.0 / 2.0, 0};
@@ -45,13 +42,12 @@ BOOST_AUTO_TEST_CASE(sphere_tet_area_sphere_contained) {
 	resultExact.fill(scalar_t(0));
 	resultExact[0] = s.surfaceArea();
 
-	scalar_t delta(std::numeric_limits<scalar_t>::epsilon());
 	for(size_t i = 0; i < resultExact.size(); ++i)
-		BOOST_CHECK_CLOSE(result[i], resultExact[i], delta);
+		ASSERT_EQ(result[i], resultExact[i]);
 }
 
 // Element contained in sphere.
-BOOST_AUTO_TEST_CASE(sphere_tet_area_element_contained) {
+TEST(SphereTetAreaTest, TetInSphere) {
 	vector_t v0{-std::sqrt(3) / 6.0, -1.0 / 2.0, 0};
 	vector_t v1{std::sqrt(3) / 3.0, 0, 0};
 	vector_t v2{-std::sqrt(3) / 6.0, +1.0 / 2.0, 0};
@@ -71,13 +67,36 @@ BOOST_AUTO_TEST_CASE(sphere_tet_area_element_contained) {
 	resultExact.back() = std::accumulate(resultExact.begin() + 1,
 		resultExact.end() - 1, scalar_t(0));
 
-	scalar_t delta(std::numeric_limits<scalar_t>::epsilon());
 	for(size_t i = 0; i < resultExact.size(); ++i)
-		BOOST_CHECK_CLOSE(result[i], resultExact[i], delta);
+		ASSERT_NEAR(result[i], resultExact[i],
+			std::numeric_limits<scalar_t>::epsilon());
+}
+
+// Sphere intersects one face.
+TEST(SphereTetAreaTest, Face) {
+	vector_t v0{-std::sqrt(3) / 6.0, -1.0 / 2.0, 0};
+	vector_t v1{std::sqrt(3) / 3.0, 0, 0};
+	vector_t v2{-std::sqrt(3) / 6.0, +1.0 / 2.0, 0};
+	vector_t v3{0, 0, std::sqrt(6) / 3.0};
+
+	Tetrahedron tet{v0, v1, v2, v3};
+	Sphere s({0, 0, 0}, 0.25);
+
+	auto result = overlapArea(s, tet);
+
+	std::array<scalar_t, 6> resultExact;
+	resultExact.fill(scalar_t(0));
+	resultExact[0] = scalar_t(0.5) * s.surfaceArea();
+	resultExact[1] = s.diskArea(s.radius);
+	resultExact[5] = resultExact[1];
+
+	for(size_t i = 0; i < resultExact.size(); ++i)
+		ASSERT_NEAR(result[i], resultExact[i],
+			std::numeric_limits<scalar_t>::epsilon());
 }
 
 // Sphere intersects one vertex (and thus 3 edges and 3 faces).
-BOOST_AUTO_TEST_CASE(sphere_tet_area_vertex) {
+TEST(SphereTetAreaTest, Vertex) {
 	vector_t v0{-std::sqrt(3) / 6.0, -1.0 / 2.0, 0};
 	vector_t v1{std::sqrt(3) / 3.0, 0, 0};
 	vector_t v2{-std::sqrt(3) / 6.0, +1.0 / 2.0, 0};
@@ -100,32 +119,7 @@ BOOST_AUTO_TEST_CASE(sphere_tet_area_vertex) {
 		resultApprox.end() - 1, scalar_t(0));
 
 	// Should be 1 / sqrt(N_{samples}), but does not quite work...
-	scalar_t delta(3.5e-06 * 1e2);
-	for(size_t i = 0; i < resultApprox.size(); ++i) {
-		std::cout << "result[" << i << "]: " << result[i] << std::endl;
-		BOOST_CHECK_CLOSE(result[i], resultApprox[i], delta);
-	}
-}
-
-// Sphere intersects one face.
-BOOST_AUTO_TEST_CASE(sphere_tet_area_face) {
-	vector_t v0{-std::sqrt(3) / 6.0, -1.0 / 2.0, 0};
-	vector_t v1{std::sqrt(3) / 3.0, 0, 0};
-	vector_t v2{-std::sqrt(3) / 6.0, +1.0 / 2.0, 0};
-	vector_t v3{0, 0, std::sqrt(6) / 3.0};
-
-	Tetrahedron tet{v0, v1, v2, v3};
-	Sphere s({0, 0, 0}, 0.25);
-
-	auto result = overlapArea(s, tet);
-
-	std::array<scalar_t, 6> resultExact;
-	resultExact.fill(scalar_t(0));
-	resultExact[0] = scalar_t(0.5) * s.surfaceArea();
-	resultExact[1] = s.diskArea(s.radius);
-	resultExact[5] = resultExact[1];
-
-	scalar_t delta(std::numeric_limits<scalar_t>::epsilon());
-	for(size_t i = 0; i < resultExact.size(); ++i)
-		BOOST_CHECK_CLOSE(result[i], resultExact[i], delta);
+	constexpr scalar_t epsilon = 3.5e-06;
+	for(size_t i = 0; i < resultApprox.size(); ++i)
+		ASSERT_NEAR(result[i], resultApprox[i], epsilon);
 }
