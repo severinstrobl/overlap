@@ -2,7 +2,7 @@
  * Exact calculation of the overlap volume of spheres and mesh elements.
  * http://dx.doi.org/10.1016/j.jcp.2016.02.003
  *
- * Copyright (C) 2015-2017 Severin Strobl <severin.strobl@fau.de>
+ * Copyright (C) 2015-2020 Severin Strobl <severin.strobl@fau.de>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,17 +18,14 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_MODULE sphere_hex_area
-#define BOOST_TEST_DYN_LINK
-
-#include <boost/test/unit_test.hpp>
+#include "gtest/gtest.h"
 
 #include "overlap.hpp"
 
 #include "common.hpp"
 
 // Sphere intersects one face.
-BOOST_AUTO_TEST_CASE(sphere_hex_area_face) {
+TEST(SphereHexAreaTest, Face) {
 	Hexahedron hex = unitHexahedron();
 	Sphere s({0, 0, 1}, 0.75);
 
@@ -40,15 +37,13 @@ BOOST_AUTO_TEST_CASE(sphere_hex_area_face) {
 	resultExact[6] = s.diskArea(s.radius);
 	resultExact[7] = resultExact[6];
 
-	scalar_t delta(1e2 * std::numeric_limits<scalar_t>::epsilon());
-	for(size_t i = 0; i < resultExact.size(); ++i) {
-		std::cout << "result[" << i << "]: " << result[i] << std::endl;
-		BOOST_CHECK_CLOSE(result[i], resultExact[i], delta);
-	}
+	for(size_t i = 0; i < resultExact.size(); ++i)
+		ASSERT_NEAR(result[i], resultExact[i],
+			std::numeric_limits<scalar_t>::epsilon());
 }
 
 // Sphere intersects one edge (and thus 1 edge and 2 faces).
-BOOST_AUTO_TEST_CASE(sphere_hex_area_edge) {
+TEST(SphereHexAreaTest, Edge) {
 	Hexahedron hex = unitHexahedron();
 	Sphere s({1, 1, 0}, 0.75);
 
@@ -61,15 +56,13 @@ BOOST_AUTO_TEST_CASE(sphere_hex_area_edge) {
 	resultExact[4] = resultExact[3];
 	resultExact[7] = 2 * resultExact[3];
 
-	scalar_t delta(1e2 * std::numeric_limits<scalar_t>::epsilon());
-	for(size_t i = 0; i < resultExact.size(); ++i) {
-		std::cout << "result[" << i << "]: " << result[i] << std::endl;
-		BOOST_CHECK_CLOSE(result[i], resultExact[i], delta);
-	}
+	for(size_t i = 0; i < resultExact.size(); ++i)
+		ASSERT_NEAR(result[i], resultExact[i],
+			std::numeric_limits<scalar_t>::epsilon());
 }
 
 // Sphere intersects one vertex (and thus 3 edge and 3 faces).
-BOOST_AUTO_TEST_CASE(sphere_hex_area_vertex) {
+TEST(SphereHexAreaTest, Vertex) {
 	Hexahedron hex = unitHexahedron();
 	Sphere s({1, 1, 1}, 0.75);
 
@@ -83,9 +76,7 @@ BOOST_AUTO_TEST_CASE(sphere_hex_area_vertex) {
 	resultExact[6] = resultExact[3];
 	resultExact[7] = 3 * resultExact[3];
 
-	scalar_t delta(1e3 * std::numeric_limits<scalar_t>::epsilon());
-	for(size_t i = 0; i < resultExact.size(); ++i) {
-		std::cout << "result[" << i << "]: " << result[i] << std::endl;
-		BOOST_CHECK_CLOSE(result[i], resultExact[i], delta);
-	}
+	constexpr scalar_t epsilon = 1e3 * std::numeric_limits<scalar_t>::epsilon();
+	for(size_t i = 0; i < resultExact.size(); ++i)
+		ASSERT_NEAR(result[i], resultExact[i], epsilon);
 }

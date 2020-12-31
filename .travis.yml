@@ -17,7 +17,6 @@ matrix:
       addons:
         apt:
           packages:
-            - libboost-test-dev
             - libeigen3-dev
       # The system compiler for bionic is gcc 7.4.0.
       env: COMPILER=gcc CC=gcc CXX=g++
@@ -27,7 +26,6 @@ matrix:
       addons:
         apt:
           packages:
-            - libboost-test-dev
             - libeigen3-dev
             - g++-5
             - libstdc++-5-dev
@@ -38,7 +36,6 @@ matrix:
       addons:
         apt:
           packages:
-            - libboost-test-dev
             - libeigen3-dev
             - g++-6
             - libstdc++-6-dev
@@ -49,7 +46,6 @@ matrix:
       addons:
         apt:
           packages:
-            - libboost-test-dev
             - libeigen3-dev
             - g++-8
             - libstdc++-8-dev
@@ -64,7 +60,6 @@ matrix:
 #          sources:
 #            - ubuntu-toolchain-r-test
 #          packages:
-#            - libboost-test-dev
 #            - libeigen3-dev
 #            - g++-9
 #            - libstdc++-9-dev
@@ -75,7 +70,6 @@ matrix:
       addons:
         apt:
           packages:
-            - libboost-test-dev
             - libeigen3-dev
       # The packaged version of clang for bionic is 7.0.0.
       env: COMPILER=clang CC=clang CXX=clang++
@@ -85,7 +79,6 @@ matrix:
       addons:
         apt:
           packages:
-            - libboost-test-dev
             - libeigen3-dev
             - clang-3.9
       env: COMPILER=clang CC=clang-3.9 CXX=clang++-3.9
@@ -95,7 +88,6 @@ matrix:
       addons:
         apt:
           packages:
-            - libboost-test-dev
             - libeigen3-dev
             - clang-4.0
       env: COMPILER=clang CC=clang-4.0 CXX=clang++-4.0
@@ -107,7 +99,6 @@ matrix:
           sources:
             - llvm-toolchain-bionic-5.0
           packages:
-            - libboost-test-dev
             - libeigen3-dev
             - clang-5.0
       env: COMPILER=clang CC=clang-5.0 CXX=clang++-5.0
@@ -119,7 +110,6 @@ matrix:
           sources:
             - llvm-toolchain-bionic-6.0
           packages:
-            - libboost-test-dev
             - libeigen3-dev
             - clang-6.0
       env: COMPILER=clang CC=clang-6.0 CXX=clang++-6.0
@@ -131,7 +121,6 @@ matrix:
           sources:
             - llvm-toolchain-bionic-7
           packages:
-            - libboost-test-dev
             - libeigen3-dev
             - clang-7
       env: COMPILER=clang CC=clang-7 CXX=clang++-7
@@ -143,7 +132,6 @@ matrix:
           sources:
             - llvm-toolchain-bionic-8
           packages:
-            - libboost-test-dev
             - libeigen3-dev
             - clang-8
       env: COMPILER=clang CC=clang-8 CXX=clang++-8
@@ -162,7 +150,6 @@ matrix:
           branch_pattern: coverity_scan
         apt:
           packages:
-            - libboost-test-dev
             - libeigen3-dev
       env: COMPILER=gcc CC=gcc CXX=g++
 

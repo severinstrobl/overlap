@@ -1,24 +1,45 @@
-# Set up the Boost unit test library.
-find_package(Boost 1.40.0 COMPONENTS unit_test_framework REQUIRED)
-include_directories(${Boost_INCLUDE_DIR})
+# Build GoogleTest shipped as a third-party dependency
+add_subdirectory("${PROJECT_SOURCE_DIR}/third_party/googletest" "third_party/googletest")
 
-# Register the individual unit tests.
-set(TEST_SOURCES
-    decompose_elements.cpp
-    detail_regularizedWedge.cpp
-    detail_regularizedWedgeArea.cpp
-    normal_newell.cpp
-    sphere_element_area_edgecases.cpp
-    sphere_element_overlap.cpp
-    sphere_element_overlap_edgecases.cpp
-    sphere_hex_area.cpp
-    sphere_tet_area.cpp
-    sphere_tet_overlap_edgecases.cpp
+mark_as_advanced(
+    BUILD_GMOCK BUILD_GTEST BUILD_SHARED_LIBS
+    gmock_build_tests gtest_build_samples gtest_build_tests
+    gtest_disable_pthreads gtest_force_shared_crt gtest_hide_internal_symbols
 )
 
-foreach(TEST_SOURCE ${TEST_SOURCES})
-    get_filename_component(TEST_NAME ${TEST_SOURCE} NAME_WE)
-    add_executable(${TEST_NAME} ${TEST_SOURCE} ${BOOST_UNIT_TEST})
-    target_link_libraries(${TEST_NAME} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
-    add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME} "--log_level=test_suite")
-endforeach(TEST_SOURCE)
+set_target_properties(gtest PROPERTIES FOLDER extern)
+set_target_properties(gtest_main PROPERTIES FOLDER extern)
+set_target_properties(gmock PROPERTIES FOLDER extern)
+set_target_properties(gmock_main PROPERTIES FOLDER extern)
+
+# Load GoogleTest module and set up helper function for creating tests.
+include(GoogleTest)
+
+macro(overlap_add_test TESTNAME)
+    add_executable(${TESTNAME} ${ARGN})
+    target_link_libraries(${TESTNAME} gtest gtest_main)
+    gtest_discover_tests(${TESTNAME}
+        WORKING_DIRECTORY ${PROJECT_DIR}
+        PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${PROJECT_DIR}"
+    )
+    set_target_properties(${TESTNAME} PROPERTIES FOLDER test)
+endmacro()
+
+# List of unit tests.
+set(UNIT_TESTS
+    decompose_elements
+    detail_regularizedWedge
+    detail_regularizedWedgeArea
+    normal_newell
+    sphere_element_area_edgecases
+    sphere_element_overlap
+    sphere_element_overlap_edgecases
+    sphere_hex_area
+    sphere_tet_area
+    sphere_tet_overlap_edgecases
+)
+
+# Register the individual unit tests.
+foreach(UNIT_TEST ${UNIT_TESTS})
+    overlap_add_test(${UNIT_TEST} "${UNIT_TEST}.cpp")
+endforeach()
