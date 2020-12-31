@@ -32,18 +32,30 @@ compilers:
 | Compiler   | Versions |
 |------------|----------|
 | GNU G++    | 10.2.0, 9.3.0, 8.4.0, 7.5.0 |
-| Clang/LLVM | 10.0.0, 9.0.1,8.0.1 |
+| Clang/LLVM | 10.0.0, 9.0.1, 8.0.1 |
 
 Additionally, the Intel C++ compiler starting with version 15.0 should work,
 albeit this configuration is not part of the CI process.
 
 ## Usage
 
+### Node ordering
+
+The element types of the overlap library follow the node numbering conventions
+of the [CFD General Notation System (CGNS)](https://cgns.github.io/) project.
+Please refer to the CGNS documentation for the order of the nodes of
+[hexahedral](https://cgns.github.io/CGNS_docs_current/sids/conv.html#unst_hexa),
+[tetrahedral](https://cgns.github.io/CGNS_docs_current/sids/conv.html#unst_tetra), and
+[pentahedral/wedge-shaped](https://cgns.github.io/CGNS_docs_current/sids/conv.html#unst_penta)
+elements of linear order, respectively. Also the ordering of the faces uses
+the conventions of CGNS. This should make interfacing this library with
+existing codes rather easy, often even without the need to reorder nodes.
+
 The library is implemented as a pure header-only library written in plain
 C++11. To use it in your code, simply include the header file `overlap.hpp` and
-make sure the Eigen3 headers can be found by your compiler or build system.  A
-minimal example calculating the overlap of a hexahedron with a side length of 2
-centered at the origin and a sphere with radius 1 centered at a corner of the
+make sure the **Eigen3** headers can be found by your compiler or build system.
+A minimal example calculating the overlap of a hexahedron with a side length of
+2 centered at the origin and a sphere with radius 1 centered at a corner of the
 hexahedron could look something like this:
 ```cpp
 vector_t v0{-1, -1, -1};
