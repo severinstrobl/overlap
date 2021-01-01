@@ -29,9 +29,9 @@ The software is currently continuously compiled and tested with the following
 compilers:
 
 | Compiler   | Versions |
-|------------|---------|
-| GNU G++    | 8.3.0, 7.4.0, 6.4.0, 5.5.0 |
-| Clang/LLVM | 8.0.1, 7.1.0, 6.0.1, 5.0.2, 4.0.1, 3.9.1 |
+|------------|----------|
+| GNU G++    | 10.2.0, 9.3.0, 8.4.0, 7.5.0 |
+| Clang/LLVM | 10.0.0, 9.0.1,8.0.1 |
 
 Additionally, the Intel C++ compiler starting with version 15.0 should work,
 albeit this configuration is not part of the CI process.
