@@ -1,0 +1,47 @@
+name: CI build Linux
+
+on:
+  - push
+  - pull_request
+
+jobs:
+  build:
+    name: ${{ matrix.config.name }}
+    runs-on: ubuntu-18.04
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+        - {
+            name: "Ubuntu 18.04 - GCC 9",
+            cc: "gcc-9", cxx: "g++-9"
+          }
+        - {
+            name: "Ubuntu 18.04 - Clang 9",
+            cc: "clang-9", cxx: "clang++-9"
+          }
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+
+      - name: Dependencies
+        run: sudo apt install libeigen3-dev
+
+      - name: Configure
+        run: |
+          cmake \
+            -Bbuild \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_C_COMPILER=${{ matrix.config.cc }} \
+            -DCMAKE_CXX_COMPILER=${{ matrix.config.cxx }}
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Test
+        run: |
+          cd build
+          ctest --output-on-failure
