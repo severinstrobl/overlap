@@ -1,5 +1,7 @@
-# Build GoogleTest shipped as a third-party dependency
-add_subdirectory("${PROJECT_SOURCE_DIR}/third_party/googletest" "third_party/googletest")
+# Build GoogleTest shipped as a third-party dependency.
+add_subdirectory("${PROJECT_SOURCE_DIR}/third_party/googletest"
+                 "third_party/googletest"
+                 EXCLUDE_FROM_ALL)
 
 mark_as_advanced(
     BUILD_GMOCK BUILD_GTEST BUILD_SHARED_LIBS
