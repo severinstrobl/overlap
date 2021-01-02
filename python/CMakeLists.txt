@@ -1,5 +1,7 @@
 # Build pybind11 shipped as a third-party dependency.
-add_subdirectory("${PROJECT_SOURCE_DIR}/third_party/pybind11" "third_party/pybind11")
+add_subdirectory("${PROJECT_SOURCE_DIR}/third_party/pybind11"
+                 "third_party/pybind11"
+                 EXCLUDE_FROM_ALL)
 
 pybind11_add_module(_overlap MODULE overlap.cpp)
 
