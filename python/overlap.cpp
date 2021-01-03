@@ -27,7 +27,7 @@ void createBindings(py::module& m) {
     static_cast<char>(std::tolower(static_cast<char>(name[0]))) +
     name.substr(1);
 
-  constexpr std::size_t nrVertices = element_trait<Element>::nrVertices;
+  static constexpr std::size_t nrVertices = element_trait<Element>::nrVertices;
 
   py::class_<Element>(m, name.c_str())
     .def(py::init<std::array<vector_t, nrVertices>>())
