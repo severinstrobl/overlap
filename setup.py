@@ -27,6 +27,9 @@ setup(
     packages=['overlap'],
     package_dir={'overlap': 'python'},
     setup_requires=setup_requires,
+    install_requires=[
+        'numpy'
+    ],
     cmake_install_dir='python',
     classifiers=[
         'Programming Language :: Python :: 3',
