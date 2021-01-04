@@ -49,4 +49,5 @@ set(UNIT_TESTS
 # Register the individual unit tests.
 foreach(UNIT_TEST ${UNIT_TESTS})
     overlap_add_test(${UNIT_TEST} "${UNIT_TEST}.cpp")
+    target_link_libraries(${UNIT_TEST} PUBLIC Eigen3::Eigen)
 endforeach()
