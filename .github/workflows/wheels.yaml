@@ -1,0 +1,40 @@
+name: Python Wheels
+
+on:
+  push:
+    branches:
+      - python
+
+jobs:
+  build_wheels:
+    name: "Build 🐍 wheels on ${{ matrix.os }}"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-20.04, windows-2019, macOS-10.15]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+
+      - name: Dependencies
+        run: |
+          python -m pip install cibuildwheel==1.7.4
+
+      - name: Build wheels
+        env:
+          CIBW_SKIP: "cp27-* pp27-*"  # skip Python 2.7 wheels
+        run: |
+          python -m cibuildwheel --output-dir wheelhouse
+
+      - name: 'Upload Artifact'
+        uses: actions/upload-artifact@v2
+        with:
+          path: ./wheelhouse/*.whl
+          retention-days: 2
