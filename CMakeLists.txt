@@ -15,8 +15,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Set up the Eigen3 library.
-find_package(Eigen3 3.0.0 REQUIRED)
-include_directories(${EIGEN3_INCLUDE_DIR})
+find_package(Eigen3 3.2.0 NO_MODULE)
+if(NOT TARGET Eigen3::Eigen)
+    message(STATUS "Failed to find Eigen3 >= 3.2.0, using internal version")
+
+    add_library(Eigen3::Eigen IMPORTED INTERFACE)
+    set_property(TARGET Eigen3::Eigen PROPERTY INTERFACE_INCLUDE_DIRECTORIES
+                 "${PROJECT_SOURCE_DIR}/third_party/eigen")
+endif()
 
 # Add dummy interface for coverage configuration.
 add_library(coverage INTERFACE)
