@@ -29,7 +29,9 @@ jobs:
 
       - name: Build wheels
         env:
-          CIBW_SKIP: "cp27-* pp27-*"  # skip Python 2.7 wheels
+          CIBW_SKIP: "cp27-* pp27-* cp35-*"
+          CIBW_TEST_REQUIRES: pytest
+          CIBW_TEST_COMMAND: "python -m pytest -v {project}/test"
         run: |
           python -m cibuildwheel --output-dir wheelhouse
 
