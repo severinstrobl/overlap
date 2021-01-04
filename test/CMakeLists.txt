@@ -1,4 +1,6 @@
 # Build GoogleTest shipped as a third-party dependency.
+# Avoid linker issues on Windows when mixing shared and static libraries.
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 add_subdirectory("${PROJECT_SOURCE_DIR}/third_party/googletest"
                  "third_party/googletest"
                  EXCLUDE_FROM_ALL)
