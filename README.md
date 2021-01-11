@@ -1,6 +1,6 @@
 # Exact calculation of the overlap volume and area of spheres and mesh elements
 
-[![Build Status](https://travis-ci.org/severinstrobl/overlap.svg?branch=master)](https://travis-ci.org/severinstrobl/overlap)
+![Build Status](https://img.shields.io/github/workflow/status/severinstrobl/overlap/CI%20build%20Linux)
 [![codecov](https://codecov.io/gh/severinstrobl/overlap/branch/master/graph/badge.svg?token=GQ2L62OXXK)](https://codecov.io/gh/severinstrobl/overlap)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](./COPYING)
 [![DOI](https://img.shields.io/badge/DOI-10.1016/j.jcp.2016.02.003-blue.svg)](https://dx.doi.org/10.1016/j.jcp.2016.02.003)
@@ -23,7 +23,7 @@ element can also be calculated with this library.
 ## Dependencies
 
 The compile-time dependencies of this code are:
-- [Eigen3](http://eigen.tuxfamily.org), tested vith versions 3.3.4 and above
+- [Eigen3](http://eigen.tuxfamily.org), tested with versions 3.3.4 and above
 - [compiler supporting C++11](https://en.cppreference.com/w/cpp/compiler_support#cpp11)
 
 The software is currently continuously compiled and tested with the following
