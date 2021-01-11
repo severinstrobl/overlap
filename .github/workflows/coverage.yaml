@@ -1,0 +1,45 @@
+name: Code coverage
+
+on:
+  - push
+  - pull_request
+
+jobs:
+  build:
+    name: Codecov
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+
+      - name: Dependencies
+        run: |
+          sudo apt install libeigen3-dev
+          python -m pip install gcovr
+
+      - name: Configure
+        run: |
+          cmake \
+            -Bbuild \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_C_COMPILER=gcc-10 \
+            -DCMAKE_CXX_COMPILER=g++-10 \
+            -DOVERLAP_COVERAGE=ON
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Generate coverage report
+        run: |
+          cd build
+          ctest --output-on-failure
+          ~/.local/bin/gcovr -r ../ --xml -o coverage.xml  -e ../third_party/ -e ../test/
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
+        with:
+          files: ./build/coverage.xml
+          fail_ci_if_error: true
