@@ -31,7 +31,7 @@ include_directories(${EIGEN3_INCLUDE_DIR})
 # Add dummy interface for coverage configuration.
 add_library(coverage INTERFACE)
 
-if(OVERLAP_COVERAGE AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+if(OVERLAP_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "[GNU|Clang]")
     if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
         message(FATAL_ERROR "Generation of coverage information "
                 "requires debug build, set CMAKE_BUILD_TYPE=Debug.")

@@ -25,8 +25,8 @@ jobs:
           cmake \
             -Bbuild \
             -DCMAKE_BUILD_TYPE=Debug \
-            -DCMAKE_C_COMPILER=gcc-10 \
-            -DCMAKE_CXX_COMPILER=g++-10 \
+            -DCMAKE_C_COMPILER=clang-10 \
+            -DCMAKE_CXX_COMPILER=clang++-10 \
             -DOVERLAP_COVERAGE=ON
 
       - name: Build
@@ -36,7 +36,11 @@ jobs:
         run: |
           cd build
           ctest --output-on-failure
-          ~/.local/bin/gcovr -r ../ --xml -o coverage.xml  -e ../third_party/ -e ../test/
+          ~/.local/bin/gcovr \
+            --gcov-executable 'llvm-cov-10 gcov' \
+            -r ../ \
+            --xml -o coverage.xml \
+            -e ../third_party/ -e ../test/
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
