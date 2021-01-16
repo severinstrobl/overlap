@@ -29,9 +29,13 @@ endmacro()
 # List of unit tests.
 set(UNIT_TESTS
     decompose_elements
+    detail_clamp
     detail_regularizedWedge
     detail_regularizedWedgeArea
+    elements
     normal_newell
+    polygon
+    sphere
     sphere_element_area_edgecases
     sphere_element_overlap
     sphere_element_overlap_edgecases
