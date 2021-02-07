@@ -62,6 +62,9 @@ compilers:
 Additionally, the Intel C++ compiler starting with version 15.0 should work,
 albeit this configuration is not part of the CI process.
 
+
+## C++
+
 The library is implemented as a pure header-only library written in plain
 C++11. To use it in your code, simply include the header file `overlap.hpp` and
 make sure the **Eigen3** headers can be found by your compiler or build system.
@@ -118,6 +121,38 @@ std::cout << "total surface area of tetrahedron intersecting sphere: " <<
     result.back() << std::endl;
 ```
 
+## Python
+
+The Python version of the `overlap` library is available via the [Python
+Package Index (PyPI)](https://pypi.org/project/overlap/), so for most
+environments installation should be possible simply via `pip install overlap`.
+
+In case no pre-built package or *wheel* is available for your system, compilation of the
+wrapper code is required which in turn requires the requirements listed above
+for the C++ version to be fulfilled.
+
+The interface of Python version closely resembles the interface of the C++ version:
+
+```python
+import numpy as np
+import overlap
+
+vertices = np.array((
+    (-1, -np.sqrt(1./3.), -np.sqrt(1./6.)),
+    (1, -np.sqrt(1./3.), -np.sqrt(1./6.)),
+    (0, np.sqrt(4./3.), -np.sqrt(1./6.)),
+    (0, 0, np.sqrt(3./2.))
+))
+
+tet = overlap.Tetrahedron(vertices)
+sphere = overlap.Sphere((0, 0, 0.5), 1)
+
+result = overlap.overlap(sphere, tet)
+```
+
+Calculation of the overlap area instead of the overlap volume is possible via
+the function `overlap_area()` of the package.
+
 # License
 
 The `overlap` library is distributed under the GNU General Public
@@ -129,7 +164,7 @@ license terms. For details please consult the corresponding license terms
 included with each package in the respective subdirectory.
 
 | Package     | License |
-|-------------|----------|---------|
+|-------------|----------|
 | [Eigen](http://eigen.tuxfamily.org) | MPL2 |
 | [Google Test](https://github.com/google/googletest) | 3-clause BSD |
 | [pybind11](https://github.com/pybind/pybind11) | 3-clause BSD |
