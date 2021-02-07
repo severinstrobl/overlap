@@ -99,3 +99,19 @@ for(size_t f = 1; f < result.size() - 1; ++f)
 std::cout << "total surface area of tetrahedron intersecting sphere: " <<
     result.back() << std::endl;
 ```
+
+## License
+
+The `overlap` library is distributed under the GNU General Public
+License v3, please refer to the [LICENSE](LICENSE) file for the full license
+text.
+
+This distribution bundles external third-party software covered by separate
+license terms. For details please consult the corresponding license terms
+included with each package in the respective subdirectory.
+
+| Package     | License |
+|-------------|----------|---------|
+| [Eigen](http://eigen.tuxfamily.org) | MPL2 |
+| [Google Test](https://github.com/google/googletest) | 3-clause BSD |
+| [pybind11](https://github.com/pybind/pybind11) | 3-clause BSD |
