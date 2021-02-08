@@ -15,7 +15,7 @@ with open('README.md', 'r', encoding='utf-8') as fh:
 
 setup(
     name='overlap',
-    version='0.0.5',
+    version='0.1.0',
     author='Severin Strobl',
     author_email='git@severin-strobl.de',
     description='Exact calculation of the overlap volume and area of spheres '
