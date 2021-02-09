@@ -1,14 +1,14 @@
 name: Python Wheels
 
 on:
-  pull_request:
+  release:
   push:
     branches:
       - python
 
 jobs:
   build_sdist:
-    name: Build 🐍 sdist
+    name: 🐍 sdist
     runs-on: ubuntu-20.04
 
     steps:
@@ -36,7 +36,7 @@ jobs:
           retention-days: 2
 
   build_wheels_linux:
-    name: Build 🐍 wheels on ubuntu-20.04 using ${{ matrix.manylinux }}
+    name: 🐍 wheels on ubuntu-20.04 / ${{ matrix.manylinux }}
     runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
@@ -73,7 +73,7 @@ jobs:
           retention-days: 2
 
   build_wheels:
-    name: Build 🐍 wheels on ${{ matrix.os }}
+    name: 🐍 wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
