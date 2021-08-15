@@ -1,21 +1,61 @@
 name: Python Wheels
 
 on:
-  pull_request:
-  push:
-    branches:
-      - python
+  issue_comment:
+    types:
+      - created
+  workflow_dispatch:
 
 jobs:
   build_sdist:
     name: Build 🐍 sdist
+    if: ${{(startsWith(github.event.comment.body, '/build_wheels') && github.event.issue.pull_request) || github.event_name == 'workflow_dispatch'}}
     runs-on: ubuntu-20.04
 
     steps:
+      # ref: https://github.com/actions/checkout/issues/331#issuecomment-707103442
+      - name: Get pull request
+        uses: actions/github-script@v4
+        id: get-pr
+        with:
+          script: |
+            const request = {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            }
+            core.info(`Getting PR #${request.pull_number} from ${request.owner}/${request.repo}`)
+            try {
+              const result = await github.pulls.get(request)
+              return result.data
+            } catch (err) {
+              core.setFailed(`Request failed with error ${err}`)
+            }
+
       - name: Checkout
         uses: actions/checkout@v2
         with:
+          repository: ${{ fromJSON(steps.get-pr.outputs.result).head.repo.full_name }}
+          ref: ${{ fromJSON(steps.get-pr.outputs.result).head.sha }}
           submodules: true
+
+      - name: Trigger response
+        uses: actions/github-script@v4
+        id: trigger-response
+        with:
+          script: |
+            const msg = 'Triggered [building of 🐍 sdist](https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}) via action...'
+            try {
+              const result = await github.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: msg,
+              })
+              return result.data
+            } catch (err) {
+              core.setFailed(`Request failed with error ${err}`)
+            }
 
       - name: Setup Python
         uses: actions/setup-python@v2
@@ -24,10 +64,42 @@ jobs:
         run: python -m pip install scikit-build twine
 
       - name: Build sdist
+        id: build-sdist
         run: python setup.py sdist
 
       - name: Check metadata
+        id: check-metadata
         run: twine check dist/*
+
+      - name: Notify via comment
+        if: always()
+        uses: actions/github-script@v4
+        env:
+          STEP_STATUS: ${{steps.check-metadata.outcome}}
+        with:
+          script: |
+            try {
+              const result = await github.issues.getComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: ${{fromJSON(steps.trigger-response.outputs.result).id}},
+              })
+
+              var msg = result.data.body + ' <strong class="text-emphasized mr-2">${{steps.test-step.name}}</strong> '
+              if(process.env.STEP_STATUS == 'success')
+                msg += 'successful :heavy_check_mark:'
+              else
+                msg += 'failed :x:'
+
+              github.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: ${{fromJSON(steps.trigger-response.outputs.result).id}},
+                body: msg,
+              })
+            } catch (err) {
+              core.setFailed(`Request failed with error ${err}`)
+            }
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v2
@@ -37,6 +109,7 @@ jobs:
 
   build_wheels:
     name: Build 🐍 wheels on ${{ matrix.os }}
+    if: ${{(startsWith(github.event.comment.body, '/build_wheels') && github.event.issue.pull_request) || github.event_name == 'workflow_dispatch'}}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -44,10 +117,49 @@ jobs:
         os: [ubuntu-20.04, macos-latest, windows-2016]
 
     steps:
+      # ref: https://github.com/actions/checkout/issues/331#issuecomment-707103442
+      - name: Get pull request
+        uses: actions/github-script@v4
+        id: get-pr
+        with:
+          script: |
+            const request = {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            }
+            core.info(`Getting PR #${request.pull_number} from ${request.owner}/${request.repo}`)
+            try {
+              const result = await github.pulls.get(request)
+              return result.data
+            } catch (err) {
+              core.setFailed(`Request failed with error ${err}`)
+            }
+
       - name: Checkout
         uses: actions/checkout@v2
         with:
+          repository: ${{ fromJSON(steps.get-pr.outputs.result).head.repo.full_name }}
+          ref: ${{ fromJSON(steps.get-pr.outputs.result).head.sha }}
           submodules: true
+
+      - name: Trigger response
+        uses: actions/github-script@v4
+        id: trigger-response
+        with:
+          script: |
+            const msg = 'Triggered [building of 🐍 wheels on ${{matrix.os}}](https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}) via action...'
+            try {
+              const result = await github.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: msg,
+              })
+              return result.data
+            } catch (err) {
+              core.setFailed(`Request failed with error ${err}`)
+            }
 
       - name: Setup Python
         uses: actions/setup-python@v2
@@ -57,6 +169,7 @@ jobs:
           python -m pip install cibuildwheel==1.7.4
 
       - name: Build wheels
+        id: build-wheels
         env:
           CIBW_SKIP: "cp27-* pp27-* cp35-*"
           CIBW_BEFORE_BUILD_MACOS: >
@@ -67,6 +180,36 @@ jobs:
           CIBW_TEST_COMMAND: "python -m pytest {project}/test"
         run: |
           python -m cibuildwheel --output-dir wheelhouse
+
+      - name: Notify via comment
+        if: always()
+        uses: actions/github-script@v4
+        env:
+          STEP_STATUS: ${{steps.build-wheels.outcome}}
+        with:
+          script: |
+            try {
+              const result = await github.issues.getComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: ${{fromJSON(steps.trigger-response.outputs.result).id}},
+              })
+
+              var msg = result.data.body + ' <strong class="text-emphasized mr-2">${{steps.test-step.name}}</strong> '
+              if(process.env.STEP_STATUS == 'success')
+                msg += 'successful :heavy_check_mark:'
+              else
+                msg += 'failed :x:'
+
+              github.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: ${{fromJSON(steps.trigger-response.outputs.result).id}},
+                body: msg,
+              })
+            } catch (err) {
+              core.setFailed(`Request failed with error ${err}`)
+            }
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v2
