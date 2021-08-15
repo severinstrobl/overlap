@@ -1,0 +1,34 @@
+# YAML 1.2
+---
+cff-version: 1.2.0
+authors:
+  - family-names: Strobl
+    given-names: Severin
+    orcid: "https://orcid.org/0000-0002-1636-5368"
+title: "overlap - Exact calculation of the overlap volume and area of spheres and mesh elements"
+message: "If you use this software, please cite the article from preferred-citation and the software itself."
+repository-code: "https://github.com/severinstrobl/overlap"
+license: GPLv3
+date-released: "2021-02-08"
+version: 0.1.0
+type: software
+preferred-citation:
+  authors:
+    - family-names: Strobl
+      given-names: Severin
+      orcid: "https://orcid.org/0000-0002-1636-5368"
+    - family-names: Formella
+      given-names: Arno
+    - family-names: "Pöschel"
+      given-names: Thorsten
+  title: "Exact calculation of the overlap volume of spheres and mesh elements"
+  journal: "Journal of Computational Physics"
+  year: 2016
+  doi: "10.1016/j.jcp.2016.02.00"
+  url: "https://www.sciencedirect.com/science/article/pii/S0021999116000577"
+  type: article
+  keywords:
+    - "overlap volume"
+    - "local solid fraction"
+    - "numerical robustness"
+    - "sphere-mesh overlap"
