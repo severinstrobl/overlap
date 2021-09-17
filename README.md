@@ -56,8 +56,8 @@ compilers:
 
 | Compiler   | Versions |
 |------------|----------|
-| GNU G++    | 10.2.0, 9.3.0, 8.4.0, 7.5.0 |
-| Clang/LLVM | 10.0.0, 9.0.1, 8.0.1 |
+| GNU G++    | 10.3.0, 9.3.0, 8.4.0, 7.5.0 |
+| Clang/LLVM | 12.0.0, 11.0.0, 10.0.0, 9.0.1, 8.0.1 |
 
 Additionally, the Intel C++ compiler starting with version 15.0 should work,
 albeit this configuration is not part of the CI process.
