@@ -1,14 +1,26 @@
-# Build GoogleTest shipped as a third-party dependency.
-# Avoid linker issues on Windows when mixing shared and static libraries.
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-add_subdirectory("${PROJECT_SOURCE_DIR}/third_party/googletest"
-                 "third_party/googletest"
-                 EXCLUDE_FROM_ALL)
+# build GoogleTest shipped as a third-party dependency.
+
+# avoid linker issues on Windows when mixing shared and static libraries
+set(gtest_force_shared_crt
+    ON
+    CACHE BOOL "" FORCE
+)
+
+add_subdirectory(
+  "${PROJECT_SOURCE_DIR}/third_party/googletest" "third_party/googletest"
+  EXCLUDE_FROM_ALL
+)
 
 mark_as_advanced(
-    BUILD_GMOCK BUILD_GTEST BUILD_SHARED_LIBS
-    gmock_build_tests gtest_build_samples gtest_build_tests
-    gtest_disable_pthreads gtest_force_shared_crt gtest_hide_internal_symbols
+  BUILD_GMOCK
+  BUILD_GTEST
+  BUILD_SHARED_LIBS
+  gmock_build_tests
+  gtest_build_samples
+  gtest_build_tests
+  gtest_disable_pthreads
+  gtest_force_shared_crt
+  gtest_hide_internal_symbols
 )
 
 set_target_properties(gtest PROPERTIES FOLDER extern)
@@ -16,22 +28,24 @@ set_target_properties(gtest_main PROPERTIES FOLDER extern)
 set_target_properties(gmock PROPERTIES FOLDER extern)
 set_target_properties(gmock_main PROPERTIES FOLDER extern)
 
-# Load GoogleTest module and set up helper function for creating tests.
+# load Google Test module and set up helper function for creating tests
 include(GoogleTest)
 
-macro(overlap_add_test TESTNAME)
-    add_executable(${TESTNAME} ${ARGN})
-    target_link_libraries(${TESTNAME} PRIVATE gtest gtest_main coverage)
+# helper function to dd a test using the Google Test framework
+function(overlap_add_test test_name test_source)
+  add_executable(${test_name} ${test_source})
+  target_link_libraries(${test_name} PRIVATE gtest gtest_main coverage)
 
-    gtest_discover_tests(${TESTNAME}
-        WORKING_DIRECTORY ${PROJECT_DIR}
-        PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${PROJECT_DIR}"
-    )
-    set_target_properties(${TESTNAME} PROPERTIES FOLDER test)
-endmacro()
+  gtest_discover_tests(
+    ${test_name}
+    WORKING_DIRECTORY ${PROJECT_DIR}
+    PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${PROJECT_DIR}"
+  )
+  set_target_properties(${test_name} PROPERTIES FOLDER test)
+endfunction()
 
-# List of unit tests.
-set(UNIT_TESTS
+# list of unit tests
+set(unit_tests
     decompose_elements
     detail_clamp
     detail_regularizedWedge
@@ -48,8 +62,8 @@ set(UNIT_TESTS
     sphere_tet_overlap_edgecases
 )
 
-# Register the individual unit tests.
-foreach(UNIT_TEST ${UNIT_TESTS})
-    overlap_add_test(${UNIT_TEST} "${UNIT_TEST}.cpp")
-    target_link_libraries(${UNIT_TEST} PUBLIC Eigen3::Eigen)
+# register the individual unit tests
+foreach(unit_test ${unit_tests})
+  overlap_add_test(${unit_test} "${unit_test}.cpp")
+  target_link_libraries(${unit_test} PUBLIC Eigen3::Eigen)
 endforeach()

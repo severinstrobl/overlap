@@ -5,7 +5,7 @@ from packaging.version import LegacyVersion
 # available.
 setup_requires = []
 try:
-    if LegacyVersion(cmaker.get_cmake_version()) < LegacyVersion('3.10'):
+    if LegacyVersion(cmaker.get_cmake_version()) < LegacyVersion('3.12'):
         setup_requires.append('cmake')
 except exceptions.SKBuildError:
     setup_requires.append('cmake')
@@ -26,6 +26,7 @@ setup(
     long_description_content_type='text/markdown',
     packages=['overlap'],
     package_dir={'overlap': 'python'},
+    python_requires='>=3.6',
     setup_requires=setup_requires,
     install_requires=[
         'numpy'
