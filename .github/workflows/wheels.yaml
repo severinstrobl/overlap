@@ -46,7 +46,7 @@ jobs:
           script: |
             const msg = 'Triggered [building of 🐍 sdist](https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}) via action...'
             try {
-              const result = await github.issues.createComment({
+              const result = await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.issue.number,
@@ -79,7 +79,7 @@ jobs:
         with:
           script: |
             try {
-              const result = await github.issues.getComment({
+              const result = await github.rest.issues.getComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 comment_id: ${{fromJSON(steps.trigger-response.outputs.result).id}},
@@ -91,7 +91,7 @@ jobs:
               else
                 msg += 'failed :x:'
 
-              github.issues.updateComment({
+              github.rest.issues.updateComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 comment_id: ${{fromJSON(steps.trigger-response.outputs.result).id}},
@@ -150,7 +150,7 @@ jobs:
           script: |
             const msg = 'Triggered [building of 🐍 wheels on ${{matrix.os}}](https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}) via action...'
             try {
-              const result = await github.issues.createComment({
+              const result = await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.issue.number,
@@ -189,7 +189,7 @@ jobs:
         with:
           script: |
             try {
-              const result = await github.issues.getComment({
+              const result = await github.rest.issues.getComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 comment_id: ${{fromJSON(steps.trigger-response.outputs.result).id}},
@@ -201,7 +201,7 @@ jobs:
               else
                 msg += 'failed :x:'
 
-              github.issues.updateComment({
+              github.rest.issues.updateComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 comment_id: ${{fromJSON(steps.trigger-response.outputs.result).id}},
