@@ -15,7 +15,7 @@ jobs:
     steps:
       # ref: https://github.com/actions/checkout/issues/331#issuecomment-707103442
       - name: Get pull request
-        uses: actions/github-script@v4
+        uses: actions/github-script@v5
         id: get-pr
         with:
           script: |
@@ -40,7 +40,7 @@ jobs:
           submodules: true
 
       - name: Trigger response
-        uses: actions/github-script@v4
+        uses: actions/github-script@v5
         id: trigger-response
         with:
           script: |
@@ -73,7 +73,7 @@ jobs:
 
       - name: Notify via comment
         if: always()
-        uses: actions/github-script@v4
+        uses: actions/github-script@v5
         env:
           STEP_STATUS: ${{steps.check-metadata.outcome}}
         with:
@@ -119,7 +119,7 @@ jobs:
     steps:
       # ref: https://github.com/actions/checkout/issues/331#issuecomment-707103442
       - name: Get pull request
-        uses: actions/github-script@v4
+        uses: actions/github-script@v5
         id: get-pr
         with:
           script: |
@@ -144,7 +144,7 @@ jobs:
           submodules: true
 
       - name: Trigger response
-        uses: actions/github-script@v4
+        uses: actions/github-script@v5
         id: trigger-response
         with:
           script: |
@@ -183,7 +183,7 @@ jobs:
 
       - name: Notify via comment
         if: always()
-        uses: actions/github-script@v4
+        uses: actions/github-script@v5
         env:
           STEP_STATUS: ${{steps.build-wheels.outcome}}
         with:
