@@ -66,4 +66,8 @@ set(unit_tests
 foreach(unit_test ${unit_tests})
   overlap_add_test(${unit_test} "${unit_test}.cpp")
   target_link_libraries(${unit_test} PUBLIC Eigen3::Eigen)
+
+  if(HAVE_FEENABLEEXCEPT)
+    target_compile_definitions(${unit_test} PRIVATE -DHAVE_FEENABLEEXCEPT)
+  endif()
 endforeach()
