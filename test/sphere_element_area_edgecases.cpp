@@ -24,12 +24,12 @@
 
 #include "common.hpp"
 
-#ifdef _GNU_SOURCE
+#ifdef HAVE_FEENABLEEXCEPT
 #include <fenv.h>
 #endif
 
 TEST(SphereElementAreaTest, EdgeCases) {
-#ifdef _GNU_SOURCE
+#ifdef HAVE_FEENABLEEXCEPT
     feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW | FE_UNDERFLOW);
 #endif
 
