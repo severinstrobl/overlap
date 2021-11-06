@@ -62,8 +62,16 @@ set(unit_tests
     sphere_tet_overlap_edgecases
 )
 
+# check for feenableexcept
+include(CheckSymbolExists)
+check_symbol_exists(feenableexcept "fenv.h" HAVE_FEENABLEEXCEPT)
+
 # register the individual unit tests
 foreach(unit_test ${unit_tests})
   overlap_add_test(${unit_test} "${unit_test}.cpp")
   target_link_libraries(${unit_test} PUBLIC Eigen3::Eigen)
+
+  if(HAVE_FEENABLEEXCEPT)
+    target_compile_definitions(${unit_test} PRIVATE -DHAVE_FEENABLEEXCEPT)
+  endif()
 endforeach()
