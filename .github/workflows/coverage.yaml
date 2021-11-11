@@ -1,8 +1,10 @@
 name: Code coverage
 
 on:
-  - push
-  - pull_request
+  push:
+    branches:
+      - main
+  pull_request:
 
 jobs:
   build:
@@ -43,7 +45,7 @@ jobs:
             -e ../third_party/ -e ../test/
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v2
         with:
           files: ./build/coverage.xml
           fail_ci_if_error: true
