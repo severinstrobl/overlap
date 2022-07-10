@@ -114,7 +114,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04, macos-latest, windows-2016]
+        os: [ubuntu-20.04, macos-11, windows-2019]
 
     steps:
       # ref: https://github.com/actions/checkout/issues/331#issuecomment-707103442
@@ -171,7 +171,7 @@ jobs:
       - name: Build wheels
         id: build-wheels
         env:
-          CIBW_SKIP: "cp27-* pp27-* cp35-*"
+          CIBW_SKIP: "cp36-*"
           CIBW_BEFORE_BUILD_MACOS: >
             brew install openblas &&
             export OPENBLAS="$(brew --prefix openblas)" &&
