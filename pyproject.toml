@@ -1,8 +1,9 @@
 [build-system]
 requires = [
-    "scikit-build>=0.8.0",
-    "setuptools>=42",
-    "wheel",
+  "ninja; platform_system!='Windows'",
+  "scikit-build>=0.15.0",
+  "setuptools>=42",
+  "wheel",
 ]
 
 build-backend = "setuptools.build_meta"
@@ -10,5 +11,5 @@ build-backend = "setuptools.build_meta"
 [tool.pytest.ini_options]
 minversion = "6.0"
 testpaths = [
-    "test",
+  "test",
 ]
