@@ -42,7 +42,7 @@ jobs:
             --gcov-executable 'llvm-cov-10 gcov' \
             -r ../ \
             --xml -o coverage.xml \
-            -e ../third_party/ -e ../test/
+            -e ../third_party/ -e ../tests/src
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2

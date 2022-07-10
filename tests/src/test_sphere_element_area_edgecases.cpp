@@ -20,15 +20,23 @@
 
 #include "gtest/gtest.h"
 
-#include "overlap.hpp"
+#include "overlap/overlap.hpp"
 
 #include "common.hpp"
 
-TEST(SphereElementOverlapTest, EdgeCases) {
+#ifdef HAVE_FEENABLEEXCEPT
+#include <fenv.h>
+#endif
+
+TEST(SphereElementAreaTest, EdgeCases) {
+#ifdef HAVE_FEENABLEEXCEPT
+    feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW | FE_UNDERFLOW);
+#endif
+
 	const std::vector<Sphere> spheres = {
-		{{0, 0, 0}, 1.0},
+		{{0, 0, 0}, 0.5},
 		{{-1, 3, 9}, 10},
-		{{0.5, 0.5, 0.5}, 0.50001 * std::sqrt(2.0)},
+		{{0.5, 0.5, 0.5}, 0.50001 * std::sqrt(2)},
 
 		{{-1.534427712524021, -0.6526040637766801, 3.823443102163421},
 			5.459817873898927},
@@ -48,13 +56,13 @@ TEST(SphereElementOverlapTest, EdgeCases) {
 		{{2.992123379449451, -0.4987719594414469, 1.44196971013958},
 			4.706537474211725},
 
-		{{15.461110118225834, -8.575216180676412, 14.487981174363448},
-			21.97121086612232}
+		{{7.730555059112917, -4.2876080903382061, 7.2439905871817235},
+			10.98560543306116}
 	};
 
 	const scalar_t epsilon =
 		std::sqrt(std::numeric_limits<scalar_t>::epsilon());
 
 	for(const Sphere& sphere : spheres)
-		overlap(sphere, unitHexahedron(), epsilon * sphere.volume);
+		area(sphere, unitHexahedron(), epsilon * sphere.volume);
 }

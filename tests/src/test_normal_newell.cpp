@@ -20,7 +20,7 @@
 
 #include "gtest/gtest.h"
 
-#include "overlap.hpp"
+#include "overlap/overlap.hpp"
 
 TEST(NormalNewell, Basic) {
 	const std::array<vector_t, 3> points = {{

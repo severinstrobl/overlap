@@ -20,7 +20,7 @@
 
 #include "gtest/gtest.h"
 
-#include "overlap.hpp"
+#include "overlap/overlap.hpp"
 
 TEST(Wedge, Constructors) {
 	Wedge wedge0{};

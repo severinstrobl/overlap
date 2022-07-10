@@ -1,26 +1,33 @@
-cmake_minimum_required(VERSION 3.12)
-project(overlap LANGUAGES CXX)
+cmake_minimum_required(VERSION 3.18)
+project(overlap)
 
-option(OVERLAP_TESTS "Build the tests" on)
-option(OVERLAP_COVERAGE "Build with coverage support" off)
+enable_language(CXX)
 
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+option(OVERLAP_WITH_PYTHON "Build the Python bindings" on)
+option(OVERLAP_WITH_TESTS "Build the tests" on)
+option(OVERLAP_WITH_COVERAGE "Build with coverage support for tests" off)
 
-# prefer first detected Python verion to avoid issues with virtual envs
-set(Python_FIND_STRATEGY LOCATION)
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+  if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE RelWithDebInfo)
+  endif()
 
-# Header-only library.
-include_directories(${PROJECT_SOURCE_DIR})
+  set(CMAKE_CXX_STANDARD 11)
+  set(CMAKE_CXX_STANDARD_REQUIRED on)
+  set(CMAKE_CXX_EXTENSIONS off)
 
-# Add compiler flags for C++11.
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+  # prefer first detected Python verion to avoid issues with virtual envs
+  set(Python_FIND_STRATEGY LOCATION)
+endif()
 
-# Set up the Eigen3 library.
-find_package(Eigen3 3.2.0 NO_MODULE)
+# enable generation of Clang compilation database for IDE integration
+set(CMAKE_EXPORT_COMPILE_COMMANDS on)
+
+# set up the dependency on Eigen3
+list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/third_party/eigen/cmake")
+find_package(Eigen3 3.3.0 NO_MODULE QUIET)
 if(NOT TARGET Eigen3::Eigen)
-  message(STATUS "Failed to find Eigen3 >= 3.2.0, using internal version")
+  message(STATUS "Failed to find Eigen3 >= 3.3.0, using internal version")
 
   add_library(Eigen3::Eigen IMPORTED INTERFACE)
   set_property(
@@ -29,29 +36,26 @@ if(NOT TARGET Eigen3::Eigen)
   )
 endif()
 
-# Add dummy interface for coverage configuration.
-add_library(coverage INTERFACE)
+add_library(overlap INTERFACE)
+add_library(overlap::overlap ALIAS overlap)
+add_library(overlap::headers ALIAS overlap)
 
-if(OVERLAP_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "[GNU|Clang]")
-  if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-    message(FATAL_ERROR "Generation of coverage information "
-                        "requires debug build, set CMAKE_BUILD_TYPE=Debug."
-    )
-  endif()
+include(GNUInstallDirs)
 
-  message(STATUS "Enabling generation of coverage reports")
-  target_compile_options(coverage INTERFACE --coverage)
-  target_link_options(coverage INTERFACE --coverage)
-endif()
+target_include_directories(
+  overlap INTERFACE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+                    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
 
-# Activate the unit tests.
-if(OVERLAP_TESTS)
+target_compile_features(overlap INTERFACE cxx_std_11)
+
+# optional: C++ unit tests
+if(OVERLAP_WITH_TESTS)
   enable_testing()
-  add_subdirectory(test)
+  add_subdirectory(tests/src)
 endif()
 
-# Build the Python bindings using pybind11.
-option(OVERLAP_PYTHON "Build the Python bindings" ON)
-if(OVERLAP_PYTHON)
-  add_subdirectory(python)
+# optional: build the Python bindings using pybind11
+if(OVERLAP_WITH_PYTHON)
+  add_subdirectory(python/overlap)
 endif()
