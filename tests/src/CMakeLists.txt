@@ -1,4 +1,38 @@
-# build GoogleTest shipped as a third-party dependency.
+# handle configuration for generation of coverage information as library
+add_library(coverage INTERFACE)
+
+if(OVERLAP_WITH_COVERAGE)
+  if(CMAKE_CXX_COMPILER_ID MATCHES "(GNU|Clang)")
+    if(NOT CMAKE_BUILD_TYPE MATCHES "(Debug|RelWithDebInfo)")
+      message(
+        FATAL_ERROR
+          "Generation of coverage information requires debug information, set "
+          "CMAKE_BUILD_TYPE=Debug or CMAKE_BUILD_TYPE=RelWithDebInfo."
+      )
+    endif()
+
+    message(STATUS "Enabling generation of coverage reports for C++ unit tests")
+
+    set(_coverage_compile_flags "--coverage")
+
+    include(CheckCXXCompilerFlag)
+    check_cxx_compiler_flag("-fprofile-abs-path" have_fprofile_abs_path)
+    if(have_fprofile_abs_path)
+      list(APPEND _coverage_compile_flags "-fprofile-abs-path")
+    endif()
+
+    target_compile_options(coverage INTERFACE ${_coverage_compile_flags})
+    target_link_options(coverage INTERFACE "--coverage")
+  else()
+    message(FATAL_ERROR "Generation of coverage information not supported for "
+                        ${CMAKE_CXX_COMPILER_ID} " compiler"
+    )
+  endif()
+endif()
+
+# FIXME: switch to Catch2
+
+# build GoogleTest shipped as a third-party dependency
 
 # avoid linker issues on Windows when mixing shared and static libraries
 set(gtest_force_shared_crt
@@ -41,7 +75,8 @@ function(overlap_add_test test_name test_source)
     WORKING_DIRECTORY ${PROJECT_DIR}
     PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${PROJECT_DIR}"
   )
-  set_target_properties(${test_name} PROPERTIES FOLDER test)
+
+  set_target_properties(${test_name} PROPERTIES FOLDER tests)
 endfunction()
 
 # list of unit tests
@@ -62,6 +97,8 @@ set(unit_tests
     sphere_tet_overlap_edgecases
 )
 
+list(TRANSFORM unit_tests PREPEND "test_")
+
 # check for feenableexcept
 include(CheckSymbolExists)
 check_symbol_exists(feenableexcept "fenv.h" HAVE_FEENABLEEXCEPT)
@@ -69,7 +106,7 @@ check_symbol_exists(feenableexcept "fenv.h" HAVE_FEENABLEEXCEPT)
 # register the individual unit tests
 foreach(unit_test ${unit_tests})
   overlap_add_test(${unit_test} "${unit_test}.cpp")
-  target_link_libraries(${unit_test} PUBLIC Eigen3::Eigen)
+  target_link_libraries(${unit_test} PRIVATE overlap::headers Eigen3::Eigen)
 
   if(HAVE_FEENABLEEXCEPT)
     target_compile_definitions(${unit_test} PRIVATE -DHAVE_FEENABLEEXCEPT)

@@ -20,7 +20,7 @@
 
 #include "gtest/gtest.h"
 
-#include "overlap.hpp"
+#include "overlap/overlap.hpp"
 
 // Test clamping of numbers.
 TEST(Clamp, Basic) {

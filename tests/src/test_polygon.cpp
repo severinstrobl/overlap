@@ -20,7 +20,7 @@
 
 #include "gtest/gtest.h"
 
-#include "overlap.hpp"
+#include "overlap/overlap.hpp"
 
 TEST(Polygon, IsPlanar) {
 	Triangle tri{

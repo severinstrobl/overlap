@@ -22,7 +22,7 @@
 
 #include "gtest/gtest.h"
 
-#include "overlap.hpp"
+#include "overlap/overlap.hpp"
 
 TEST(Sphere, Volume) {
 	Sphere s{vector_t::Zero(), 1.0};

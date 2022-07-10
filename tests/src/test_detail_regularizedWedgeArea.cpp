@@ -22,7 +22,7 @@
 
 #include "gtest/gtest.h"
 
-#include "overlap.hpp"
+#include "overlap/overlap.hpp"
 
 // Test regularizedWedgeArea using different values for the distance of the
 // intersection point from the center of the sphere `z`.

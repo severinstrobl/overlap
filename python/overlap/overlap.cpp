@@ -25,7 +25,7 @@
 #include "pybind11/numpy.h"
 #include "pybind11/stl.h"
 
-#include "overlap.hpp"
+#include "overlap/overlap.hpp"
 
 namespace py = pybind11;
 

@@ -20,9 +20,9 @@ Employing the concepts and routines used for the calculation of the overlap
 volume, the intersection or overlap *area* of a sphere and the facets of a mesh
 element can also be calculated with this library.
 
-# Usage
+## Usage
 
-## Supported primitives
+### Supported primitives
 
 The overlap calculation directly supports these element types:
 
@@ -33,7 +33,7 @@ The overlap calculation directly supports these element types:
 The elements must be convex and have to be specified as a list of three-dimensional nodes/vertices,
 while the sphere (data type `Sphere`) requires a center point and the radius.
 
-## Node ordering
+### Node ordering
 
 The element types of the overlap library follow the node numbering conventions
 of the [CFD General Notation System (CGNS)](https://cgns.github.io/) project.
@@ -45,9 +45,10 @@ elements of linear order, respectively. Also the ordering of the faces uses
 the conventions of CGNS. This should make interfacing this library with
 existing codes rather easy, often even without the need to reorder nodes.
 
-## Dependencies
+### Dependencies
 
 The compile-time dependencies of this code are:
+
 - [Eigen3](http://eigen.tuxfamily.org), tested with versions 3.3.4 and above
 - [compiler supporting C++11](https://en.cppreference.com/w/cpp/compiler_support#cpp11)
 
@@ -62,8 +63,7 @@ compilers:
 Additionally, the Intel C++ compiler starting with version 15.0 should work,
 albeit this configuration is not part of the CI process.
 
-
-## C++
+### C++
 
 The library is implemented as a pure header-only library written in plain
 C++11. To use it in your code, simply include the header file `overlap.hpp` and
@@ -78,6 +78,7 @@ impact on the precision and stability of the calculations.
 A minimal example calculating the overlap of a hexahedron with a side length of
 2 centered at the origin and a sphere with radius 1 centered at a corner of the
 hexahedron could look something like this:
+
 ```cpp
 vector_t v0{-1, -1, -1};
 vector_t v1{ 1, -1, -1};
@@ -93,11 +94,13 @@ Sphere s{vector_t::Constant(1), 1};
 
 scalar_t result = overlap(s, hex);
 ```
+
 This code snippet calculates the correct result (&pi;/6) for this simple
 configuration.
 
 To obtain the overlap area of a sphere and the facets of a tetrahedron, the
 function `overlapArea()` can be employed as such:
+
 ```cpp
 vector_t v0{-std::sqrt(3) / 6.0, -1.0 / 2.0, 0};
 vector_t v1{std::sqrt(3) / 3.0, 0, 0};
@@ -121,7 +124,7 @@ std::cout << "total surface area of tetrahedron intersecting sphere: " <<
     result.back() << std::endl;
 ```
 
-## Python
+### Python
 
 The Python version of the `overlap` library is available via the [Python
 Package Index (PyPI)](https://pypi.org/project/overlap/), so for most
@@ -153,7 +156,7 @@ result = overlap.overlap(sphere, tet)
 Calculation of the overlap area instead of the overlap volume is possible via
 the function `overlap_area()` of the package.
 
-# License
+## License
 
 The `overlap` library is distributed under the GNU General Public
 License v3, please refer to the [LICENSE](LICENSE) file for the full license

@@ -22,7 +22,7 @@
 
 #include "gtest/gtest.h"
 
-#include "overlap.hpp"
+#include "overlap/overlap.hpp"
 
 // Test regularizedWedge using different values of the distance `d`.
 TEST(RegularizedWedge, Distance) {

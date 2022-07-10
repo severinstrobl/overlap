@@ -25,7 +25,7 @@
 
 #include "gtest/gtest.h"
 
-#include "overlap.hpp"
+#include "overlap/overlap.hpp"
 
 inline Hexahedron unitHexahedron(scalar_t scaling = scalar_t(1)) {
 	vector_t v0{-1, -1, -1};
