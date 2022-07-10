@@ -1,17 +1,9 @@
-if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.18.0")
+# CMake 3.18 should support this, but there is a bug w.r.t. multiple queries
+# with different components
+if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.24.0")
   set(python_components Interpreter Development.Module)
 else()
   set(python_components Interpreter Development)
-endif()
-
-# get FindPython working with scikit-build
-if(SKBUILD)
-  set(Python_EXECUTABLE "${PYTHON_EXECUTABLE}")
-  set(Python_INCLUDE_DIR "${PYTHON_INCLUDE_DIR}")
-  unset(PYTHON_EXECUTABLE)
-  unset(PYTHON_INCLUDE_DIR)
-  unset(PYTHON_LIBRARY)
-  unset(PYTHON_VERSION_STRING)
 endif()
 
 find_package(
