@@ -1,0 +1,54 @@
+name: Find Pull Request
+
+on:
+  workflow_call:
+    outputs:
+      pull_number:
+        description: "The number of the corresponding pull request"
+        value: ${{ jobs.find-pr.outputs.pull_number }}
+
+jobs:
+  find-pr:
+    name: Extracting PR from commit
+    runs-on: ubuntu-latest
+    outputs:
+      pull_number: ${{ steps.pr-query.outputs.pull_number }}
+    steps:
+      - id: pr-query
+        uses: octokit/graphql-action@v2.x
+        with:
+          query: |
+            query find_pull_request($owner: String!, $repo: String!, $sha: String) {
+              repository(owner: $owner, name: $repo) {
+                commit: object(expression: $sha) {
+                  ... on Commit {
+                    associatedPullRequests(first: 1) {
+                      edges {
+                        node {
+                          number
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          owner: ${{ github.repository_owner }}
+          repo: ${{ github.event.repository.name }}
+          sha: ${{ github.event.pull_request.head.sha || github.sha }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/github-script@v6
+        with:
+          script: |
+            const data = ${{ fromJSON(steps.pr-query.outputs.data) }}
+            core.info(`data: ${data}`)
+            # const pull_requests = data.repository.commit.associatedPullRequests.edge
+            # if(pull_requests.length()) {
+            #   core.info(`Getting PR #${pull_requests[0].node.number}`)
+            #   return pull_requests[0].node.number
+            # } else {
+            #   core.info(`Failed to find matching PR`)
+            # }
+          # echo "Matching PR: ${{ fromJSON(steps.pr-query.outputs.data).repository.commit.associatedPullRequests.edges }}"
+          # echo "::set-output name=pull_number::${{ fromJSON(steps.pr-query.outputs.data).repository.commit.associatedPullRequests.edges }}"
