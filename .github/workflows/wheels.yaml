@@ -15,6 +15,7 @@ jobs:
     steps:
       # ref: https://github.com/actions/checkout/issues/331#issuecomment-707103442
       - name: Get pull request
+        if: ${{ github.event.issue.pull_request }}
         uses: actions/github-script@v5
         id: get-pr
         with:
@@ -32,14 +33,22 @@ jobs:
               core.setFailed(`Request failed with error ${err}`)
             }
 
-      - name: Checkout
+      - name: Checkout MR
+        if: ${{ github.event.issue.pull_request }}
         uses: actions/checkout@v2
         with:
           repository: ${{ fromJSON(steps.get-pr.outputs.result).head.repo.full_name }}
           ref: ${{ fromJSON(steps.get-pr.outputs.result).head.sha }}
           submodules: true
 
+      - name: Checkout
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+
       - name: Trigger response
+        if: ${{ github.event.issue.pull_request }}
         uses: actions/github-script@v5
         id: trigger-response
         with:
@@ -72,7 +81,7 @@ jobs:
         run: twine check dist/*
 
       - name: Notify via comment
-        if: always()
+        if: ${{ github.event.issue.pull_request }}
         uses: actions/github-script@v5
         env:
           STEP_STATUS: ${{steps.check-metadata.outcome}}
@@ -119,6 +128,7 @@ jobs:
     steps:
       # ref: https://github.com/actions/checkout/issues/331#issuecomment-707103442
       - name: Get pull request
+        if: ${{ github.event.issue.pull_request }}
         uses: actions/github-script@v5
         id: get-pr
         with:
@@ -136,14 +146,22 @@ jobs:
               core.setFailed(`Request failed with error ${err}`)
             }
 
-      - name: Checkout
+      - name: Checkout MR
+        if: ${{ github.event.issue.pull_request }}
         uses: actions/checkout@v2
         with:
           repository: ${{ fromJSON(steps.get-pr.outputs.result).head.repo.full_name }}
           ref: ${{ fromJSON(steps.get-pr.outputs.result).head.sha }}
           submodules: true
 
+      - name: Checkout
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+
       - name: Trigger response
+        if: ${{ github.event.issue.pull_request }}
         uses: actions/github-script@v5
         id: trigger-response
         with:
@@ -183,7 +201,7 @@ jobs:
           python -m cibuildwheel --output-dir wheelhouse
 
       - name: Notify via comment
-        if: always()
+        if: ${{ github.event.issue.pull_request }}
         uses: actions/github-script@v5
         env:
           STEP_STATUS: ${{steps.build-wheels.outcome}}
