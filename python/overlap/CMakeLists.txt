@@ -1,16 +1,18 @@
-# CMake 3.18 should support this, but there is a bug w.r.t. multiple queries
-# with different components
-if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.24.0")
-  set(_python_components Interpreter Development.Module)
-else()
-  set(_python_components Interpreter Development)
-endif()
+if(NOT SKBUILD)
+  # CMake 3.18 should support this, but there is a bug w.r.t. multiple queries
+  # with different components
+  if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.22.0")
+    set(_python_components Interpreter Development.Module)
+  else()
+    set(_python_components Interpreter Development)
+  endif()
 
-find_package(
-  Python 3.5
-  COMPONENTS ${_python_components}
-  REQUIRED
-)
+  find_package(
+    Python 3.5
+    COMPONENTS ${_python_components}
+    REQUIRED
+  )
+endif()
 
 # add pybind11 shipped as a third-party dependency
 add_subdirectory(
