@@ -14,3 +14,7 @@ minversion = "6.0"
 testpaths = [
   "tests/python",
 ]
+
+[tool.cibuildwheel]
+test-requires = "pytest"
+test-command = "python -m pytest -vs {project}/tests/python"
