@@ -2,7 +2,7 @@
  * Exact calculation of the overlap volume of spheres and mesh elements.
  * http://dx.doi.org/10.1016/j.jcp.2016.02.003
  *
- * Copyright (C) 2021 Severin Strobl <git@severin-strobl.de>
+ * Copyright (C) 2021-2022 Severin Strobl <git@severin-strobl.de>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,20 +23,13 @@
 #include "overlap/overlap.hpp"
 
 TEST(Polygon, IsPlanar) {
-	Triangle tri{
-		vector_t{0.0, 0.0, 0.0},
-		vector_t{1.0, 0.0, 0.0},
-		vector_t{1.0, 1.0, 0.0}
-	};
+  Triangle tri{vector_t{0.0, 0.0, 0.0}, vector_t{1.0, 0.0, 0.0},
+               vector_t{1.0, 1.0, 0.0}};
 
-	ASSERT_TRUE(tri.isPlanar());
+  ASSERT_TRUE(tri.isPlanar());
 
-	Quadrilateral quad{
-		vector_t{0.0, 0.0, 0.0},
-		vector_t{1.0, 0.0, 0.0},
-		vector_t{1.0, 1.0, 0.0},
-		vector_t{0.0, 1.0, 0.01}
-	};
+  Quadrilateral quad{vector_t{0.0, 0.0, 0.0}, vector_t{1.0, 0.0, 0.0},
+                     vector_t{1.0, 1.0, 0.0}, vector_t{0.0, 1.0, 0.01}};
 
-	ASSERT_FALSE(quad.isPlanar());
+  ASSERT_FALSE(quad.isPlanar());
 }

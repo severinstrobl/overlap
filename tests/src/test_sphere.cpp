@@ -2,7 +2,7 @@
  * Exact calculation of the overlap volume of spheres and mesh elements.
  * http://dx.doi.org/10.1016/j.jcp.2016.02.003
  *
- * Copyright (C) 2021 Severin Strobl <git@severin-strobl.de>
+ * Copyright (C) 2021-2022 Severin Strobl <git@severin-strobl.de>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,50 +25,49 @@
 #include "overlap/overlap.hpp"
 
 TEST(Sphere, Volume) {
-	Sphere s{vector_t::Zero(), 1.0};
+  Sphere s{vector_t::Zero(), 1.0};
 
+  constexpr scalar_t eps = std::numeric_limits<scalar_t>::epsilon();
 
-	constexpr scalar_t eps = std::numeric_limits<scalar_t>::epsilon();
+  ASSERT_NEAR(s.volume, 4.0 / 3.0 * M_PI, eps);
 
-	ASSERT_NEAR(s.volume, 4.0 / 3.0 * M_PI, eps);
-
-	ASSERT_EQ(s.capVolume(-1 * s.radius), 0.0);
-	ASSERT_EQ(s.capVolume(0), 0.0);
-	ASSERT_NEAR(s.capVolume(0.5 * s.radius), (M_PI * 0.25 / 3.0) * 2.5, eps);
-	ASSERT_NEAR(s.capVolume(s.radius), 0.5 * s.volume, eps);
-	ASSERT_EQ(s.capVolume(2 * s.radius), s.volume);
-	ASSERT_EQ(s.capVolume(3 * s.radius), s.volume);
+  ASSERT_EQ(s.capVolume(-1 * s.radius), 0.0);
+  ASSERT_EQ(s.capVolume(0), 0.0);
+  ASSERT_NEAR(s.capVolume(0.5 * s.radius), (M_PI * 0.25 / 3.0) * 2.5, eps);
+  ASSERT_NEAR(s.capVolume(s.radius), 0.5 * s.volume, eps);
+  ASSERT_EQ(s.capVolume(2 * s.radius), s.volume);
+  ASSERT_EQ(s.capVolume(3 * s.radius), s.volume);
 }
 
 TEST(Sphere, SurfaceArea) {
-	Sphere s{vector_t::Zero(), 1.0};
+  Sphere s{vector_t::Zero(), 1.0};
 
-	constexpr scalar_t eps = std::numeric_limits<scalar_t>::epsilon();
+  constexpr scalar_t eps = std::numeric_limits<scalar_t>::epsilon();
 
-	ASSERT_NEAR(s.surfaceArea(), 4.0 * M_PI, eps);
+  ASSERT_NEAR(s.surfaceArea(), 4.0 * M_PI, eps);
 
-	ASSERT_EQ(s.capSurfaceArea(-1 * s.radius), 0.0);
-	ASSERT_EQ(s.capSurfaceArea(0), 0.0);
-	ASSERT_EQ(s.capSurfaceArea(s.radius), 0.5 * s.surfaceArea());
-	ASSERT_EQ(s.capSurfaceArea(2 * s.radius), s.surfaceArea());
-	ASSERT_EQ(s.capSurfaceArea(3 * s.radius), s.surfaceArea());
+  ASSERT_EQ(s.capSurfaceArea(-1 * s.radius), 0.0);
+  ASSERT_EQ(s.capSurfaceArea(0), 0.0);
+  ASSERT_EQ(s.capSurfaceArea(s.radius), 0.5 * s.surfaceArea());
+  ASSERT_EQ(s.capSurfaceArea(2 * s.radius), s.surfaceArea());
+  ASSERT_EQ(s.capSurfaceArea(3 * s.radius), s.surfaceArea());
 }
 
 TEST(Sphere, DiskArea) {
-	Sphere s{vector_t::Zero(), 1.0};
+  Sphere s{vector_t::Zero(), 1.0};
 
-	constexpr scalar_t eps = std::numeric_limits<scalar_t>::epsilon();
+  constexpr scalar_t eps = std::numeric_limits<scalar_t>::epsilon();
 
-	ASSERT_EQ(s.diskArea(-1 * s.radius), 0.0);
-	ASSERT_EQ(s.diskArea(0), 0.0);
-	ASSERT_NEAR(s.diskArea(s.radius), M_PI, eps);
-	ASSERT_EQ(s.diskArea(2 * s.radius), 0.0);
-	ASSERT_EQ(s.diskArea(3 * s.radius), 0.0);
+  ASSERT_EQ(s.diskArea(-1 * s.radius), 0.0);
+  ASSERT_EQ(s.diskArea(0), 0.0);
+  ASSERT_NEAR(s.diskArea(s.radius), M_PI, eps);
+  ASSERT_EQ(s.diskArea(2 * s.radius), 0.0);
+  ASSERT_EQ(s.diskArea(3 * s.radius), 0.0);
 }
 
 TEST(Sphere, Contains) {
-	Sphere s{vector_t::Zero(), 2.0};
+  Sphere s{vector_t::Zero(), 2.0};
 
-	ASSERT_TRUE(contains(s, vector_t{1, 1, 1}));
-	ASSERT_FALSE(contains(s, vector_t{2, 2, 2}));
+  ASSERT_TRUE(contains(s, vector_t{1, 1, 1}));
+  ASSERT_FALSE(contains(s, vector_t{2, 2, 2}));
 }
