@@ -2,7 +2,7 @@
  * Exact calculation of the overlap volume of spheres and mesh elements.
  * http://dx.doi.org/10.1016/j.jcp.2016.02.003
  *
- * Copyright (C) 2021 Severin Strobl <git@severin-strobl.de>
+ * Copyright (C) 2021-2022 Severin Strobl <git@severin-strobl.de>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,40 +23,40 @@
 #include "overlap/overlap.hpp"
 
 TEST(Wedge, Constructors) {
-	Wedge wedge0{};
+  Wedge wedge0{};
 
-	ASSERT_EQ(wedge0.volume, 0.0);
+  ASSERT_EQ(wedge0.volume, 0.0);
 
-	Wedge wedge1{
-		vector_t{-1, -1, -1}, vector_t{1, -1, -1}, vector_t{1,  1, -1},
-		vector_t{-1, -1,  1}, vector_t{1, -1,  1}, vector_t{1,  1,  1}
-	};
+  // clang-format off
+  Wedge wedge1{
+		vector_t{-1, -1, -1}, vector_t{1, -1, -1}, vector_t{1, 1, -1},
+		vector_t{-1, -1, 1},  vector_t{1, -1, 1},  vector_t{1, 1, 1}};
 
 	Wedge wedge2{std::array<vector_t, 6>{{
 		{-1, -1, -1}, {1, -1, -1}, {1,  1, -1},
-		{-1, -1,  1}, {1, -1,  1}, {1,  1,  1}
-	}}};
+		{-1, -1,  1}, {1, -1,  1}, {1,  1,  1}}}};
+  // clang-format on
 
-	constexpr scalar_t eps = std::numeric_limits<scalar_t>::epsilon();
+  constexpr scalar_t eps = std::numeric_limits<scalar_t>::epsilon();
 
-	ASSERT_NEAR(wedge1.volume, wedge2.volume, eps);
+  ASSERT_NEAR(wedge1.volume, wedge2.volume, eps);
 }
 
 TEST(Hexahedron, Constructors) {
+  // clang-format off
 	Hexahedron hex1{
 		vector_t{-1, -1, -1}, vector_t{1, -1, -1},
 		vector_t{ 1,  1, -1}, vector_t{-1,  1, -1},
 
 		vector_t{-1, -1,  1}, vector_t{1, -1,  1},
-		vector_t{ 1,  1,  1}, vector_t{-1,  1,  1}
-	};
+		vector_t{ 1,  1,  1}, vector_t{-1,  1,  1}};
 
 	Hexahedron hex2{std::array<vector_t, 8>{{
 		{-1, -1, -1}, {1, -1, -1}, {1,  1, -1}, {-1,  1, -1},
-		{-1, -1,  1}, {1, -1,  1}, {1,  1,  1}, {-1,  1,  1}
-	}}};
+		{-1, -1,  1}, {1, -1,  1}, {1,  1,  1}, {-1,  1,  1}}}};
+  // clang-format on
 
-	constexpr scalar_t eps = std::numeric_limits<scalar_t>::epsilon();
+  constexpr scalar_t eps = std::numeric_limits<scalar_t>::epsilon();
 
-	ASSERT_NEAR(hex1.volume, hex2.volume, eps);
+  ASSERT_NEAR(hex1.volume, hex2.volume, eps);
 }

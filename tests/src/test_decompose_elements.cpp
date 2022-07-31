@@ -2,7 +2,7 @@
  * Exact calculation of the overlap volume of spheres and mesh elements.
  * http://dx.doi.org/10.1016/j.jcp.2016.02.003
  *
- * Copyright (C) 2015-2020 Severin Strobl <severin.strobl@fau.de>
+ * Copyright (C) 2015-2022 Severin Strobl <severin.strobl@fau.de>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,35 +25,37 @@
 #include "common.hpp"
 
 TEST(DecomposeElements, Hexahedron) {
-	Hexahedron hex = unitHexahedron();
+  Hexahedron hex = unitHexahedron();
 
-	std::array<Tetrahedron, 4> subTets;
-	std::array<Tetrahedron, 5> tets5;
-	std::array<Tetrahedron, 6> tets6;
-	std::array<Wedge, 2> wedges;
+  std::array<Tetrahedron, 4> subTets;
+  std::array<Tetrahedron, 5> tets5;
+  std::array<Tetrahedron, 6> tets6;
+  std::array<Wedge, 2> wedges;
 
-	decompose(hex, tets5);
-	decompose(hex, tets6);
-	decompose(hex, wedges);
+  decompose(hex, tets5);
+  decompose(hex, tets6);
+  decompose(hex, wedges);
 
-	scalar_t tets5Volume = 0;
-	for(const auto& tet : tets5)
-		tets5Volume += tet.volume;
+  scalar_t tets5Volume = 0;
+  for (const auto& tet : tets5) {
+    tets5Volume += tet.volume;
+  }
 
-	scalar_t tets6Volume = 0;
-	scalar_t tets24Volume = 0;
-	for(const auto& tet : tets6) {
-		decompose(tet, subTets);
-		tets6Volume += tet.volume;
+  scalar_t tets6Volume = 0;
+  scalar_t tets24Volume = 0;
+  for (const auto& tet : tets6) {
+    decompose(tet, subTets);
+    tets6Volume += tet.volume;
 
-		for(const auto& subTet : subTets)
-			tets24Volume += subTet.volume;
-	}
+    for (const auto& subTet : subTets) {
+      tets24Volume += subTet.volume;
+    }
+  }
 
-	constexpr scalar_t delta(5e2 * std::numeric_limits<scalar_t>::epsilon());
+  constexpr scalar_t delta(5e2 * std::numeric_limits<scalar_t>::epsilon());
 
-	ASSERT_NEAR(hex.volume, tets5Volume, delta);
-	ASSERT_NEAR(hex.volume, tets6Volume, delta);
-	ASSERT_NEAR(hex.volume, tets24Volume, delta);
-	ASSERT_NEAR(hex.volume, wedges[0].volume + wedges[1].volume, delta);
+  ASSERT_NEAR(hex.volume, tets5Volume, delta);
+  ASSERT_NEAR(hex.volume, tets6Volume, delta);
+  ASSERT_NEAR(hex.volume, tets24Volume, delta);
+  ASSERT_NEAR(hex.volume, wedges[0].volume + wedges[1].volume, delta);
 }
