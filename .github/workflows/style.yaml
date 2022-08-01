@@ -1,0 +1,39 @@
+name: Code formatting and style
+
+on:
+  pull_request:
+
+jobs:
+  format:
+    name: "Code formatting via clang-format"
+    runs-on: ubuntu-20.04
+    env:
+      CLANG_FORMAT_VERSION: 14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+          fetch-depth: 0
+
+      - name: Dependencies
+        run: |
+          sudo apt update && sudo apt install -y curl software-properties-common
+          curl -s https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+          sudo add-apt-repository 'deb http://apt.llvm.org/focal/ llvm-toolchain-focal-14 main'
+          sudo apt install -y clang-format-$CLANG_FORMAT_VERSION
+
+      - name: Run clang-format
+        run: |
+          git diff --name-only --diff-filter=ACMRT ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep -i '\.\(c\|cc\|cxx\|cpp\|h\|hh\|hpp\)$' | xargs -r clang-format-$CLANG_FORMAT_VERSION -i -style=file
+          INCORRECTLY_FORMATTED=`git status --porcelain | grep '^ M' | cut -c4-`
+          if [[ -z $INCORRECTLY_FORMATTED ]]; then
+            exit 0
+          fi
+          echo -e "\e[1;31mFormatting issues in the following files:\n\e[0m"
+          INCORRECTLY_FORMATTED=`echo "$INCORRECTLY_FORMATTED" | sed -e 's/^/\\\e[31m * /'`
+          echo -e "$INCORRECTLY_FORMATTED\e[0m"
+          echo -e "\n\n\e[1;31mFormatting issues in detail:\n\e[0m"
+          git diff --color
+          echo "::set-output name=incorrectly_formatted::$INCORRECTLY_FORMATTED"
+          exit 1
