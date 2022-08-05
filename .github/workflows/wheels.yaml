@@ -58,7 +58,7 @@ jobs:
             }
 
       - name: Setup Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
 
       - name: Dependencies
         run: python -m pip install scikit-build twine
@@ -162,7 +162,7 @@ jobs:
             }
 
       - name: Setup Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
 
       - name: Dependencies
         run: |
