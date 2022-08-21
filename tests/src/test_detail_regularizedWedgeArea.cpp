@@ -27,7 +27,7 @@
 // Test regularizedWedgeArea using different values for the distance of the
 // intersection point from the center of the sphere `z`.
 TEST(RegularizedWedgeArea, Distance) {
-  using namespace detail;
+  using namespace overlap::detail;
 
   // special cases should return precisely zero
   ASSERT_EQ(regularizedWedgeArea(1.0, 1.0, 0.25 * M_PI), 0.0);
@@ -35,16 +35,16 @@ TEST(RegularizedWedgeArea, Distance) {
 
   constexpr scalar_t delta(2e2 * std::numeric_limits<scalar_t>::epsilon());
 
-  ASSERT_NEAR(regularizedWedgeArea(1.0, detail::tinyEpsilon, 0.5 * M_PI), M_PI,
+  ASSERT_NEAR(regularizedWedgeArea(1.0, tinyEpsilon, 0.5 * M_PI), M_PI,
               5 * delta);
 
-  ASSERT_NEAR(regularizedWedgeArea(1.0, -detail::tinyEpsilon, 0.5 * M_PI), M_PI,
+  ASSERT_NEAR(regularizedWedgeArea(1.0, -tinyEpsilon, 0.5 * M_PI), M_PI,
               5 * delta);
 }
 
 // Test regularizedWedgeArea using different values of the angle `alpha`.
 TEST(regularizedWedgeArea, Angle) {
-  using namespace detail;
+  using namespace overlap::detail;
 
   // special cases should return constants values
   ASSERT_EQ(regularizedWedgeArea(1.0, 0.0, 0.0), 0.0);

@@ -80,6 +80,8 @@ A minimal example calculating the overlap of a hexahedron with a side length of
 hexahedron could look something like this:
 
 ```cpp
+using namespace overlap;
+
 vector_t v0{-1, -1, -1};
 vector_t v1{ 1, -1, -1};
 vector_t v2{ 1,  1, -1};
@@ -92,7 +94,7 @@ vector_t v7{-1,  1,  1};
 Hexahedron hex{v0, v1, v2, v3, v4, v5, v6, v7};
 Sphere s{vector_t::Constant(1), 1};
 
-scalar_t result = overlap(s, hex);
+scalar_t result = overlap_volume(s, hex);
 ```
 
 This code snippet calculates the correct result (&pi;/6) for this simple
@@ -102,6 +104,8 @@ To obtain the overlap area of a sphere and the facets of a tetrahedron, the
 function `overlapArea()` can be employed as such:
 
 ```cpp
+using namespace overlap;
+
 vector_t v0{-std::sqrt(3) / 6.0, -1.0 / 2.0, 0};
 vector_t v1{std::sqrt(3) / 3.0, 0, 0};
 vector_t v2{-std::sqrt(3) / 6.0, +1.0 / 2.0, 0};
@@ -110,7 +114,7 @@ vector_t v3{0, 0, std::sqrt(6) / 3.0};
 Tetrahedron tet{v0, v1, v2, v3};
 Sphere s{{0, 0, 1.5}, 1.25};
 
-auto result = overlapArea(s, tet);
+auto result = overlap_area(s, tet);
 
 std::cout << "surface area of sphere intersecting tetrahedron: " <<
     result[0] << std::endl;
@@ -150,7 +154,7 @@ vertices = np.array((
 tet = overlap.Tetrahedron(vertices)
 sphere = overlap.Sphere((0, 0, 0.5), 1)
 
-result = overlap.overlap(sphere, tet)
+result = overlap.overlap_volume(sphere, tet)
 ```
 
 Calculation of the overlap area instead of the overlap volume is possible via

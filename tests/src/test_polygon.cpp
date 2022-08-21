@@ -23,6 +23,8 @@
 #include "overlap/overlap.hpp"
 
 TEST(Polygon, IsPlanar) {
+  using namespace overlap::detail;
+
   Triangle tri{vector_t{0.0, 0.0, 0.0}, vector_t{1.0, 0.0, 0.0},
                vector_t{1.0, 1.0, 0.0}};
 

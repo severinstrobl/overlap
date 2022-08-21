@@ -27,7 +27,9 @@
 
 #include "overlap/overlap.hpp"
 
-inline Hexahedron unitHexahedron(scalar_t scaling = scalar_t(1)) {
+using namespace overlap;
+
+inline Hexahedron unit_hexahedron(scalar_t scaling = scalar_t(1)) {
   vector_t v0{-1, -1, -1};
   vector_t v1{1, -1, -1};
   vector_t v2{1, 1, -1};
@@ -41,9 +43,9 @@ inline Hexahedron unitHexahedron(scalar_t scaling = scalar_t(1)) {
                     v4 * scaling, v5 * scaling, v6 * scaling, v7 * scaling};
 }
 
-inline void overlap(const Sphere& s, const Hexahedron& hex,
-                    const scalar_t epsilon,
-                    const scalar_t exactResult = scalar_t{-1}) {
+inline void validate_overlap_volume(const Sphere& s, const Hexahedron& hex,
+                                    const scalar_t epsilon,
+                                    const scalar_t exactResult = scalar_t{-1}) {
   std::array<Tetrahedron, 4> subTets;
   std::array<Tetrahedron, 5> tets5;
   std::array<Tetrahedron, 6> tets6;
@@ -53,14 +55,14 @@ inline void overlap(const Sphere& s, const Hexahedron& hex,
   decompose(hex, tets6);
   decompose(hex, wedges);
 
-  const scalar_t overlapCalcHex = overlap(s, hex);
+  const scalar_t overlapCalcHex = overlap_volume(s, hex);
 
   if (exactResult != scalar_t{-1}) {
     ASSERT_NEAR(overlapCalcHex, exactResult, epsilon);
   }
   scalar_t overlapCalcTets5 = 0;
   for (const auto& tet : tets5) {
-    overlapCalcTets5 += overlap(s, tet);
+    overlapCalcTets5 += overlap_volume(s, tet);
   }
 
   scalar_t overlapCalcTets6 = 0;
@@ -69,15 +71,15 @@ inline void overlap(const Sphere& s, const Hexahedron& hex,
     decompose(tet, subTets);
 
     for (const auto& subTet : subTets) {
-      overlapCalcTets24 += overlap(s, subTet);
+      overlapCalcTets24 += overlap_volume(s, subTet);
     }
 
-    overlapCalcTets6 += overlap(s, tet);
+    overlapCalcTets6 += overlap_volume(s, tet);
   }
 
   scalar_t overlapCalcWedges = 0;
   for (const auto& wedge : wedges) {
-    overlapCalcWedges += overlap(s, wedge);
+    overlapCalcWedges += overlap_volume(s, wedge);
   }
 
   std::cout << "volume hex:    " << overlapCalcHex << std::endl;
@@ -95,8 +97,8 @@ inline void overlap(const Sphere& s, const Hexahedron& hex,
   ASSERT_NEAR(overlapCalcTets6, overlapCalcTets24, epsilon);
 }
 
-inline void area(const Sphere& s, const Hexahedron& hex,
-                 const scalar_t epsilon) {
+inline void validate_overlap_area(const Sphere& s, const Hexahedron& hex,
+                                  const scalar_t epsilon) {
   std::array<Tetrahedron, 4> subTets;
   std::array<Tetrahedron, 5> tets5;
   std::array<Tetrahedron, 6> tets6;
@@ -106,7 +108,7 @@ inline void area(const Sphere& s, const Hexahedron& hex,
   decompose(hex, tets6);
   decompose(hex, wedges);
 
-  const scalar_t areaCalcHex = overlapArea(s, hex)[0];
+  const scalar_t areaCalcHex = overlap_area(s, hex)[0];
 
   scalar_t areaCalcWedges = 0;
   scalar_t areaCalcTets5 = 0;
@@ -114,21 +116,21 @@ inline void area(const Sphere& s, const Hexahedron& hex,
   scalar_t areaCalcTets24 = 0;
 
   for (const auto& tet : tets5) {
-    areaCalcTets5 += overlapArea(s, tet)[0];
+    areaCalcTets5 += overlap_area(s, tet)[0];
   }
 
   for (const auto& tet : tets6) {
     decompose(tet, subTets);
 
     for (const auto& subTet : subTets) {
-      areaCalcTets24 += overlapArea(s, subTet)[0];
+      areaCalcTets24 += overlap_area(s, subTet)[0];
     }
 
-    areaCalcTets6 += overlapArea(s, tet)[0];
+    areaCalcTets6 += overlap_area(s, tet)[0];
   }
 
   for (const auto& wedge : wedges) {
-    areaCalcWedges += overlapArea(s, wedge)[0];
+    areaCalcWedges += overlap_area(s, wedge)[0];
   }
 
   std::cout << "sphere center: [" << s.center.transpose()

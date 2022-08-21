@@ -25,6 +25,8 @@
 #include "common.hpp"
 
 TEST(SphereTetOverlap, EdgeCases) {
+  using namespace overlap;
+
   // clang-format off
 	const std::vector<Sphere> spheres = {
 		{vector_t::Zero(), 1.0},
@@ -62,11 +64,12 @@ TEST(SphereTetOverlap, EdgeCases) {
     std::array<Tetrahedron, 4> tets4;
     decompose(tetrahedra[idx], tets4);
 
-    const scalar_t overlapCalcTet = overlap(spheres[idx], tetrahedra[idx]);
+    const scalar_t overlapCalcTet =
+        overlap_volume(spheres[idx], tetrahedra[idx]);
 
     scalar_t overlapCalcTets4 = 0;
     for (const auto& tet : tets4) {
-      overlapCalcTets4 += overlap(spheres[idx], tet);
+      overlapCalcTets4 += overlap_volume(spheres[idx], tet);
     }
 
     std::cout << "volume tet:  " << overlapCalcTet << std::endl;

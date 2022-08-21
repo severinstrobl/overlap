@@ -36,7 +36,7 @@ TEST(SphereTetAreaTest, SphereInTet) {
   Tetrahedron tet{v0, v1, v2, v3};
   Sphere s({0, 0, 0.25}, 0.125);
 
-  auto result = overlapArea(s, tet);
+  auto result = overlap_area(s, tet);
 
   std::array<scalar_t, 6> resultExact;
   resultExact.fill(scalar_t(0));
@@ -57,7 +57,7 @@ TEST(SphereTetAreaTest, TetInSphere) {
   Tetrahedron tet{v0, v1, v2, v3};
   Sphere s({0, 0, std::sqrt(6) / 6.0}, 2);
 
-  auto result = overlapArea(s, tet);
+  auto result = overlap_area(s, tet);
 
   std::array<scalar_t, 6> resultExact;
   resultExact[0] = scalar_t(0);
@@ -83,7 +83,7 @@ TEST(SphereTetAreaTest, Face) {
   Tetrahedron tet{v0, v1, v2, v3};
   Sphere s({0, 0, 0}, 0.25);
 
-  auto result = overlapArea(s, tet);
+  auto result = overlap_area(s, tet);
 
   std::array<scalar_t, 6> resultExact;
   resultExact.fill(scalar_t(0));
@@ -107,7 +107,7 @@ TEST(SphereTetAreaTest, Vertex) {
   Tetrahedron tet{v0, v1, v2, v3};
   Sphere s({0, 0, 1.5}, 1.25);
 
-  auto result = overlapArea(s, tet);
+  auto result = overlap_area(s, tet);
 
   // Compare with approximate result obtained via an Monte Carlo approach.
   std::array<scalar_t, 6> resultApprox;

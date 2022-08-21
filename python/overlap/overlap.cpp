@@ -34,6 +34,8 @@ using overload_cast_ = py::detail::overload_cast_impl<Args...>;
 
 using namespace py::literals;
 
+using namespace overlap;
+
 template<typename Element>
 void createBindings(py::module& m) {
   static_assert(std::is_same<Element, Tetrahedron>::value ||
@@ -50,7 +52,8 @@ void createBindings(py::module& m) {
       static_cast<char>(std::tolower(static_cast<char>(name[0]))) +
       name.substr(1);
 
-  static constexpr std::size_t nrVertices = element_trait<Element>::nrVertices;
+  static constexpr std::size_t nrVertices =
+      detail::element_trait<Element>::nrVertices;
 
   py::class_<Element>(m, name.c_str())
       .def(py::init<std::array<vector_t, nrVertices>>())
@@ -80,14 +83,15 @@ void createBindings(py::module& m) {
           [](const Element& elem) { return elem.surfaceArea(); },
           "Return the surface area of the element.");
 
-  m.def("overlap",
-        overload_cast_<const Sphere&, const Element&>()(&overlap<Element>),
-        "sphere"_a, py::arg("nameLower.c_str()"),
-        ("Calculate the overlap volume of a sphere and a " + nameLower + ".")
-            .c_str());
+  m.def(
+      "overlap_volume",
+      overload_cast_<const Sphere&, const Element&>()(&overlap_volume<Element>),
+      "sphere"_a, py::arg("nameLower.c_str()"),
+      ("Calculate the overlap volume of a sphere and a " + nameLower + ".")
+          .c_str());
 
   m.def("overlap_area",
-        overload_cast_<const Sphere&, const Element&>()(&overlapArea<Element>),
+        overload_cast_<const Sphere&, const Element&>()(&overlap_area<Element>),
         "sphere"_a, py::arg("nameLower.c_str()"),
         ("Calculate the overlap area of a sphere and a " + nameLower + ".")
             .c_str());

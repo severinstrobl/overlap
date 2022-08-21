@@ -24,7 +24,7 @@
 
 // Test clamping of numbers.
 TEST(Clamp, Basic) {
-  using namespace detail;
+  using namespace overlap::detail;
 
   // clang-format off
 	ASSERT_EQ(clamp(-1.1, -1.0, 1.0, 0.25), -1.0);
@@ -37,7 +37,7 @@ TEST(Clamp, Basic) {
 
 // Test error handling of clamping of numbers using invalid inputs.
 TEST(Clamp, Asserts) {
-  using namespace detail;
+  using namespace overlap::detail;
 
   // clang-format off
   ASSERT_DEBUG_DEATH(clamp(0.0,  1.0, -1.0,  0.0), "");

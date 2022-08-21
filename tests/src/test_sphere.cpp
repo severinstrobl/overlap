@@ -18,22 +18,23 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define _USE_MATH_DEFINES
-
 #include "gtest/gtest.h"
 
 #include "overlap/overlap.hpp"
+
+using namespace overlap;
 
 TEST(Sphere, Volume) {
   Sphere s{vector_t::Zero(), 1.0};
 
   constexpr scalar_t eps = std::numeric_limits<scalar_t>::epsilon();
 
-  ASSERT_NEAR(s.volume, 4.0 / 3.0 * M_PI, eps);
+  ASSERT_NEAR(s.volume, 4.0 / 3.0 * detail::pi, eps);
 
   ASSERT_EQ(s.capVolume(-1 * s.radius), 0.0);
   ASSERT_EQ(s.capVolume(0), 0.0);
-  ASSERT_NEAR(s.capVolume(0.5 * s.radius), (M_PI * 0.25 / 3.0) * 2.5, eps);
+  ASSERT_NEAR(s.capVolume(0.5 * s.radius), (detail::pi * 0.25 / 3.0) * 2.5,
+              eps);
   ASSERT_NEAR(s.capVolume(s.radius), 0.5 * s.volume, eps);
   ASSERT_EQ(s.capVolume(2 * s.radius), s.volume);
   ASSERT_EQ(s.capVolume(3 * s.radius), s.volume);
@@ -44,7 +45,7 @@ TEST(Sphere, SurfaceArea) {
 
   constexpr scalar_t eps = std::numeric_limits<scalar_t>::epsilon();
 
-  ASSERT_NEAR(s.surfaceArea(), 4.0 * M_PI, eps);
+  ASSERT_NEAR(s.surfaceArea(), 4.0 * detail::pi, eps);
 
   ASSERT_EQ(s.capSurfaceArea(-1 * s.radius), 0.0);
   ASSERT_EQ(s.capSurfaceArea(0), 0.0);
@@ -60,7 +61,7 @@ TEST(Sphere, DiskArea) {
 
   ASSERT_EQ(s.diskArea(-1 * s.radius), 0.0);
   ASSERT_EQ(s.diskArea(0), 0.0);
-  ASSERT_NEAR(s.diskArea(s.radius), M_PI, eps);
+  ASSERT_NEAR(s.diskArea(s.radius), detail::pi, eps);
   ASSERT_EQ(s.diskArea(2 * s.radius), 0.0);
   ASSERT_EQ(s.diskArea(3 * s.radius), 0.0);
 }

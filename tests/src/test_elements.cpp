@@ -23,6 +23,8 @@
 #include "overlap/overlap.hpp"
 
 TEST(Wedge, Constructors) {
+  using namespace overlap;
+
   Wedge wedge0{};
 
   ASSERT_EQ(wedge0.volume, 0.0);
@@ -43,6 +45,8 @@ TEST(Wedge, Constructors) {
 }
 
 TEST(Hexahedron, Constructors) {
+  using namespace overlap;
+
   // clang-format off
 	Hexahedron hex1{
 		vector_t{-1, -1, -1}, vector_t{1, -1, -1},
