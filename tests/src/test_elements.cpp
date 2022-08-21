@@ -31,12 +31,12 @@ TEST(Wedge, Constructors) {
 
   // clang-format off
   Wedge wedge1{
-		vector_t{-1, -1, -1}, vector_t{1, -1, -1}, vector_t{1, 1, -1},
-		vector_t{-1, -1, 1},  vector_t{1, -1, 1},  vector_t{1, 1, 1}};
+    vector_t{-1, -1, -1}, vector_t{1, -1, -1}, vector_t{1, 1, -1},
+    vector_t{-1, -1, 1},  vector_t{1, -1, 1},  vector_t{1, 1, 1}};
 
-	Wedge wedge2{std::array<vector_t, 6>{{
-		{-1, -1, -1}, {1, -1, -1}, {1,  1, -1},
-		{-1, -1,  1}, {1, -1,  1}, {1,  1,  1}}}};
+  Wedge wedge2{std::array<vector_t, 6>{{
+    {-1, -1, -1}, {1, -1, -1}, {1,  1, -1},
+    {-1, -1,  1}, {1, -1,  1}, {1,  1,  1}}}};
   // clang-format on
 
   constexpr scalar_t eps = std::numeric_limits<scalar_t>::epsilon();
@@ -48,16 +48,16 @@ TEST(Hexahedron, Constructors) {
   using namespace overlap;
 
   // clang-format off
-	Hexahedron hex1{
-		vector_t{-1, -1, -1}, vector_t{1, -1, -1},
-		vector_t{ 1,  1, -1}, vector_t{-1,  1, -1},
+  Hexahedron hex1{
+    vector_t{-1, -1, -1}, vector_t{1, -1, -1},
+    vector_t{ 1,  1, -1}, vector_t{-1,  1, -1},
 
-		vector_t{-1, -1,  1}, vector_t{1, -1,  1},
-		vector_t{ 1,  1,  1}, vector_t{-1,  1,  1}};
+    vector_t{-1, -1,  1}, vector_t{1, -1,  1},
+    vector_t{ 1,  1,  1}, vector_t{-1,  1,  1}};
 
-	Hexahedron hex2{std::array<vector_t, 8>{{
-		{-1, -1, -1}, {1, -1, -1}, {1,  1, -1}, {-1,  1, -1},
-		{-1, -1,  1}, {1, -1,  1}, {1,  1,  1}, {-1,  1,  1}}}};
+  Hexahedron hex2{std::array<vector_t, 8>{{
+    {-1, -1, -1}, {1, -1, -1}, {1,  1, -1}, {-1,  1, -1},
+    {-1, -1,  1}, {1, -1,  1}, {1,  1,  1}, {-1,  1,  1}}}};
   // clang-format on
 
   constexpr scalar_t eps = std::numeric_limits<scalar_t>::epsilon();

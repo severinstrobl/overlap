@@ -18,8 +18,6 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define _USE_MATH_DEFINES
-
 #include "gtest/gtest.h"
 
 #include "overlap/overlap.hpp"
@@ -30,16 +28,14 @@ TEST(RegularizedWedgeArea, Distance) {
   using namespace overlap::detail;
 
   // special cases should return precisely zero
-  ASSERT_EQ(regularizedWedgeArea(1.0, 1.0, 0.25 * M_PI), 0.0);
-  ASSERT_EQ(regularizedWedgeArea(1.0, -1.0, 0.25 * M_PI), 0.0);
+  ASSERT_EQ(regularizedWedgeArea(1.0, 1.0, 0.25 * pi), 0.0);
+  ASSERT_EQ(regularizedWedgeArea(1.0, -1.0, 0.25 * pi), 0.0);
 
   constexpr scalar_t delta(2e2 * std::numeric_limits<scalar_t>::epsilon());
 
-  ASSERT_NEAR(regularizedWedgeArea(1.0, tinyEpsilon, 0.5 * M_PI), M_PI,
-              5 * delta);
+  ASSERT_NEAR(regularizedWedgeArea(1.0, tinyEpsilon, 0.5 * pi), pi, 5 * delta);
 
-  ASSERT_NEAR(regularizedWedgeArea(1.0, -tinyEpsilon, 0.5 * M_PI), M_PI,
-              5 * delta);
+  ASSERT_NEAR(regularizedWedgeArea(1.0, -tinyEpsilon, 0.5 * pi), pi, 5 * delta);
 }
 
 // Test regularizedWedgeArea using different values of the angle `alpha`.
@@ -48,9 +44,9 @@ TEST(regularizedWedgeArea, Angle) {
 
   // special cases should return constants values
   ASSERT_EQ(regularizedWedgeArea(1.0, 0.0, 0.0), 0.0);
-  ASSERT_EQ(regularizedWedgeArea(1.0, 0.0, 0.5 * M_PI), M_PI);
+  ASSERT_EQ(regularizedWedgeArea(1.0, 0.0, 0.5 * pi), pi);
 
-  ASSERT_NEAR(regularizedWedgeArea(1.0, 0.0, 0.75 * M_PI),
-              2 * M_PI - regularizedWedgeArea(1.0, 0.0, 0.25 * M_PI),
+  ASSERT_NEAR(regularizedWedgeArea(1.0, 0.0, 0.75 * pi),
+              2 * pi - regularizedWedgeArea(1.0, 0.0, 0.25 * pi),
               std::numeric_limits<scalar_t>::epsilon());
 }
