@@ -31,33 +31,33 @@ static const scalar_t epsilon =
 TEST(SphereElementOverlap, Face) {
   Sphere s(vector_t{0, 2, 0}, 1);
 
-  overlap(s, unitHexahedron(), epsilon, scalar_t{0});
+  validate_overlap_volume(s, unit_hexahedron(), epsilon, scalar_t{0});
 }
 
 // Sphere intersects one edge (and thus 2 faces).
 TEST(SphereElementOverlap, Edge) {
   Sphere s(vector_t{0, -1, 1}, 1);
 
-  overlap(s, unitHexahedron(), epsilon, 0.25 * s.volume);
+  validate_overlap_volume(s, unit_hexahedron(), epsilon, 0.25 * s.volume);
 }
 
 // Sphere intersects one vertex (and thus 3 edges and 3 faces)
 TEST(SphereElementOverlap, Vertex) {
   Sphere s(vector_t{1, -1, 1}, 1);
 
-  overlap(s, unitHexahedron(), epsilon, 0.125 * s.volume);
+  validate_overlap_volume(s, unit_hexahedron(), epsilon, 0.125 * s.volume);
 }
 
 // Sphere outside of hexahedron, touching one vertex.
 TEST(SphereElementOverlap, VertexTouching) {
   Sphere s(vector_t{2, -1, 1}, 1);
 
-  overlap(s, unitHexahedron(), epsilon, scalar_t{0});
+  validate_overlap_volume(s, unit_hexahedron(), epsilon, scalar_t{0});
 }
 
 // Sphere outside of hexahedron, slightly overlapping one vertex.
 TEST(SphereElementOverlap, Vertex2) {
   Sphere s(vector_t{2 - 10 * detail::tinyEpsilon, -1, 1}, 1);
 
-  overlap(s, unitHexahedron(), epsilon, scalar_t{0});
+  validate_overlap_volume(s, unit_hexahedron(), epsilon, scalar_t{0});
 }

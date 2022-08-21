@@ -1,7 +1,7 @@
 # Exact calculation of the overlap volume of spheres and mesh elements.
 # http://dx.doi.org/10.1016/j.jcp.2016.02.003
 
-# Copyright (C) 2021 Severin Strobl <git@severin-strobl.de>
+# Copyright (C) 2021-2022 Severin Strobl <git@severin-strobl.de>
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -77,7 +77,8 @@ class TestOverlap:
         wedge = overlap.Wedge(vertices)
         s = overlap.Sphere((1, 1, 1), 1)
 
-        np.testing.assert_almost_equal(overlap.overlap(s, wedge), np.pi / 12)
+        np.testing.assert_almost_equal(
+            overlap.overlap_volume(s, wedge), np.pi / 12)
 
     def test_hexahedron(self):
         vertices = [
@@ -88,7 +89,8 @@ class TestOverlap:
         hexa = overlap.Hexahedron(vertices)
         s = overlap.Sphere((1, 1, 1), 1)
 
-        np.testing.assert_almost_equal(overlap.overlap(s, hexa), np.pi / 6)
+        np.testing.assert_almost_equal(
+            overlap.overlap_volume(s, hexa), np.pi / 6)
 
 
 class TestOverlapArea:

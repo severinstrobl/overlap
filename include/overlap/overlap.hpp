@@ -38,6 +38,10 @@
 #include <type_traits>
 #include <utility>
 
+namespace overlap {
+
+namespace detail {
+
 // typedefs
 typedef double scalar_t;
 typedef Eigen::Matrix<scalar_t, 3, 1, Eigen::DontAlign> vector_t;
@@ -50,8 +54,6 @@ static const Eigen::IOFormat pretty(Eigen::StreamPrecision,
 
 // constants
 const scalar_t pi = scalar_t(4) * std::atan(scalar_t(1.0));
-
-namespace detail {
 
 static const scalar_t tinyEpsilon(2 * std::numeric_limits<scalar_t>::epsilon());
 
@@ -315,8 +317,6 @@ inline scalar_t clamp(scalar_t value, scalar_t min, scalar_t max,
   return value;
 }
 
-}  // namespace detail
-
 class Transformation {
  public:
   Transformation(const vector_t& t, const scalar_t& s) :
@@ -437,8 +437,6 @@ class Tetrahedron;
 class Wedge;
 class Hexahedron;
 
-namespace detail {
-
 // Some tricks are required to keep this code header-only.
 template<typename T, typename Nil>
 struct mappings;
@@ -477,8 +475,6 @@ const uint32_t mappings<Tetrahedron, Nil>::face_mapping[3][2] = {
     {0, 1}, {0, 2}, {1, 2}};
 
 typedef mappings<Tetrahedron, void> tet_mappings;
-
-}  // namespace detail
 
 class Tetrahedron : public detail::tet_mappings {
  public:
@@ -565,8 +561,6 @@ class Tetrahedron : public detail::tet_mappings {
   scalar_t volume;
 };
 
-namespace detail {
-
 template<typename Nil>
 struct mappings<Wedge, Nil> {
   // Map edges of a wedge to vertices and faces.
@@ -607,8 +601,6 @@ const uint32_t mappings<Wedge, Nil>::face_mapping[3][2] = {
     {0, 1}, {0, 2}, {1, 2}};
 
 typedef mappings<Wedge, void> wedge_mappings;
-
-}  // namespace detail
 
 class Wedge : public detail::wedge_mappings {
  public:
@@ -711,8 +703,6 @@ class Wedge : public detail::wedge_mappings {
   scalar_t volume;
 };
 
-namespace detail {
-
 template<typename Nil>
 struct mappings<Hexahedron, Nil> {
   // Map edges of a hexahedron to vertices and faces.
@@ -760,8 +750,6 @@ const uint32_t mappings<Hexahedron, Nil>::face_mapping[3][2] = {
     {0, 1}, {0, 2}, {1, 2}};
 
 typedef mappings<Hexahedron, void> hex_mappings;
-
-}  // namespace detail
 
 class Hexahedron : public detail::hex_mappings {
  public:
@@ -1129,8 +1117,6 @@ inline std::pair<std::array<scalar_t, 2>, size_t> lineSphereIntersection(
   return std::make_pair(solutions, 0);
 }
 
-namespace detail {
-
 // Calculate the volume of a regularized spherical wedge defined by the radius,
 // the distance of the intersection point from the center of the sphere and the
 // angle.
@@ -1231,8 +1217,6 @@ inline scalar_t regularizedWedgeArea(scalar_t r, scalar_t z, scalar_t alpha) {
   return scalar_t(2) * r * r * std::acos(arg0) -
          scalar_t(2) * r * z * std::acos(arg1);
 }
-
-}  // namespace detail
 
 // Depending on the dimensionality, either the volume or external surface area
 // of the general wedge is computed.
@@ -1399,12 +1383,25 @@ scalar_t generalWedge(const Sphere& sphere, const Element& element, size_t edge,
   return generalWedge<Dim>(sphere, p0, p1, edgeCenter - sphere.center);
 }
 
+}  // namespace detail
+
+// expose types required for public API
+using vector_t = detail::vector_t;
+using scalar_t = detail::scalar_t;
+
+using Sphere = detail::Sphere;
+using Tetrahedron = detail::Tetrahedron;
+using Wedge = detail::Wedge;
+using Hexahedron = detail::Hexahedron;
+
 template<typename Element>
-scalar_t overlap(const Sphere& sOrig, const Element& elementOrig) {
+scalar_t overlap_volume(const Sphere& sOrig, const Element& elementOrig) {
   static_assert(std::is_same<Element, Tetrahedron>::value ||
                     std::is_same<Element, Wedge>::value ||
                     std::is_same<Element, Hexahedron>::value,
                 "Invalid element type detected.");
+
+  using namespace detail;
 
   // Construct AABBs and perform a coarse overlap detection.
   AABB sAABB(sOrig.center - vector_t::Constant(sOrig.radius),
@@ -1718,11 +1715,11 @@ scalar_t overlap(const Sphere& sOrig, const Element& elementOrig) {
 }
 
 template<typename Iterator>
-scalar_t overlap(const Sphere& s, Iterator eBegin, Iterator eEnd) {
+scalar_t overlap_volume(const Sphere& s, Iterator eBegin, Iterator eEnd) {
   scalar_t sum(0);
 
   for (Iterator it = eBegin; it != eEnd; ++it) {
-    sum += overlap(s, *it);
+    sum += overlap_volume(s, *it);
   }
 
   return sum;
@@ -1735,9 +1732,12 @@ scalar_t overlap(const Sphere& s, Iterator eBegin, Iterator eEnd) {
 //   - surface area of the region of the sphere intersecting the element
 //   - for each face of the element: area contained within the sphere
 //   - total surface area of the element intersecting the sphere
-template<typename Element, size_t NrFaces = element_trait<Element>::nrFaces + 2>
-auto overlapArea(const Sphere& sOrig, const Element& elementOrig)
+template<typename Element,
+         size_t NrFaces = detail::element_trait<Element>::nrFaces + 2>
+auto overlap_area(const Sphere& sOrig, const Element& elementOrig)
     -> std::array<scalar_t, NrFaces> {
+  using namespace detail;
+
   static_assert(NrFaces == element_trait<Element>::nrFaces + 2,
                 "Invalid number of faces for the element provided.");
 
@@ -2202,5 +2202,7 @@ auto overlapArea(const Sphere& sOrig, const Element& elementOrig)
 
   return result;
 }
+
+}  // namespace overlap
 
 #endif  // OVERLAP_HPP

@@ -24,8 +24,10 @@
 
 #include "common.hpp"
 
+using namespace overlap;
+
 TEST(DecomposeElements, Hexahedron) {
-  Hexahedron hex = unitHexahedron();
+  Hexahedron hex = unit_hexahedron();
 
   std::array<Tetrahedron, 4> subTets;
   std::array<Tetrahedron, 5> tets5;

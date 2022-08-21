@@ -23,6 +23,8 @@
 #include "overlap/overlap.hpp"
 
 TEST(NormalNewell, Basic) {
+  using namespace overlap::detail;
+
   const std::array<vector_t, 3> points = {
       {vector_t(-0.8482081444352685, -0.106496132943784, -0.5188463331100054),
        vector_t(-0.8482081363047198, -0.1064961977010221, -0.5188463331100054),
@@ -32,7 +34,7 @@ TEST(NormalNewell, Basic) {
       1.0 / 3.0 *
       std::accumulate(points.begin(), points.end(), vector_t::Zero().eval());
 
-  vector_t normal(detail::normalNewell(points.begin(), points.end(), center));
+  vector_t normal(normalNewell(points.begin(), points.end(), center));
 
   vector_t expected(0.8482081353353663, 0.1064961653160474, 0.5188463413419023);
 
@@ -42,6 +44,8 @@ TEST(NormalNewell, Basic) {
 }
 
 TEST(NormalNewell, Degenerated) {
+  using namespace overlap::detail;
+
   const std::array<vector_t, 3> points = {
       {vector_t(0, 0, 0), vector_t(1, 1, 0), vector_t(0, 0, 0)}};
 
@@ -49,7 +53,7 @@ TEST(NormalNewell, Degenerated) {
       1.0 / points.size() *
       std::accumulate(points.begin(), points.end(), vector_t::Zero().eval());
 
-  vector_t normal(detail::normalNewell(points.begin(), points.end(), center));
+  vector_t normal(normalNewell(points.begin(), points.end(), center));
 
   ASSERT_LE(normal.norm(), std::numeric_limits<scalar_t>::epsilon())
       << "Invalid normal generated: [" << normal.transpose() << "]";

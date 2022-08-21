@@ -26,10 +26,10 @@
 
 // Sphere intersects one face.
 TEST(SphereHexAreaTest, Face) {
-  Hexahedron hex = unitHexahedron();
+  Hexahedron hex = unit_hexahedron();
   Sphere s({0, 0, 1}, 0.75);
 
-  auto result = overlapArea(s, hex);
+  auto result = overlap_area(s, hex);
 
   std::array<scalar_t, 8> resultExact;
   resultExact.fill(scalar_t(0));
@@ -44,10 +44,10 @@ TEST(SphereHexAreaTest, Face) {
 
 // Sphere intersects one edge (and thus 1 edge and 2 faces).
 TEST(SphereHexAreaTest, Edge) {
-  Hexahedron hex = unitHexahedron();
+  Hexahedron hex = unit_hexahedron();
   Sphere s({1, 1, 0}, 0.75);
 
-  auto result = overlapArea(s, hex);
+  auto result = overlap_area(s, hex);
 
   std::array<scalar_t, 8> resultExact;
   resultExact.fill(scalar_t(0));
@@ -63,10 +63,10 @@ TEST(SphereHexAreaTest, Edge) {
 
 // Sphere intersects one vertex (and thus 3 edge and 3 faces).
 TEST(SphereHexAreaTest, Vertex) {
-  Hexahedron hex = unitHexahedron();
+  Hexahedron hex = unit_hexahedron();
   Sphere s({1, 1, 1}, 0.75);
 
-  auto result = overlapArea(s, hex);
+  auto result = overlap_area(s, hex);
 
   std::array<scalar_t, 8> resultExact;
   resultExact.fill(scalar_t(0));
