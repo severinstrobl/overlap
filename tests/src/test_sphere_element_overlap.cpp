@@ -24,40 +24,60 @@
 
 #include "common.hpp"
 
-static const scalar_t epsilon =
-    std::sqrt(std::numeric_limits<scalar_t>::epsilon());
+static const auto epsilon = std::sqrt(std::numeric_limits<Scalar>::epsilon());
 
 // Sphere outside of hexahedron, touching one face.
 TEST(SphereElementOverlap, Face) {
-  Sphere s(vector_t{0, 2, 0}, 1);
+  const auto sphere = Sphere{{0, 2, 0}, 1};
 
-  validate_overlap_volume(s, unit_hexahedron(), epsilon, scalar_t{0});
+  validate_overlap_volume(sphere, unit_hexahedron(), epsilon, Scalar{0});
 }
 
 // Sphere intersects one edge (and thus 2 faces).
 TEST(SphereElementOverlap, Edge) {
-  Sphere s(vector_t{0, -1, 1}, 1);
+  const auto sphere = Sphere{Vector{0, -1, 1}, 1};
 
-  validate_overlap_volume(s, unit_hexahedron(), epsilon, 0.25 * s.volume);
+  validate_overlap_volume(sphere, unit_hexahedron(), epsilon,
+                          0.25 * sphere.volume);
+}
+
+// Sphere intersects one edge (and thus 2 faces), edge passing through center
+// of sphere -> spherical wedge with angle pi/4.
+TEST(SphereElementOverlap, Wedge) {
+  const auto sphere = Sphere{Vector::Zero(), 1};
+
+  // clang-format off
+  const auto hex = Hexahedron{{{
+    {0, 0, -1}, {2, 2, -1},
+    {2, 4, -1}, {0, 4, -1},
+
+    {0, 0, 1}, {2, 2, 1},
+    {2, 4, 1}, {0, 4, 1}}}};
+  // clang-format on
+
+  validate_overlap_volume(
+      sphere, hex, epsilon,
+      2.0 / 3.0 * sphere.radius * sphere.radius * 0.25 * detail::pi);
 }
 
 // Sphere intersects one vertex (and thus 3 edges and 3 faces)
 TEST(SphereElementOverlap, Vertex) {
-  Sphere s(vector_t{1, -1, 1}, 1);
+  const auto sphere = Sphere{Vector{1, -1, 1}, 1};
 
-  validate_overlap_volume(s, unit_hexahedron(), epsilon, 0.125 * s.volume);
+  validate_overlap_volume(sphere, unit_hexahedron(), epsilon,
+                          0.125 * sphere.volume);
 }
 
 // Sphere outside of hexahedron, touching one vertex.
 TEST(SphereElementOverlap, VertexTouching) {
-  Sphere s(vector_t{2, -1, 1}, 1);
+  const auto sphere = Sphere{Vector{2, -1, 1}, 1};
 
-  validate_overlap_volume(s, unit_hexahedron(), epsilon, scalar_t{0});
+  validate_overlap_volume(sphere, unit_hexahedron(), epsilon, Scalar{0});
 }
 
 // Sphere outside of hexahedron, slightly overlapping one vertex.
-TEST(SphereElementOverlap, Vertex2) {
-  Sphere s(vector_t{2 - 10 * detail::tinyEpsilon, -1, 1}, 1);
+TEST(SphereElementOverlap, VertexOverlap) {
+  const auto sphere = Sphere{Vector{2 - 10 * detail::tinyEpsilon, -1, 1}, 1};
 
-  validate_overlap_volume(s, unit_hexahedron(), epsilon, scalar_t{0});
+  validate_overlap_volume(sphere, unit_hexahedron(), epsilon, Scalar{0});
 }

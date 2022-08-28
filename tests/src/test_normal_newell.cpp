@@ -25,36 +25,34 @@
 TEST(NormalNewell, Basic) {
   using namespace overlap::detail;
 
-  const std::array<vector_t, 3> points = {
-      {vector_t(-0.8482081444352685, -0.106496132943784, -0.5188463331100054),
-       vector_t(-0.8482081363047198, -0.1064961977010221, -0.5188463331100054),
-       vector_t(-0.8482081363047198, -0.106496132943784, -0.5188463464017972)}};
+  const std::array<Vector, 3> points = {
+      {{-0.8482081444352685, -0.106496132943784, -0.5188463331100054},
+       {-0.8482081363047198, -0.1064961977010221, -0.5188463331100054},
+       {-0.8482081363047198, -0.106496132943784, -0.5188463464017972}}};
 
-  vector_t center =
-      1.0 / 3.0 *
-      std::accumulate(points.begin(), points.end(), vector_t::Zero().eval());
+  const auto center =
+      (Scalar{1} / Scalar{3}) *
+      std::accumulate(points.begin(), points.end(), Vector::Zero().eval());
 
-  vector_t normal(normalNewell(points.begin(), points.end(), center));
+  const auto normal = normal_newell(points.begin(), points.end(), center);
+  const auto expected =
+      Vector{0.8482081353353663, 0.1064961653160474, 0.5188463413419023};
 
-  vector_t expected(0.8482081353353663, 0.1064961653160474, 0.5188463413419023);
-
-  ASSERT_LE((normal - expected).norm(),
-            std::numeric_limits<scalar_t>::epsilon())
+  ASSERT_LE((normal - expected).norm(), std::numeric_limits<Scalar>::epsilon())
       << "Invalid normal generated: [" << normal.transpose() << "]";
 }
 
 TEST(NormalNewell, Degenerated) {
   using namespace overlap::detail;
 
-  const std::array<vector_t, 3> points = {
-      {vector_t(0, 0, 0), vector_t(1, 1, 0), vector_t(0, 0, 0)}};
+  const std::array<Vector, 3> points = {{{0, 0, 0}, {1, 1, 0}, {0, 0, 0}}};
 
-  vector_t center =
-      1.0 / points.size() *
-      std::accumulate(points.begin(), points.end(), vector_t::Zero().eval());
+  const auto center =
+      (Scalar{1} / Scalar{points.size()}) *
+      std::accumulate(points.begin(), points.end(), Vector::Zero().eval());
 
-  vector_t normal(normalNewell(points.begin(), points.end(), center));
+  const auto normal = normal_newell(points.begin(), points.end(), center);
 
-  ASSERT_LE(normal.norm(), std::numeric_limits<scalar_t>::epsilon())
+  ASSERT_LE(normal.norm(), std::numeric_limits<Scalar>::epsilon())
       << "Invalid normal generated: [" << normal.transpose() << "]";
 }

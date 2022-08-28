@@ -29,9 +29,9 @@ TEST(SphereTetOverlap, EdgeCases) {
 
   // clang-format off
 	const std::vector<Sphere> spheres = {
-		{vector_t::Zero(), 1.0},
+		{Vector::Zero(), 1.0},
 		{{-0.01725, 0, 0}, 1.0},
-		{vector_t::Zero(), 1.0}
+		{Vector::Zero(), 1.0}
 	};
 
 	const std::vector<Tetrahedron> tetrahedra = {
@@ -58,16 +58,13 @@ TEST(SphereTetOverlap, EdgeCases) {
 
   ASSERT_EQ(spheres.size(), tetrahedra.size());
 
-  const scalar_t epsilon = std::sqrt(std::numeric_limits<scalar_t>::epsilon());
-
+  const auto epsilon = std::sqrt(std::numeric_limits<Scalar>::epsilon());
   for (std::size_t idx = 0; idx < spheres.size(); ++idx) {
     std::array<Tetrahedron, 4> tets4;
     decompose(tetrahedra[idx], tets4);
 
-    const scalar_t overlapCalcTet =
-        overlap_volume(spheres[idx], tetrahedra[idx]);
-
-    scalar_t overlapCalcTets4 = 0;
+    const auto overlapCalcTet = overlap_volume(spheres[idx], tetrahedra[idx]);
+    auto overlapCalcTets4 = Scalar{0};
     for (const auto& tet : tets4) {
       overlapCalcTets4 += overlap_volume(spheres[idx], tet);
     }

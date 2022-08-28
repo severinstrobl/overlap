@@ -25,13 +25,18 @@
 TEST(Polygon, IsPlanar) {
   using namespace overlap::detail;
 
-  Triangle tri{vector_t{0.0, 0.0, 0.0}, vector_t{1.0, 0.0, 0.0},
-               vector_t{1.0, 1.0, 0.0}};
+  const auto tri =
+      Triangle{{{{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {1.0, 1.0, 0.0}}}};
 
-  ASSERT_TRUE(tri.isPlanar());
+  ASSERT_TRUE(tri.is_planar());
 
-  Quadrilateral quad{vector_t{0.0, 0.0, 0.0}, vector_t{1.0, 0.0, 0.0},
-                     vector_t{1.0, 1.0, 0.0}, vector_t{0.0, 1.0, 0.01}};
+  const auto quad0 = Quadrilateral{
+      {{{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {1.0, 1.0, 0.0}, {0.0, 1.0, 0.0}}}};
 
-  ASSERT_FALSE(quad.isPlanar());
+  ASSERT_TRUE(quad0.is_planar());
+
+  const auto quad1 = Quadrilateral{
+      {{{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {1.0, 1.0, 0.0}, {0.0, 1.0, 0.01}}}};
+
+  ASSERT_FALSE(quad1.is_planar());
 }

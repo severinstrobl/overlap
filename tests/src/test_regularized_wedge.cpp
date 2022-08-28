@@ -22,73 +22,72 @@
 
 #include "overlap/overlap.hpp"
 
-// Test regularizedWedge using different values of the distance `d`.
+// Test regularized_wedge using different values of the distance `d`.
 TEST(RegularizedWedge, Distance) {
   using namespace overlap::detail;
 
   // special case should return precisely zero
-  ASSERT_EQ(regularizedWedge(1.0, 1.0, 0.25 * pi), 0.0);
+  ASSERT_EQ(regularized_wedge(1.0, 1.0, 0.25 * pi), 0.0);
 
-  constexpr scalar_t epsilon = 5 * std::numeric_limits<scalar_t>::epsilon();
+  constexpr auto epsilon = 5 * std::numeric_limits<Scalar>::epsilon();
 
-  ASSERT_NEAR(regularizedWedge(1.0, tinyEpsilon, 0.25 * pi), pi / 6.0, epsilon);
-
-  ASSERT_NEAR(regularizedWedge(1.0, tinyEpsilon, 0.5 * pi), pi / 3.0, epsilon);
+  ASSERT_NEAR(regularized_wedge(1.0, tinyEpsilon, 0.25 * pi), pi / 6.0, epsilon);
+  ASSERT_NEAR(regularized_wedge(1.0, tinyEpsilon, 0.5 * pi), pi / 3.0, epsilon);
 }
 
-// Test regularizedWedge using different values of the angle `alpha`.
+// Test regularized_wedge using different values of the angle `alpha`.
 TEST(RegularizedWedge, Angle) {
   using namespace overlap::detail;
 
   // special case should return precisely zero
-  ASSERT_EQ(regularizedWedge(1.0, 0.5, 0.0), 0.0);
+  ASSERT_EQ(regularized_wedge(1.0, 0.5, 0.0), 0.0);
 
-  constexpr scalar_t epsilon = std::numeric_limits<scalar_t>::epsilon();
+  constexpr auto epsilon = std::numeric_limits<Scalar>::epsilon();
 
-  ASSERT_NEAR(regularizedWedge(1.0, 0.5, 0.5 * pi), 5.0 * pi / 48.0, epsilon);
+  ASSERT_NEAR(regularized_wedge(1.0, 0.5, 0.5 * pi), 5.0 * pi / 48.0, epsilon);
 
   // test using angle of alpha = pi/2
-  const scalar_t alpha = 0.5 * pi;
-  constexpr scalar_t delta = std::numeric_limits<scalar_t>::epsilon();
+  const auto alpha = (Scalar{1} / Scalar{2}) * pi;
+  constexpr auto delta = std::numeric_limits<Scalar>::epsilon();
 
   // introduce slight variations to `alpha` and `z`
   ASSERT_NEAR(
-      regularizedWedge(1.0, 0.5, alpha, 0.5 * std::cos(alpha + 0.5 * pi)),
-      regularizedWedge(1.0, 0.5, alpha - delta,
+      regularized_wedge(1.0, 0.5, alpha, 0.5 * std::cos(alpha + 0.5 * pi)),
+      regularized_wedge(1.0, 0.5, alpha - delta,
                        0.5 * std::cos(alpha + 0.5 * pi - delta)),
       5 * epsilon);
 
   ASSERT_NEAR(
-      regularizedWedge(1.0, 0.5, alpha, 0.5 * std::cos(alpha + 0.5 * pi)),
-      regularizedWedge(1.0, 0.5, alpha + delta,
+      regularized_wedge(1.0, 0.5, alpha, 0.5 * std::cos(alpha + 0.5 * pi)),
+      regularized_wedge(1.0, 0.5, alpha + delta,
                        0.5 * std::cos(alpha + 0.5 * pi + delta)),
       5 * epsilon);
 
   ASSERT_NEAR(
-      regularizedWedge(1.0, 0.5, alpha, -0.5 * std::cos(alpha + 0.5 * pi)),
-      regularizedWedge(1.0, 0.5, alpha - delta,
+      regularized_wedge(1.0, 0.5, alpha, -0.5 * std::cos(alpha + 0.5 * pi)),
+      regularized_wedge(1.0, 0.5, alpha - delta,
                        -0.5 * std::cos(alpha + 0.5 * pi - delta)),
       5 * epsilon);
 
   ASSERT_NEAR(
-      regularizedWedge(1.0, 0.5, alpha, -0.5 * std::cos(alpha + 0.5 * pi)),
-      regularizedWedge(1.0, 0.5, alpha + delta,
+      regularized_wedge(1.0, 0.5, alpha, -0.5 * std::cos(alpha + 0.5 * pi)),
+      regularized_wedge(1.0, 0.5, alpha + delta,
                        -0.5 * std::cos(alpha + 0.5 * pi + delta)),
       5 * epsilon);
 }
 
-// Test regularizedWedge for simple angles and base points very close to the
+// Test regularized_wedge for simple angles and base points very close to the
 // center.
 TEST(RegularizedWedge, NearCenter) {
   using namespace overlap::detail;
 
-  constexpr scalar_t epsilon = 5 * std::numeric_limits<scalar_t>::epsilon();
-
-  ASSERT_NEAR(regularizedWedge(1.0, std::numeric_limits<scalar_t>::epsilon(),
-                               0.25 * pi),
-              pi / 6.0, epsilon);
+  constexpr auto epsilon = 5 * std::numeric_limits<Scalar>::epsilon();
 
   ASSERT_NEAR(
-      regularizedWedge(1.0, std::numeric_limits<scalar_t>::epsilon(), 0.5 * pi),
+      regularized_wedge(1.0, std::numeric_limits<Scalar>::epsilon(), 0.25 * pi),
+      pi / 6.0, epsilon);
+
+  ASSERT_NEAR(
+      regularized_wedge(1.0, std::numeric_limits<Scalar>::epsilon(), 0.5 * pi),
       pi / 3.0, epsilon);
 }

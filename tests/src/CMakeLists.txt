@@ -81,13 +81,13 @@ endfunction()
 
 # list of unit tests
 set(unit_tests
+    clamp
     decompose_elements
-    detail_clamp
-    detail_regularizedWedge
-    detail_regularizedWedgeArea
     elements
     normal_newell
     polygon
+    regularized_wedge
+    regularized_wedge_area
     sphere
     sphere_element_area_edgecases
     sphere_element_overlap
@@ -100,15 +100,30 @@ set(unit_tests
 list(TRANSFORM unit_tests PREPEND "test_")
 
 # check for feenableexcept
+include(CheckIncludeFile)
 include(CheckSymbolExists)
-check_symbol_exists(feenableexcept "fenv.h" HAVE_FEENABLEEXCEPT)
+include(CMakePushCheckState)
+
+cmake_push_check_state(RESET)
+check_include_file("fenv.h" _have_fenv_h)
+if(_have_fenv_h)
+  set(CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
+  if(UNIX)
+    set(CMAKE_REQUIRED_LIBRARIES m)
+  endif()
+  check_symbol_exists(feenableexcept "fenv.h" OVERLAP_HAVE_FEENABLEEXCEPT)
+  set(CMAKE_REQUIRED_LIBRARIES)
+endif()
+cmake_reset_check_state()
 
 # register the individual unit tests
 foreach(unit_test ${unit_tests})
   overlap_add_test(${unit_test} "${unit_test}.cpp")
   target_link_libraries(${unit_test} PRIVATE overlap::headers Eigen3::Eigen)
 
-  if(HAVE_FEENABLEEXCEPT)
-    target_compile_definitions(${unit_test} PRIVATE -DHAVE_FEENABLEEXCEPT)
+  if(OVERLAP_HAVE_FEENABLEEXCEPT)
+    target_compile_definitions(
+      ${unit_test} PRIVATE -DOVERLAP_HAVE_FEENABLEEXCEPT
+    )
   endif()
 endforeach()

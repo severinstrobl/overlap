@@ -19,6 +19,9 @@
  */
 
 #include <cctype>
+#include <map>
+#include <typeindex>
+#include <typeinfo>
 
 #include "pybind11/eigen.h"
 #include "pybind11/numpy.h"
@@ -43,20 +46,24 @@ void createBindings(py::module& m) {
                     std::is_same<Element, Hexahedron>::value,
                 "Invalid element type detected.");
 
-  static const std::string name =
-      std::is_same<Element, Tetrahedron>::value ? "Tetrahedron"
-      : std::is_same<Element, Wedge>::value     ? "Wedge"
-                                                : "Hexahedron";
+  static const std::map<std::type_index, std::string> element_names = []() {
+    std::map<std::type_index, std::string> names{};
+    names[std::type_index(typeid(Tetrahedron))] = "Tetrahedron";
+    names[std::type_index(typeid(Wedge))] = "Wedge";
+    names[std::type_index(typeid(Hexahedron))] = "Hexahedron";
 
-  static const std::string nameLower =
+    return names;
+  }();
+
+  const std::string name = element_names.at(std::type_index(typeid(Element)));
+  const std::string nameLower =
       static_cast<char>(std::tolower(static_cast<char>(name[0]))) +
       name.substr(1);
 
-  static constexpr std::size_t nrVertices =
-      detail::element_trait<Element>::nrVertices;
+  static constexpr auto nrVertices = detail::num_vertices<Element>();
 
   py::class_<Element>(m, name.c_str())
-      .def(py::init<std::array<vector_t, nrVertices>>())
+      .def(py::init<std::array<Vector, nrVertices>>())
       .def(py::init([](py::array_t<double> vertices) {
         auto proxy = vertices.unchecked<2>();
         if (proxy.shape(0) != nrVertices || proxy.shape(1) != 3) {
@@ -65,12 +72,12 @@ void createBindings(py::module& m) {
               std::to_string(nrVertices) + ", 3)"};
         }
 
-        std::array<vector_t, nrVertices> tmp{};
+        std::array<Vector, nrVertices> tmp{};
         for (py::ssize_t v = 0; v < proxy.shape(0); ++v) {
-          tmp[v] = vector_t{proxy(v, 0), proxy(v, 1), proxy(v, 2)};
+          tmp[v] = Vector{proxy(v, 0), proxy(v, 1), proxy(v, 2)};
         }
 
-        return Element(tmp);
+        return Element{std::move(tmp)};
       }))
       .def_readonly("vertices", &Element::vertices,
                     "Return the vertices of the element.")
@@ -80,7 +87,7 @@ void createBindings(py::module& m) {
                     "Return the volume of the element.")
       .def_property_readonly(
           "surface_area",
-          [](const Element& elem) { return elem.surfaceArea(); },
+          [](const Element& elem) { return elem.surface_area(); },
           "Return the surface area of the element.");
 
   m.def(
@@ -117,7 +124,7 @@ PYBIND11_MODULE(_overlap, m) {
 #endif
 
   py::class_<Sphere>(m, "Sphere")
-      .def(py::init<vector_t, scalar_t>())
+      .def(py::init<Vector, Scalar>())
       .def_readonly("center", &Sphere::center,
                     "Return the center point of the sphere.")
       .def_readonly("radius", &Sphere::radius,
@@ -125,7 +132,7 @@ PYBIND11_MODULE(_overlap, m) {
       .def_readonly("volume", &Sphere::volume,
                     "Return the volume of the sphere.")
       .def_property_readonly(
-          "surface_area", [](const Sphere& s) { return s.surfaceArea(); },
+          "surface_area", [](const Sphere& s) { return s.surface_area(); },
           "Return the surface area of the sphere.");
 
   createBindings<Tetrahedron>(m);

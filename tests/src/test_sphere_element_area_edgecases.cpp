@@ -24,12 +24,12 @@
 
 #include "common.hpp"
 
-#ifdef HAVE_FEENABLEEXCEPT
-#include <fenv.h>
+#ifdef OVERLAP_HAVE_FEENABLEEXCEPT
+#include <cfenv>
 #endif
 
 TEST(SphereElementAreaTest, EdgeCases) {
-#ifdef HAVE_FEENABLEEXCEPT
+#ifdef OVERLAP_HAVE_FEENABLEEXCEPT
   feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW | FE_UNDERFLOW);
 #endif
 
@@ -59,8 +59,7 @@ TEST(SphereElementAreaTest, EdgeCases) {
       {{7.730555059112917, -4.2876080903382061, 7.2439905871817235},
        10.98560543306116}};
 
-  const scalar_t epsilon = std::sqrt(std::numeric_limits<scalar_t>::epsilon());
-
+  const auto epsilon = std::sqrt(std::numeric_limits<Scalar>::epsilon());
   for (const Sphere& sphere : spheres) {
     validate_overlap_area(sphere, unit_hexahedron(), epsilon * sphere.volume);
   }
