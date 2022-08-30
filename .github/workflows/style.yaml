@@ -25,8 +25,8 @@ jobs:
 
       - name: Run clang-format
         run: |
-          git diff --name-only --diff-filter=ACMRT ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep -i '\.\(c\|cc\|cxx\|cpp\|h\|hh\|hpp\)$' | xargs -r clang-format-$CLANG_FORMAT_VERSION -i -style=file
-          INCORRECTLY_FORMATTED=`git status --porcelain | grep '^ M' | cut -c4-`
+          git diff --name-only --diff-filter=ACMRT ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | { grep -i '\.\(c\|cc\|cxx\|cpp\|h\|hh\|hpp\)$' || true; } | xargs -r clang-format-$CLANG_FORMAT_VERSION -i -style=file
+          INCORRECTLY_FORMATTED=`git status --porcelain | { grep '^ M' || true; } | cut -c4-`
           if [[ -z $INCORRECTLY_FORMATTED ]]; then
             exit 0
           fi
@@ -34,6 +34,10 @@ jobs:
           INCORRECTLY_FORMATTED=`echo "$INCORRECTLY_FORMATTED" | sed -e 's/^/\\\e[31m * /'`
           echo -e "$INCORRECTLY_FORMATTED\e[0m"
           echo -e "\n\n\e[1;31mFormatting issues in detail:\n\e[0m"
-          git diff --color
-          echo "::set-output name=incorrectly_formatted::$INCORRECTLY_FORMATTED"
-          exit 1
+          git diff > clang_format.patch && git diff --exit-code --color
+
+      - name: Upload Artifacts
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v2
+        with:
+          path: clang_format.patch
