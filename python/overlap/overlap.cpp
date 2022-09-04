@@ -19,6 +19,7 @@
  */
 
 #include <cctype>
+#include <locale>
 #include <map>
 #include <typeindex>
 #include <typeinfo>
@@ -39,46 +40,38 @@ using namespace py::literals;
 
 using namespace overlap;
 
-template<typename Element>
+template<typename Element,
+         typename = std::enable_if_t<detail::is_element_v<Element>>>
 void createBindings(py::module& m) {
-  static_assert(std::is_same<Element, Tetrahedron>::value ||
-                    std::is_same<Element, Wedge>::value ||
-                    std::is_same<Element, Hexahedron>::value,
-                "Invalid element type detected.");
+  static const auto element_names = std::map<std::type_index, std::string>{
+      {std::type_index(typeid(Tetrahedron)), "Tetrahedron"},
+      {std::type_index(typeid(Wedge)), "Wedge"},
+      {std::type_index(typeid(Hexahedron)), "Hexahedron"}};
 
-  static const std::map<std::type_index, std::string> element_names = []() {
-    std::map<std::type_index, std::string> names{};
-    names[std::type_index(typeid(Tetrahedron))] = "Tetrahedron";
-    names[std::type_index(typeid(Wedge))] = "Wedge";
-    names[std::type_index(typeid(Hexahedron))] = "Hexahedron";
-
-    return names;
-  }();
-
-  const std::string name = element_names.at(std::type_index(typeid(Element)));
-  const std::string nameLower =
-      static_cast<char>(std::tolower(static_cast<char>(name[0]))) +
-      name.substr(1);
+  const auto& name = element_names.at(std::type_index(typeid(Element)));
+  const auto nameLower =
+      std::tolower(name.front(), std::locale{}) + name.substr(1);
 
   static constexpr auto nrVertices = detail::num_vertices<Element>();
 
   py::class_<Element>(m, name.c_str())
-      .def(py::init<std::array<Vector, nrVertices>>())
+      .def(py::init<std::array<Vector, nrVertices>>(), py::arg("vertices"))
       .def(py::init([](py::array_t<double> vertices) {
-        auto proxy = vertices.unchecked<2>();
-        if (proxy.shape(0) != nrVertices || proxy.shape(1) != 3) {
-          throw std::invalid_argument{
-              "invalid shape for vertex list, must be (" +
-              std::to_string(nrVertices) + ", 3)"};
-        }
+             auto proxy = vertices.unchecked<2>();
+             if (proxy.shape(0) != nrVertices || proxy.shape(1) != 3) {
+               throw std::invalid_argument{
+                   "invalid shape for vertex list, must be (" +
+                   std::to_string(nrVertices) + ", 3)"};
+             }
 
-        std::array<Vector, nrVertices> tmp{};
-        for (py::ssize_t v = 0; v < proxy.shape(0); ++v) {
-          tmp[v] = Vector{proxy(v, 0), proxy(v, 1), proxy(v, 2)};
-        }
+             std::array<Vector, nrVertices> tmp{};
+             for (py::ssize_t v = 0; v < proxy.shape(0); ++v) {
+               tmp[v] = Vector{proxy(v, 0), proxy(v, 1), proxy(v, 2)};
+             }
 
-        return Element{std::move(tmp)};
-      }))
+             return Element{std::move(tmp)};
+           }),
+           py::arg("vertices"))
       .def_readonly("vertices", &Element::vertices,
                     "Return the vertices of the element.")
       .def_readonly("center", &Element::center,
@@ -93,13 +86,13 @@ void createBindings(py::module& m) {
   m.def(
       "overlap_volume",
       overload_cast_<const Sphere&, const Element&>()(&overlap_volume<Element>),
-      "sphere"_a, py::arg("nameLower.c_str()"),
+      "sphere"_a, py::arg{nameLower.c_str()},
       ("Calculate the overlap volume of a sphere and a " + nameLower + ".")
           .c_str());
 
   m.def("overlap_area",
         overload_cast_<const Sphere&, const Element&>()(&overlap_area<Element>),
-        "sphere"_a, py::arg("nameLower.c_str()"),
+        "sphere"_a, py::arg{nameLower.c_str()},
         ("Calculate the overlap area of a sphere and a " + nameLower + ".")
             .c_str());
 }
@@ -124,7 +117,7 @@ PYBIND11_MODULE(_overlap, m) {
 #endif
 
   py::class_<Sphere>(m, "Sphere")
-      .def(py::init<Vector, Scalar>())
+      .def(py::init<Vector, Scalar>(), py::arg("center"), py::arg("radius"))
       .def_readonly("center", &Sphere::center,
                     "Return the center point of the sphere.")
       .def_readonly("radius", &Sphere::radius,
