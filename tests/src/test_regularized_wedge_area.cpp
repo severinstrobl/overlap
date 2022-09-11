@@ -33,9 +33,11 @@ TEST(RegularizedWedgeArea, Distance) {
 
   constexpr auto delta = Scalar{2e2} * std::numeric_limits<Scalar>::epsilon();
 
-  ASSERT_NEAR(regularized_wedge_area(1.0, tinyEpsilon, 0.5 * pi), pi, 5 * delta);
+  ASSERT_NEAR(regularized_wedge_area(1.0, tinyEpsilon, 0.5 * pi), pi,
+              5 * delta);
 
-  ASSERT_NEAR(regularized_wedge_area(1.0, -tinyEpsilon, 0.5 * pi), pi, 5 * delta);
+  ASSERT_NEAR(regularized_wedge_area(1.0, -tinyEpsilon, 0.5 * pi), pi,
+              5 * delta);
 }
 
 // Test regularized_wedge_area using different values of the angle `alpha`.

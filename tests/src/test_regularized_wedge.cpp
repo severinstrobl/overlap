@@ -31,7 +31,8 @@ TEST(RegularizedWedge, Distance) {
 
   constexpr auto epsilon = 5 * std::numeric_limits<Scalar>::epsilon();
 
-  ASSERT_NEAR(regularized_wedge(1.0, tinyEpsilon, 0.25 * pi), pi / 6.0, epsilon);
+  ASSERT_NEAR(regularized_wedge(1.0, tinyEpsilon, 0.25 * pi), pi / 6.0,
+              epsilon);
   ASSERT_NEAR(regularized_wedge(1.0, tinyEpsilon, 0.5 * pi), pi / 3.0, epsilon);
 }
 
@@ -54,25 +55,25 @@ TEST(RegularizedWedge, Angle) {
   ASSERT_NEAR(
       regularized_wedge(1.0, 0.5, alpha, 0.5 * std::cos(alpha + 0.5 * pi)),
       regularized_wedge(1.0, 0.5, alpha - delta,
-                       0.5 * std::cos(alpha + 0.5 * pi - delta)),
+                        0.5 * std::cos(alpha + 0.5 * pi - delta)),
       5 * epsilon);
 
   ASSERT_NEAR(
       regularized_wedge(1.0, 0.5, alpha, 0.5 * std::cos(alpha + 0.5 * pi)),
       regularized_wedge(1.0, 0.5, alpha + delta,
-                       0.5 * std::cos(alpha + 0.5 * pi + delta)),
+                        0.5 * std::cos(alpha + 0.5 * pi + delta)),
       5 * epsilon);
 
   ASSERT_NEAR(
       regularized_wedge(1.0, 0.5, alpha, -0.5 * std::cos(alpha + 0.5 * pi)),
       regularized_wedge(1.0, 0.5, alpha - delta,
-                       -0.5 * std::cos(alpha + 0.5 * pi - delta)),
+                        -0.5 * std::cos(alpha + 0.5 * pi - delta)),
       5 * epsilon);
 
   ASSERT_NEAR(
       regularized_wedge(1.0, 0.5, alpha, -0.5 * std::cos(alpha + 0.5 * pi)),
       regularized_wedge(1.0, 0.5, alpha + delta,
-                       -0.5 * std::cos(alpha + 0.5 * pi + delta)),
+                        -0.5 * std::cos(alpha + 0.5 * pi + delta)),
       5 * epsilon);
 }
 

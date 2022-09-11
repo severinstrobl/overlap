@@ -59,5 +59,6 @@ TEST(Contains, SphereElement) {
   using namespace overlap;
 
   ASSERT_TRUE(detail::contains(Sphere{Vector::Zero(), 3.0}, unit_hexahedron()));
-  ASSERT_FALSE(detail::contains(Sphere{Vector::Zero(), 0.5}, unit_hexahedron()));
+  ASSERT_FALSE(
+      detail::contains(Sphere{Vector::Zero(), 0.5}, unit_hexahedron()));
 }
