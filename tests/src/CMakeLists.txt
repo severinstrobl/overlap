@@ -82,6 +82,7 @@ endfunction()
 # list of unit tests
 set(unit_tests
     clamp
+    contains
     decompose_elements
     elements
     normal_newell

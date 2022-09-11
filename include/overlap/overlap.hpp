@@ -1006,12 +1006,11 @@ inline auto contains(const Element& element, const Vector& p) -> bool {
 
 template<typename Element, typename = std::enable_if_t<is_element_v<Element>>>
 inline auto contains(const Sphere& sphere, const Element& element) -> bool {
-  return std::transform_reduce(
-             std::begin(element.vertices), std::end(element.vertices),
-             std::size_t{0}, std::plus<>{}, [&](const auto& vertex) {
-               return (sphere.center - vertex).squaredNorm() <=
-                      sphere.radius * sphere.radius;
-             }) == num_vertices<Element>();
+  return std::all_of(std::begin(element.vertices), std::end(element.vertices),
+                     [&](const Vector& vertex) -> bool {
+                       return (sphere.center - vertex).squaredNorm() <=
+                              sphere.radius * sphere.radius;
+                     });
 }
 
 inline auto intersects(const Sphere& s, const Plane& p) -> bool {
