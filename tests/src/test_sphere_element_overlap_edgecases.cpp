@@ -51,8 +51,7 @@ TEST(SphereElementOverlapTest, EdgeCases) {
       {{15.461110118225834, -8.575216180676412, 14.487981174363448},
        21.97121086612232}};
 
-  const scalar_t epsilon = std::sqrt(std::numeric_limits<scalar_t>::epsilon());
-
+  const auto epsilon = std::sqrt(std::numeric_limits<Scalar>::epsilon());
   for (const Sphere& sphere : spheres) {
     validate_overlap_volume(sphere, unit_hexahedron(), epsilon * sphere.volume);
   }

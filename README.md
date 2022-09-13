@@ -50,7 +50,7 @@ existing codes rather easy, often even without the need to reorder nodes.
 The compile-time dependencies of this code are:
 
 - [Eigen3](http://eigen.tuxfamily.org), tested with versions 3.3.4 and above
-- [compiler supporting C++11](https://en.cppreference.com/w/cpp/compiler_support#cpp11)
+- [compiler supporting C++17](https://en.cppreference.com/w/cpp/compiler_support/17)
 
 The software is currently continuously compiled and tested with the following
 compilers:
@@ -60,18 +60,19 @@ compilers:
 | GNU G++    | 10.3.0, 9.3.0, 8.4.0, 7.5.0 |
 | Clang/LLVM | 12.0.0, 11.0.0, 10.0.0, 9.0.1, 8.0.1 |
 
-Additionally, the Intel C++ compiler starting with version 15.0 should work,
-albeit this configuration is not part of the CI process.
+Additionally, the Intel C++ compiler starting with version 19.0 should work,
+albeit this configuration is not part of the CI process. All the newer
+LLVM-based oneAPI compilers are expected to work.
 
 ### C++
 
-The library is implemented as a pure header-only library written in plain
-C++11. To use it in your code, simply include the header file `overlap.hpp` and
+The library is implemented as a header-only library written in C++17. To use it
+in your code, simply include the header file `include/overlap/overlap.hpp` and
 make sure the **Eigen3** headers can be found by your compiler or build system.
-The library creates two relevant type aliases, namely `scalar_t` for `double`
-and `vector_t` for `Eigen::Matrix<scalar_t, 3, 1, Eigen::DontAlign>`, which are
-used in the public interface for scalar and vectorial quantities, respectively.
-In principle, these types can be adjusted to specific needs, yet reducing the
+The library exposes two relevant type aliases, namely `Scalar` for `double` and
+`Vector` for `Eigen::Matrix<Scalar, 3, 1, Eigen::DontAlign>`, which are used in
+the public interface for scalar and vectorial quantities, respectively. In
+principle, these types can be adjusted to specific needs, yet reducing the
 numerical precision of the scalar floating point type will have a significant
 impact on the precision and stability of the calculations.
 
@@ -82,39 +83,39 @@ hexahedron could look something like this:
 ```cpp
 using namespace overlap;
 
-vector_t v0{-1, -1, -1};
-vector_t v1{ 1, -1, -1};
-vector_t v2{ 1,  1, -1};
-vector_t v3{-1,  1, -1};
-vector_t v4{-1, -1,  1};
-vector_t v5{ 1, -1,  1};
-vector_t v6{ 1,  1,  1};
-vector_t v7{-1,  1,  1};
+Vector v0{-1, -1, -1};
+Vector v1{ 1, -1, -1};
+Vector v2{ 1,  1, -1};
+Vector v3{-1,  1, -1};
+Vector v4{-1, -1,  1};
+Vector v5{ 1, -1,  1};
+Vector v6{ 1,  1,  1};
+Vector v7{-1,  1,  1};
 
 Hexahedron hex{v0, v1, v2, v3, v4, v5, v6, v7};
-Sphere s{vector_t::Constant(1), 1};
+Sphere s{Vector::Constant(1), 1};
 
-scalar_t result = overlap_volume(s, hex);
+const Scalar result = overlap_volume(s, hex);
 ```
 
 This code snippet calculates the correct result (&pi;/6) for this simple
 configuration.
 
 To obtain the overlap area of a sphere and the facets of a tetrahedron, the
-function `overlapArea()` can be employed as such:
+function `overlap_area()` can be employed as such:
 
 ```cpp
 using namespace overlap;
 
-vector_t v0{-std::sqrt(3) / 6.0, -1.0 / 2.0, 0};
-vector_t v1{std::sqrt(3) / 3.0, 0, 0};
-vector_t v2{-std::sqrt(3) / 6.0, +1.0 / 2.0, 0};
-vector_t v3{0, 0, std::sqrt(6) / 3.0};
+Vector v0{-std::sqrt(3) / 6.0, -1.0 / 2.0, 0};
+Vector v1{std::sqrt(3) / 3.0, 0, 0};
+Vector v2{-std::sqrt(3) / 6.0, +1.0 / 2.0, 0};
+Vector v3{0, 0, std::sqrt(6) / 3.0};
 
 Tetrahedron tet{v0, v1, v2, v3};
 Sphere s{{0, 0, 1.5}, 1.25};
 
-auto result = overlap_area(s, tet);
+const auto result = overlap_area(s, tet);
 
 std::cout << "surface area of sphere intersecting tetrahedron: " <<
     result[0] << std::endl;
@@ -171,7 +172,7 @@ license terms. For details please consult the corresponding license terms
 included with each package in the respective subdirectory.
 
 | Package     | License |
-|-------------|----------|
+|-------------|---------|
 | [Eigen](http://eigen.tuxfamily.org) | MPL2 |
 | [Google Test](https://github.com/google/googletest) | 3-clause BSD |
 | [pybind11](https://github.com/pybind/pybind11) | 3-clause BSD |

@@ -26,20 +26,20 @@
 
 // Sphere intersects one face.
 TEST(SphereHexAreaTest, Face) {
-  Hexahedron hex = unit_hexahedron();
-  Sphere s({0, 0, 1}, 0.75);
+  const auto hex = unit_hexahedron();
+  const auto s = Sphere{{0, 0, 1}, 0.75};
 
   auto result = overlap_area(s, hex);
 
-  std::array<scalar_t, 8> resultExact;
-  resultExact.fill(scalar_t(0));
-  resultExact[0] = scalar_t(0.5) * s.surfaceArea();
-  resultExact[6] = s.diskArea(s.radius);
+  std::array<Scalar, 8> resultExact;
+  resultExact.fill(Scalar{0});
+  resultExact[0] = Scalar{0.5} * s.surface_area();
+  resultExact[6] = s.disk_area(s.radius);
   resultExact[7] = resultExact[6];
 
-  for (size_t i = 0; i < resultExact.size(); ++i)
+  for (std::size_t i = 0; i < resultExact.size(); ++i)
     ASSERT_NEAR(result[i], resultExact[i],
-                std::numeric_limits<scalar_t>::epsilon());
+                std::numeric_limits<Scalar>::epsilon());
 }
 
 // Sphere intersects one edge (and thus 1 edge and 2 faces).
@@ -49,16 +49,16 @@ TEST(SphereHexAreaTest, Edge) {
 
   auto result = overlap_area(s, hex);
 
-  std::array<scalar_t, 8> resultExact;
-  resultExact.fill(scalar_t(0));
-  resultExact[0] = scalar_t(0.25) * s.surfaceArea();
-  resultExact[3] = 0.5 * s.diskArea(s.radius);
+  std::array<Scalar, 8> resultExact;
+  resultExact.fill(Scalar{0});
+  resultExact[0] = Scalar{0.25} * s.surface_area();
+  resultExact[3] = 0.5 * s.disk_area(s.radius);
   resultExact[4] = resultExact[3];
   resultExact[7] = 2 * resultExact[3];
 
-  for (size_t i = 0; i < resultExact.size(); ++i)
+  for (std::size_t i = 0; i < resultExact.size(); ++i)
     ASSERT_NEAR(result[i], resultExact[i],
-                std::numeric_limits<scalar_t>::epsilon());
+                std::numeric_limits<Scalar>::epsilon());
 }
 
 // Sphere intersects one vertex (and thus 3 edge and 3 faces).
@@ -68,15 +68,15 @@ TEST(SphereHexAreaTest, Vertex) {
 
   auto result = overlap_area(s, hex);
 
-  std::array<scalar_t, 8> resultExact;
-  resultExact.fill(scalar_t(0));
-  resultExact[0] = scalar_t(0.125) * s.surfaceArea();
-  resultExact[3] = 0.25 * s.diskArea(s.radius);
+  std::array<Scalar, 8> resultExact;
+  resultExact.fill(Scalar{0});
+  resultExact[0] = Scalar{0.125} * s.surface_area();
+  resultExact[3] = 0.25 * s.disk_area(s.radius);
   resultExact[4] = resultExact[3];
   resultExact[6] = resultExact[3];
   resultExact[7] = 3 * resultExact[3];
 
-  constexpr scalar_t epsilon = 1e3 * std::numeric_limits<scalar_t>::epsilon();
-  for (size_t i = 0; i < resultExact.size(); ++i)
+  constexpr auto epsilon = Scalar{1e3} * std::numeric_limits<Scalar>::epsilon();
+  for (std::size_t i = 0; i < resultExact.size(); ++i)
     ASSERT_NEAR(result[i], resultExact[i], epsilon);
 }

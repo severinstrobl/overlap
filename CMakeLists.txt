@@ -12,7 +12,6 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     set(CMAKE_BUILD_TYPE RelWithDebInfo)
   endif()
 
-  set(CMAKE_CXX_STANDARD 11)
   set(CMAKE_CXX_STANDARD_REQUIRED on)
   set(CMAKE_CXX_EXTENSIONS off)
 
@@ -40,14 +39,14 @@ add_library(overlap INTERFACE)
 add_library(overlap::overlap ALIAS overlap)
 add_library(overlap::headers ALIAS overlap)
 
+target_compile_features(overlap INTERFACE cxx_std_17)
+
 include(GNUInstallDirs)
 
 target_include_directories(
   overlap INTERFACE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
                     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
-
-target_compile_features(overlap INTERFACE cxx_std_11)
 
 # optional: C++ unit tests
 if(OVERLAP_WITH_TESTS)

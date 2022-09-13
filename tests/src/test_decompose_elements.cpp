@@ -38,13 +38,13 @@ TEST(DecomposeElements, Hexahedron) {
   decompose(hex, tets6);
   decompose(hex, wedges);
 
-  scalar_t tets5Volume = 0;
+  auto tets5Volume = Scalar{0};
   for (const auto& tet : tets5) {
     tets5Volume += tet.volume;
   }
 
-  scalar_t tets6Volume = 0;
-  scalar_t tets24Volume = 0;
+  auto tets6Volume = Scalar{0};
+  auto tets24Volume = Scalar{0};
   for (const auto& tet : tets6) {
     decompose(tet, subTets);
     tets6Volume += tet.volume;
@@ -54,7 +54,7 @@ TEST(DecomposeElements, Hexahedron) {
     }
   }
 
-  constexpr scalar_t delta(5e2 * std::numeric_limits<scalar_t>::epsilon());
+  constexpr auto delta = Scalar{5e2} * std::numeric_limits<Scalar>::epsilon();
 
   ASSERT_NEAR(hex.volume, tets5Volume, delta);
   ASSERT_NEAR(hex.volume, tets6Volume, delta);

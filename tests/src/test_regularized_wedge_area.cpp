@@ -22,31 +22,33 @@
 
 #include "overlap/overlap.hpp"
 
-// Test regularizedWedgeArea using different values for the distance of the
+// Test regularized_wedge_area using different values for the distance of the
 // intersection point from the center of the sphere `z`.
 TEST(RegularizedWedgeArea, Distance) {
   using namespace overlap::detail;
 
   // special cases should return precisely zero
-  ASSERT_EQ(regularizedWedgeArea(1.0, 1.0, 0.25 * pi), 0.0);
-  ASSERT_EQ(regularizedWedgeArea(1.0, -1.0, 0.25 * pi), 0.0);
+  ASSERT_EQ(regularized_wedge_area(1.0, 1.0, 0.25 * pi), 0.0);
+  ASSERT_EQ(regularized_wedge_area(1.0, -1.0, 0.25 * pi), 0.0);
 
-  constexpr scalar_t delta(2e2 * std::numeric_limits<scalar_t>::epsilon());
+  constexpr auto delta = Scalar{2e2} * std::numeric_limits<Scalar>::epsilon();
 
-  ASSERT_NEAR(regularizedWedgeArea(1.0, tinyEpsilon, 0.5 * pi), pi, 5 * delta);
+  ASSERT_NEAR(regularized_wedge_area(1.0, tinyEpsilon, 0.5 * pi), pi,
+              5 * delta);
 
-  ASSERT_NEAR(regularizedWedgeArea(1.0, -tinyEpsilon, 0.5 * pi), pi, 5 * delta);
+  ASSERT_NEAR(regularized_wedge_area(1.0, -tinyEpsilon, 0.5 * pi), pi,
+              5 * delta);
 }
 
-// Test regularizedWedgeArea using different values of the angle `alpha`.
-TEST(regularizedWedgeArea, Angle) {
+// Test regularized_wedge_area using different values of the angle `alpha`.
+TEST(regularized_wedge_area, Angle) {
   using namespace overlap::detail;
 
   // special cases should return constants values
-  ASSERT_EQ(regularizedWedgeArea(1.0, 0.0, 0.0), 0.0);
-  ASSERT_EQ(regularizedWedgeArea(1.0, 0.0, 0.5 * pi), pi);
+  ASSERT_EQ(regularized_wedge_area(1.0, 0.0, 0.0), 0.0);
+  ASSERT_EQ(regularized_wedge_area(1.0, 0.0, 0.5 * pi), pi);
 
-  ASSERT_NEAR(regularizedWedgeArea(1.0, 0.0, 0.75 * pi),
-              2 * pi - regularizedWedgeArea(1.0, 0.0, 0.25 * pi),
-              std::numeric_limits<scalar_t>::epsilon());
+  ASSERT_NEAR(regularized_wedge_area(1.0, 0.0, 0.75 * pi),
+              2 * pi - regularized_wedge_area(1.0, 0.0, 0.25 * pi),
+              std::numeric_limits<Scalar>::epsilon());
 }
