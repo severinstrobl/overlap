@@ -65,7 +65,7 @@ auto normal_newell(Iterator first, Iterator last, const Vector& center)
     -> Vector {
   const auto count = std::distance(first, last);
   auto normal = Vector::Zero().eval();
-  for (std::size_t i = 0; i < count; ++i) {
+  for (auto i = decltype(count){0}; i < count; ++i) {
     normal +=
         (*(first + i) - center).cross(*(first + ((i + 1) % count)) - center);
   }

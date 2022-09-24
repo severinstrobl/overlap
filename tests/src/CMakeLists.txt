@@ -117,6 +117,13 @@ if(_have_fenv_h)
 endif()
 cmake_reset_check_state()
 
+# activate additional compiler warnings
+if(CMAKE_CXX_COMPILER_ID MATCHES "(GNU|Clang)" AND CMAKE_BUILD_TYPE MATCHES
+                                                   "(Debug|RelWithDebInfo)"
+)
+  string(APPEND CMAKE_CXX_FLAGS " -Wall -Werror -Wextra")
+endif()
+
 # register the individual unit tests
 foreach(unit_test ${unit_tests})
   overlap_add_test(${unit_test} "${unit_test}.cpp")
