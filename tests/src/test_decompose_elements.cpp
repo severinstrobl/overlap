@@ -18,46 +18,45 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "gtest/gtest.h"
-
-#include "overlap/overlap.hpp"
-
 #include "common.hpp"
 
-using namespace overlap;
+TEST_SUITE("DecomposeElements") {
+  TEST_CASE("Hexahedron") {
+    using namespace overlap;
 
-TEST(DecomposeElements, Hexahedron) {
-  Hexahedron hex = unit_hexahedron();
+    const auto hex = overlap::unit_hexahedron();
+    std::array<Tetrahedron, 5> tets5;
+    std::array<Tetrahedron, 6> tets6;
+    std::array<Wedge, 2> wedges;
 
-  std::array<Tetrahedron, 4> subTets;
-  std::array<Tetrahedron, 5> tets5;
-  std::array<Tetrahedron, 6> tets6;
-  std::array<Wedge, 2> wedges;
+    decompose(hex, tets5);
+    decompose(hex, tets6);
+    decompose(hex, wedges);
 
-  decompose(hex, tets5);
-  decompose(hex, tets6);
-  decompose(hex, wedges);
-
-  auto tets5Volume = Scalar{0};
-  for (const auto& tet : tets5) {
-    tets5Volume += tet.volume;
-  }
-
-  auto tets6Volume = Scalar{0};
-  auto tets24Volume = Scalar{0};
-  for (const auto& tet : tets6) {
-    decompose(tet, subTets);
-    tets6Volume += tet.volume;
-
-    for (const auto& subTet : subTets) {
-      tets24Volume += subTet.volume;
+    auto tets5Volume = Scalar{0};
+    for (const auto& tet : tets5) {
+      tets5Volume += tet.volume;
     }
+
+    auto tets6Volume = Scalar{0};
+    auto tets24Volume = Scalar{0};
+    for (const auto& tet : tets6) {
+      std::array<Tetrahedron, 4> subTets;
+      decompose(tet, subTets);
+      tets6Volume += tet.volume;
+
+      for (const auto& subTet : subTets) {
+        tets24Volume += subTet.volume;
+      }
+    }
+
+    constexpr auto epsilon =
+        Scalar{5e2} * std::numeric_limits<Scalar>::epsilon();
+
+    REQUIRE(hex.volume == Approx(tets5Volume).epsilon(epsilon));
+    REQUIRE(hex.volume == Approx(tets6Volume).epsilon(epsilon));
+    REQUIRE(hex.volume == Approx(tets24Volume).epsilon(epsilon));
+    REQUIRE(hex.volume ==
+            Approx(wedges[0].volume + wedges[1].volume).epsilon(epsilon));
   }
-
-  constexpr auto delta = Scalar{5e2} * std::numeric_limits<Scalar>::epsilon();
-
-  ASSERT_NEAR(hex.volume, tets5Volume, delta);
-  ASSERT_NEAR(hex.volume, tets6Volume, delta);
-  ASSERT_NEAR(hex.volume, tets24Volume, delta);
-  ASSERT_NEAR(hex.volume, wedges[0].volume + wedges[1].volume, delta);
 }

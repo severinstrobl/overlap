@@ -18,47 +18,38 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "gtest/gtest.h"
-
-#include "overlap/overlap.hpp"
-
 #include "common.hpp"
 
-TEST(Contains, SpherePoint) {
+TEST_SUITE("contains") {
   using namespace overlap;
 
-  ASSERT_TRUE(detail::contains(Sphere{}, Vector::Zero()));
-  ASSERT_TRUE(detail::contains(Sphere{}, Vector::Constant(0.25)));
-  ASSERT_FALSE(detail::contains(Sphere{}, Vector::Constant(2.0)));
-}
+  TEST_CASE("SpherePoint") {
+    CHECK(detail::contains(Sphere{}, Vector::Zero()));
+    CHECK(detail::contains(Sphere{}, Vector::Constant(0.25)));
+    CHECK(!detail::contains(Sphere{}, Vector::Constant(2.0)));
+  }
 
-TEST(Contains, PolygonPoint) {
-  using namespace overlap;
+  TEST_CASE("PolygonPoint") {
+    const auto tri = detail::Triangle{{{{0, 0, 0}, {1, 0, 0}, {0, 1, 0}}}};
 
-  const auto tri = detail::Triangle{{{{0, 0, 0}, {1, 0, 0}, {0, 1, 0}}}};
+    CHECK(detail::contains(tri, Vector{0.25, 0.25, 0.0}));
+    CHECK(!detail::contains(tri, Vector{1.0, 1.0, 0.0}));
 
-  ASSERT_TRUE(detail::contains(tri, Vector{0.25, 0.25, 0.0}));
-  ASSERT_FALSE(detail::contains(tri, Vector{1.0, 1.0, 0.0}));
+    const auto quad =
+        detail::Quadrilateral{{{{0, 0, 0}, {1, 0, 0}, {1, 1, 0}, {0, 1, 0}}}};
 
-  const auto quad =
-      detail::Quadrilateral{{{{0, 0, 0}, {1, 0, 0}, {1, 1, 0}, {0, 1, 0}}}};
+    CHECK(detail::contains(quad, Vector{0.5, 0.5, 0.0}));
+    CHECK(!detail::contains(quad, Vector{-1.0, 0.0, 0.0}));
+  }
 
-  ASSERT_TRUE(detail::contains(quad, Vector{0.5, 0.5, 0.0}));
-  ASSERT_FALSE(detail::contains(quad, Vector{-1.0, 0.0, 0.0}));
-}
+  TEST_CASE("ElementPoint") {
+    CHECK(detail::contains(unit_hexahedron(), Vector::Zero()));
+    CHECK(detail::contains(unit_hexahedron(), Vector::Constant(0.5)));
+    CHECK(!detail::contains(unit_hexahedron(), Vector::Constant(2.0)));
+  }
 
-TEST(Contains, ElementPoint) {
-  using namespace overlap;
-
-  ASSERT_TRUE(detail::contains(unit_hexahedron(), Vector::Zero()));
-  ASSERT_TRUE(detail::contains(unit_hexahedron(), Vector::Constant(0.5)));
-  ASSERT_FALSE(detail::contains(unit_hexahedron(), Vector::Constant(2.0)));
-}
-
-TEST(Contains, SphereElement) {
-  using namespace overlap;
-
-  ASSERT_TRUE(detail::contains(Sphere{Vector::Zero(), 3.0}, unit_hexahedron()));
-  ASSERT_FALSE(
-      detail::contains(Sphere{Vector::Zero(), 0.5}, unit_hexahedron()));
+  TEST_CASE("SphereElement") {
+    CHECK(detail::contains(Sphere{Vector::Zero(), 3.0}, unit_hexahedron()));
+    CHECK(!detail::contains(Sphere{Vector::Zero(), 0.5}, unit_hexahedron()));
+  }
 }

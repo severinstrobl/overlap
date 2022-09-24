@@ -18,25 +18,27 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "gtest/gtest.h"
+#include "common.hpp"
 
-#include "overlap/overlap.hpp"
-
-TEST(Polygon, IsPlanar) {
+TEST_SUITE("Polygon") {
   using namespace overlap::detail;
 
-  const auto tri =
-      Triangle{{{{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {1.0, 1.0, 0.0}}}};
+  TEST_CASE("IsPlanarTri") {
+    const auto tri =
+        Triangle{{{{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {1.0, 1.0, 0.0}}}};
 
-  ASSERT_TRUE(tri.is_planar());
+    CHECK(tri.is_planar());
+  }
 
-  const auto quad0 = Quadrilateral{
-      {{{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {1.0, 1.0, 0.0}, {0.0, 1.0, 0.0}}}};
+  TEST_CASE("IsPlanarQuad") {
+    const auto quad0 = Quadrilateral{
+        {{{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {1.0, 1.0, 0.0}, {0.0, 1.0, 0.0}}}};
 
-  ASSERT_TRUE(quad0.is_planar());
+    CHECK(quad0.is_planar());
 
-  const auto quad1 = Quadrilateral{
-      {{{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {1.0, 1.0, 0.0}, {0.0, 1.0, 0.01}}}};
+    const auto quad1 = Quadrilateral{
+        {{{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {1.0, 1.0, 0.0}, {0.0, 1.0, 0.1}}}};
 
-  ASSERT_FALSE(quad1.is_planar());
+    CHECK(!quad1.is_planar());
+  }
 }

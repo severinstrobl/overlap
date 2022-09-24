@@ -174,5 +174,5 @@ included with each package in the respective subdirectory.
 | Package     | License |
 |-------------|---------|
 | [Eigen](http://eigen.tuxfamily.org) | MPL2 |
-| [Google Test](https://github.com/google/googletest) | 3-clause BSD |
 | [pybind11](https://github.com/pybind/pybind11) | 3-clause BSD |
+| [doctest](https://github.com/doctest/doctest) | MIT |

@@ -18,29 +18,40 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "gtest/gtest.h"
+#include "common.hpp"
 
-#include "overlap/overlap.hpp"
+TEST_SUITE("clamp") {
+  // Test clamping of numbers without tolerance.
+  TEST_CASE("WithoutTolerance") {
+    // clang-format off
+    CHECK_EQ(overlap::detail::clamp(-0.5, -1.0, 1.0), -0.5);
+    CHECK_EQ(overlap::detail::clamp( 0.5, -1.0, 1.0),  0.5);
+    // clang-format on
+  }
 
-// Test clamping of numbers.
-TEST(Clamp, Basic) {
-  using namespace overlap::detail;
+  // Test clamping of numbers with tolerance.
+  TEST_CASE("WithTolerance") {
+    // clang-format off
+    CHECK_EQ(overlap::detail::clamp(-1.1, -1.0, 1.0, 0.25), -1.0);
+    CHECK_EQ(overlap::detail::clamp( 1.1, -1.0, 1.0, 0.25),  1.0);
+    // clang-format on
+  }
 
-  // clang-format off
-	ASSERT_EQ(clamp(-1.1, -1.0, 1.0, 0.25), -1.0);
-	ASSERT_EQ(clamp( 1.1, -1.0, 1.0, 0.25),  1.0);
+  // Test clamping of numbers at lower/upper limit.
+  TEST_CASE("Limits") {
+    // clang-format off
+    CHECK_EQ(overlap::detail::clamp(-1.0, -1.0, 1.0, 0.0), -1.0);
+    CHECK_EQ(overlap::detail::clamp( 1.0, -1.0, 1.0, 0.0),  1.0);
+    // clang-format on
+  }
 
-	ASSERT_EQ(clamp(-1.0, -1.0, 1.0, 0.0), -1.0);
-	ASSERT_EQ(clamp( 1.0, -1.0, 1.0, 0.0),  1.0);
-  // clang-format on
-}
-
-// Test error handling of clamping of numbers using invalid inputs.
-TEST(Clamp, Asserts) {
-  using namespace overlap::detail;
-
-  // clang-format off
-  ASSERT_DEBUG_DEATH(clamp(0.0,  1.0, -1.0,  0.0), "");
-  ASSERT_DEBUG_DEATH(clamp(0.0, -1.0,  1.0, -1.0), "");
-  // clang-format on
+  // Test error handling of clamping of numbers using invalid inputs in debug
+  // mode.
+  // NOLINTNEXTLINE(readability-function-cognitive-complexity)
+  TEST_CASE("InvalidArguments") {
+    // clang-format off
+    REQUIRE_THROWS_AS(overlap::detail::clamp(0.0,  1.0, -1.0), AssertionError);
+    REQUIRE_THROWS_AS(overlap::detail::clamp(0.0, -1.0,  1.0, -1.0), AssertionError);
+    // clang-format on
+  }
 }

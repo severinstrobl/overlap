@@ -18,41 +18,69 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "gtest/gtest.h"
+#include "common.hpp"
 
-#include "overlap/overlap.hpp"
+TEST_SUITE("NormalNewell") {
+  inline auto format_msg(const overlap::Vector& normal,
+                         const overlap::Vector& expected)
+      ->std::string {
+    std::stringstream strm;
+    strm << "invalid normal generated: [" << normal.transpose()
+         << "], expected: [" << expected.transpose() << "]";
 
-TEST(NormalNewell, Basic) {
-  using namespace overlap::detail;
+    return strm.str();
+  }
 
-  const std::array<Vector, 3> points = {
-      {{-0.8482081444352685, -0.106496132943784, -0.5188463331100054},
-       {-0.8482081363047198, -0.1064961977010221, -0.5188463331100054},
-       {-0.8482081363047198, -0.106496132943784, -0.5188463464017972}}};
+  TEST_CASE("Simple") {
+    using namespace overlap::detail;
 
-  const auto center =
-      (Scalar{1} / Scalar{3}) *
-      std::accumulate(points.begin(), points.end(), Vector::Zero().eval());
+    const auto points =
+        std::array<Vector, 3>{{{0, 0, 0}, {1, 0, 0}, {1, 1, 0}}};
+    const auto center =
+        (Scalar{1} / Scalar{3}) *
+        std::accumulate(points.begin(), points.end(), Vector::Zero().eval());
 
-  const auto normal = normal_newell(points.begin(), points.end(), center);
-  const auto expected =
-      Vector{0.8482081353353663, 0.1064961653160474, 0.5188463413419023};
+    const auto normal = normal_newell(points.begin(), points.end(), center);
+    const auto expected = Vector::UnitZ();
 
-  ASSERT_LE((normal - expected).norm(), std::numeric_limits<Scalar>::epsilon())
-      << "Invalid normal generated: [" << normal.transpose() << "]";
-}
+    REQUIRE_MESSAGE(
+        (normal - expected).norm() < std::numeric_limits<Scalar>::epsilon(),
+        format_msg(normal, expected));
+  }
 
-TEST(NormalNewell, Degenerated) {
-  using namespace overlap::detail;
+  TEST_CASE("EdgeCase") {
+    using namespace overlap::detail;
 
-  const std::array<Vector, 3> points = {{{0, 0, 0}, {1, 1, 0}, {0, 0, 0}}};
+    const std::array<Vector, 3> points = {
+        {{-0.8482081444352685, -0.106496132943784, -0.5188463331100054},
+         {-0.8482081363047198, -0.1064961977010221, -0.5188463331100054},
+         {-0.8482081363047198, -0.106496132943784, -0.5188463464017972}}};
 
-  const auto center =
-      (Scalar{1} / Scalar{points.size()}) *
-      std::accumulate(points.begin(), points.end(), Vector::Zero().eval());
+    const auto center =
+        (Scalar{1} / Scalar{3}) *
+        std::accumulate(points.begin(), points.end(), Vector::Zero().eval());
 
-  const auto normal = normal_newell(points.begin(), points.end(), center);
+    const auto normal = normal_newell(points.begin(), points.end(), center);
+    const auto expected =
+        Vector{0.8482081353353663, 0.1064961653160474, 0.5188463413419023};
 
-  ASSERT_LE(normal.norm(), std::numeric_limits<Scalar>::epsilon())
-      << "Invalid normal generated: [" << normal.transpose() << "]";
+    REQUIRE_MESSAGE(
+        (normal - expected).norm() < std::numeric_limits<Scalar>::epsilon(),
+        format_msg(normal, expected));
+  }
+
+  TEST_CASE("Degenerated") {
+    using namespace overlap::detail;
+
+    const std::array<Vector, 3> points = {{{0, 0, 0}, {1, 1, 0}, {0, 0, 0}}};
+
+    const auto center =
+        (Scalar{1} / Scalar{points.size()}) *
+        std::accumulate(points.begin(), points.end(), Vector::Zero().eval());
+
+    const auto normal = normal_newell(points.begin(), points.end(), center);
+
+    REQUIRE_MESSAGE(normal.norm() < std::numeric_limits<Scalar>::epsilon(),
+                    format_msg(normal, Vector::Zero()));
+  }
 }
