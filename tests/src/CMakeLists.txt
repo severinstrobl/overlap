@@ -30,53 +30,43 @@ if(OVERLAP_WITH_COVERAGE)
   endif()
 endif()
 
-# FIXME: switch to Catch2
-
-# build GoogleTest shipped as a third-party dependency
-
-# avoid linker issues on Windows when mixing shared and static libraries
-set(gtest_force_shared_crt
-    ON
-    CACHE BOOL "" FORCE
-)
-
-add_subdirectory(
-  "${PROJECT_SOURCE_DIR}/third_party/googletest" "third_party/googletest"
-  EXCLUDE_FROM_ALL
-)
-
-mark_as_advanced(
-  BUILD_GMOCK
-  BUILD_GTEST
-  BUILD_SHARED_LIBS
-  gmock_build_tests
-  gtest_build_samples
-  gtest_build_tests
-  gtest_disable_pthreads
-  gtest_force_shared_crt
-  gtest_hide_internal_symbols
-)
-
-set_target_properties(gtest PROPERTIES FOLDER extern)
-set_target_properties(gtest_main PROPERTIES FOLDER extern)
-set_target_properties(gmock PROPERTIES FOLDER extern)
-set_target_properties(gmock_main PROPERTIES FOLDER extern)
-
-# load Google Test module and set up helper function for creating tests
-include(GoogleTest)
-
-# helper function to dd a test using the Google Test framework
-function(overlap_add_test test_name test_source)
-  add_executable(${test_name} ${test_source})
-  target_link_libraries(${test_name} PRIVATE gtest gtest_main coverage)
-
-  gtest_discover_tests(
-    ${test_name}
-    WORKING_DIRECTORY ${PROJECT_DIR}
-    PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${PROJECT_DIR}"
+if(NOT TARGET doctest::doctest)
+  add_subdirectory(
+    "${PROJECT_SOURCE_DIR}/third_party/doctest" "third_party/doctest"
+    EXCLUDE_FROM_ALL
   )
 
+  list(APPEND CMAKE_MODULE_PATH
+       "${PROJECT_SOURCE_DIR}/third_party/doctest/scripts/cmake"
+  )
+endif()
+
+include(CTest)
+include(doctest)
+
+# helper function to add an individual test
+function(overlap_add_test test_name test_source)
+  add_executable(${test_name} ${test_source})
+  target_compile_features(${test_name} PRIVATE cxx_std_17)
+  target_link_libraries(${test_name} PRIVATE doctest::doctest coverage)
+
   set_target_properties(${test_name} PROPERTIES FOLDER tests)
+
+  target_compile_definitions(
+    ${test_name} PRIVATE DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+  )
+
+  doctest_discover_tests(
+    ${test_name}
+    REPORTER
+    junit
+    OUTPUT_DIR
+    ${CMAKE_BINARY_DIR}/
+    OUTPUT_PREFIX
+    doctest_testing_
+    OUTPUT_SUFFIX
+    .xml
+  )
 endfunction()
 
 # list of unit tests

@@ -18,56 +18,52 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "gtest/gtest.h"
+#include "common.hpp"
 
-#include "overlap/overlap.hpp"
+TEST_SUITE("Sphere") {
+  using namespace overlap;
 
-using namespace overlap;
-
-TEST(Sphere, Volume) {
+  constexpr auto epsilon = std::numeric_limits<Scalar>::epsilon();
   const auto s = Sphere{};
 
-  constexpr auto eps = std::numeric_limits<Scalar>::epsilon();
-  ASSERT_NEAR(s.volume, 4.0 / 3.0 * detail::pi, eps);
+  TEST_CASE("Volume") {
+    CHECK(s.volume == Approx(4.0 / 3.0 * detail::pi).epsilon(epsilon));
+  }
 
-  ASSERT_EQ(s.cap_volume(-1 * s.radius), 0.0);
-  ASSERT_EQ(s.cap_volume(0), 0.0);
-  ASSERT_NEAR(s.cap_volume(0.5 * s.radius), (detail::pi * 0.25 / 3.0) * 2.5,
-              eps);
-  ASSERT_NEAR(s.cap_volume(s.radius), 0.5 * s.volume, eps);
-  ASSERT_EQ(s.cap_volume(2 * s.radius), s.volume);
-  ASSERT_EQ(s.cap_volume(3 * s.radius), s.volume);
-}
+  TEST_CASE("CapVolume") {
+    CHECK(s.cap_volume(-1 * s.radius) == Scalar{0});
+    CHECK(s.cap_volume(0) == Scalar{0});
+    CHECK(s.cap_volume(0.5 * s.radius) ==
+          Approx(0.625 * detail::pi / 3.0).epsilon(epsilon));
+    CHECK(s.cap_volume(s.radius) == Approx(0.5 * s.volume).epsilon(epsilon));
+    CHECK(s.cap_volume(2 * s.radius) == s.volume);
+    CHECK(s.cap_volume(3 * s.radius) == s.volume);
+  }
 
-TEST(Sphere, SurfaceArea) {
-  const auto s = Sphere{};
+  TEST_CASE("SurfaceArea") {
+    CHECK(s.surface_area() == Approx(4.0 * detail::pi).epsilon(epsilon));
+  }
 
-  constexpr auto eps = std::numeric_limits<Scalar>::epsilon();
+  TEST_CASE("CapSurfaceArea") {
+    CHECK(s.cap_surface_area(-1 * s.radius) == Scalar{0});
+    CHECK(s.cap_surface_area(0) == Scalar{0});
+    CHECK(s.cap_surface_area(s.radius) == 0.5 * s.surface_area());
+    CHECK(s.cap_surface_area(2 * s.radius) == s.surface_area());
+    CHECK(s.cap_surface_area(3 * s.radius) == s.surface_area());
+  }
 
-  ASSERT_NEAR(s.surface_area(), 4.0 * detail::pi, eps);
+  TEST_CASE("DiskArea") {
+    CHECK(s.disk_area(-1 * s.radius) == Scalar{0});
+    CHECK(s.disk_area(0) == Scalar{0});
+    CHECK(s.disk_area(s.radius) == Approx(detail::pi).epsilon(epsilon));
+    CHECK(s.disk_area(2 * s.radius) == Scalar{0});
+    CHECK(s.disk_area(3 * s.radius) == Scalar{0});
+  }
 
-  ASSERT_EQ(s.cap_surface_area(-1 * s.radius), 0.0);
-  ASSERT_EQ(s.cap_surface_area(0), 0.0);
-  ASSERT_EQ(s.cap_surface_area(s.radius), 0.5 * s.surface_area());
-  ASSERT_EQ(s.cap_surface_area(2 * s.radius), s.surface_area());
-  ASSERT_EQ(s.cap_surface_area(3 * s.radius), s.surface_area());
-}
+  TEST_CASE("Contains") {
+    const auto s = Sphere{Vector::Zero(), 2.0};
 
-TEST(Sphere, DiskArea) {
-  const auto s = Sphere{};
-
-  constexpr auto eps = std::numeric_limits<Scalar>::epsilon();
-
-  ASSERT_EQ(s.disk_area(-1 * s.radius), 0.0);
-  ASSERT_EQ(s.disk_area(0), 0.0);
-  ASSERT_NEAR(s.disk_area(s.radius), detail::pi, eps);
-  ASSERT_EQ(s.disk_area(2 * s.radius), 0.0);
-  ASSERT_EQ(s.disk_area(3 * s.radius), 0.0);
-}
-
-TEST(Sphere, Contains) {
-  const auto s = Sphere{Vector::Zero(), 2.0};
-
-  ASSERT_TRUE(contains(s, Vector{1, 1, 1}));
-  ASSERT_FALSE(contains(s, Vector{2, 2, 2}));
+    CHECK(contains(s, Vector{1, 1, 1}));
+    CHECK(!contains(s, Vector{2, 2, 2}));
+  }
 }

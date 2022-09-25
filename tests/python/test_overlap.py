@@ -21,10 +21,10 @@ import overlap
 
 
 def test_sphere():
-    s = overlap.Sphere((1, 1, 1), 1)
-    np.testing.assert_almost_equal(s.center, [1, 1, 1])
-    np.testing.assert_almost_equal(s.radius, 1.0)
-    np.testing.assert_almost_equal(s.volume, 4./3. * np.pi)
+    sphere = overlap.Sphere((1, 1, 1), 1)
+    np.testing.assert_almost_equal(sphere.center, [1, 1, 1])
+    np.testing.assert_almost_equal(sphere.radius, 1.0)
+    np.testing.assert_almost_equal(sphere.volume, 4./3. * np.pi)
 
 
 class TestElements:
@@ -35,6 +35,7 @@ class TestElements:
             (0, np.sqrt(4./3.), -np.sqrt(1./6.)),
             (0, 0, np.sqrt(3./2.))
         ))
+
         tet = overlap.Tetrahedron(vertices)
 
         np.testing.assert_almost_equal(tet.volume, 8. / (6 * np.sqrt(2)))
@@ -60,14 +61,21 @@ class TestElements:
             (-1, -1,  1), (1, -1,  1), (1,  1,  1), (-1,  1,  1)
         ]
 
-        hexa = overlap.Hexahedron(vertices)
+        hex = overlap.Hexahedron(vertices)
 
-        np.testing.assert_almost_equal(hexa.volume, 8.0)
-        np.testing.assert_almost_equal(hexa.center, [0, 0, 0])
-        np.testing.assert_almost_equal(hexa.surface_area, 24.0)
+        np.testing.assert_almost_equal(hex.volume, 8.0)
+        np.testing.assert_almost_equal(hex.center, [0, 0, 0])
+        np.testing.assert_almost_equal(hex.surface_area, 24.0)
 
 
 class TestOverlap:
+    def test_tetrahedron(self):
+        tet = overlap.Tetrahedron([(0, 0, 0), (2, 0, 0), (0, 2, 0), (0, 0, 2)])
+        sphere = overlap.Sphere((0, 0, 0), 1)
+
+        np.testing.assert_almost_equal(
+            overlap.overlap_volume(sphere, tet), sphere.volume / 8)
+
     def test_wedge(self):
         vertices = [
             (-1, -1, -1), (1, -1, -1), (1,  1, -1),
@@ -75,10 +83,10 @@ class TestOverlap:
         ]
 
         wedge = overlap.Wedge(vertices)
-        s = overlap.Sphere((1, 1, 1), 1)
+        sphere = overlap.Sphere((1, 1, 1), 1)
 
         np.testing.assert_almost_equal(
-            overlap.overlap_volume(s, wedge), np.pi / 12)
+            overlap.overlap_volume(sphere, wedge), np.pi / 12)
 
     def test_hexahedron(self):
         vertices = [
@@ -86,11 +94,11 @@ class TestOverlap:
             (-1, -1,  1), (1, -1,  1), (1,  1,  1), (-1,  1,  1)
         ]
 
-        hexa = overlap.Hexahedron(vertices)
-        s = overlap.Sphere((1, 1, 1), 1)
+        hex = overlap.Hexahedron(vertices)
+        sphere = overlap.Sphere((1, 1, 1), 1)
 
         np.testing.assert_almost_equal(
-            overlap.overlap_volume(s, hexa), np.pi / 6)
+            overlap.overlap_volume(sphere, hex), np.pi / 6)
 
 
 class TestOverlapArea:
@@ -101,28 +109,28 @@ class TestOverlapArea:
         ]
 
         wedge = overlap.Wedge(vertices)
-        s = overlap.Sphere((0, 0, 0), 1)
+        sphere = overlap.Sphere((0, 0, 0), 1)
 
-        np.testing.assert_almost_equal(overlap.overlap_area(s, wedge), [
-            s.surface_area / 2,
-            0., 0., 0., s.radius**2 * np.pi, 0.,
-            s.radius**2 * np.pi
+        np.testing.assert_almost_equal(overlap.overlap_area(sphere, wedge), [
+            sphere.surface_area / 2,
+            0., 0., 0., sphere.radius**2 * np.pi, 0.,
+            sphere.radius**2 * np.pi
         ])
 
     def test_hexahedron(self):
-        s = overlap.Sphere((1, 1, 1), 1)
+        sphere = overlap.Sphere((1, 1, 1), 1)
 
         vertices = [
             (-1, -1, -1), (1, -1, -1), (1,  1, -1), (-1,  1, -1),
             (-1, -1,  1), (1, -1,  1), (1,  1,  1), (-1,  1,  1)
         ]
 
-        hexa = overlap.Hexahedron(vertices)
+        hex = overlap.Hexahedron(vertices)
 
-        face_overlap = s.radius**2 * np.pi / 4
+        face_overlap = sphere.radius**2 * np.pi / 4
 
-        np.testing.assert_almost_equal(overlap.overlap_area(s, hexa), [
-            s.surface_area / 8,
+        np.testing.assert_almost_equal(overlap.overlap_area(sphere, hex), [
+            sphere.surface_area / 8,
             0., 0., face_overlap, face_overlap, 0, face_overlap,
             3 * face_overlap
         ])

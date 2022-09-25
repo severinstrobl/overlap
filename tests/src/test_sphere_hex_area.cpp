@@ -18,65 +18,67 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "gtest/gtest.h"
-
-#include "overlap/overlap.hpp"
-
 #include "common.hpp"
 
-// Sphere intersects one face.
-TEST(SphereHexAreaTest, Face) {
-  const auto hex = unit_hexahedron();
-  const auto s = Sphere{{0, 0, 1}, 0.75};
+TEST_SUITE("SphereHexAreaTest") {
+  using namespace overlap;
 
-  auto result = overlap_area(s, hex);
+  // Sphere intersects one face.
+  TEST_CASE("Face") {
+    const auto hex = unit_hexahedron();
+    const auto s = Sphere{{0, 0, 1}, 0.75};
 
-  std::array<Scalar, 8> resultExact;
-  resultExact.fill(Scalar{0});
-  resultExact[0] = Scalar{0.5} * s.surface_area();
-  resultExact[6] = s.disk_area(s.radius);
-  resultExact[7] = resultExact[6];
+    auto result = overlap_area(s, hex);
 
-  for (std::size_t i = 0; i < resultExact.size(); ++i)
-    ASSERT_NEAR(result[i], resultExact[i],
-                std::numeric_limits<Scalar>::epsilon());
-}
+    std::array<Scalar, 8> resultExact{};
+    resultExact[0] = Scalar{0.5} * s.surface_area();
+    resultExact[6] = s.disk_area(s.radius);
+    resultExact[7] = resultExact[6];
 
-// Sphere intersects one edge (and thus 1 edge and 2 faces).
-TEST(SphereHexAreaTest, Edge) {
-  Hexahedron hex = unit_hexahedron();
-  Sphere s({1, 1, 0}, 0.75);
+    for (std::size_t i = 0; i < resultExact.size(); ++i) {
+      CHECK(result[i] == Approx(resultExact[i])
+                             .epsilon(std::numeric_limits<Scalar>::epsilon()));
+    }
+  }
 
-  auto result = overlap_area(s, hex);
+  // Sphere intersects one edge (and thus 1 edge and 2 faces).
+  TEST_CASE("Edge") {
+    const auto hex = unit_hexahedron();
+    const auto sphere = Sphere{{1, 1, 0}, 0.75};
 
-  std::array<Scalar, 8> resultExact;
-  resultExact.fill(Scalar{0});
-  resultExact[0] = Scalar{0.25} * s.surface_area();
-  resultExact[3] = 0.5 * s.disk_area(s.radius);
-  resultExact[4] = resultExact[3];
-  resultExact[7] = 2 * resultExact[3];
+    auto result = overlap_area(sphere, hex);
 
-  for (std::size_t i = 0; i < resultExact.size(); ++i)
-    ASSERT_NEAR(result[i], resultExact[i],
-                std::numeric_limits<Scalar>::epsilon());
-}
+    std::array<Scalar, 8> resultExact{};
+    resultExact[0] = Scalar{0.25} * sphere.surface_area();
+    resultExact[3] = 0.5 * sphere.disk_area(sphere.radius);
+    resultExact[4] = resultExact[3];
+    resultExact[7] = 2 * resultExact[3];
 
-// Sphere intersects one vertex (and thus 3 edge and 3 faces).
-TEST(SphereHexAreaTest, Vertex) {
-  Hexahedron hex = unit_hexahedron();
-  Sphere s({1, 1, 1}, 0.75);
+    for (std::size_t i = 0; i < resultExact.size(); ++i) {
+      CHECK(result[i] == Approx(resultExact[i])
+                             .epsilon(std::numeric_limits<Scalar>::epsilon()));
+    }
+  }
 
-  auto result = overlap_area(s, hex);
+  // Sphere intersects one vertex (and thus 3 edge and 3 faces).
+  TEST_CASE("Vertex") {
+    const auto hex = unit_hexahedron();
+    Sphere s({1, 1, 1}, 0.75);
 
-  std::array<Scalar, 8> resultExact;
-  resultExact.fill(Scalar{0});
-  resultExact[0] = Scalar{0.125} * s.surface_area();
-  resultExact[3] = 0.25 * s.disk_area(s.radius);
-  resultExact[4] = resultExact[3];
-  resultExact[6] = resultExact[3];
-  resultExact[7] = 3 * resultExact[3];
+    auto result = overlap_area(s, hex);
 
-  constexpr auto epsilon = Scalar{1e3} * std::numeric_limits<Scalar>::epsilon();
-  for (std::size_t i = 0; i < resultExact.size(); ++i)
-    ASSERT_NEAR(result[i], resultExact[i], epsilon);
+    std::array<Scalar, 8> resultExact{};
+    resultExact[0] = Scalar{0.125} * s.surface_area();
+    resultExact[3] = 0.25 * s.disk_area(s.radius);
+    resultExact[4] = resultExact[3];
+    resultExact[6] = resultExact[3];
+    resultExact[7] = 3 * resultExact[3];
+
+    constexpr auto epsilon =
+        Scalar{1e3} * std::numeric_limits<Scalar>::epsilon();
+
+    for (std::size_t i = 0; i < resultExact.size(); ++i) {
+      CHECK(result[i] == Approx(resultExact[i]).epsilon(epsilon));
+    }
+  }
 }

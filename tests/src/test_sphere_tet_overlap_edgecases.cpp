@@ -18,61 +18,56 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "gtest/gtest.h"
-
-#include "overlap/overlap.hpp"
-
 #include "common.hpp"
 
-TEST(SphereTetOverlap, EdgeCases) {
+TEST_SUITE("SphereTetOverlap") {
   using namespace overlap;
 
-  // clang-format off
-	const std::vector<Sphere> spheres = {
-		{Vector::Zero(), 1.0},
-		{{-0.01725, 0, 0}, 1.0},
-		{Vector::Zero(), 1.0}
-	};
+  TEST_CASE("EdgeCases") {
+    // clang-format off
+		const auto spheres = std::vector<Sphere>{
+			{Vector::Zero(), 1.0},
+			{{-0.01725, 0, 0}, 1.0},
+			{Vector::Zero(), 1.0}
+		};
 
-	const std::vector<Tetrahedron> tetrahedra = {
-		{{{
-			{0.0357829, 0, 1.01271},
-			{0, 0, 1.01271},
-			{0.0356948, 0.0386086, 0.962075},
-			{0, 0, 0.962075}
-		}}},
-		{{{
-			{0.9667906976744187, 0, 3.098296812907414e-16},
-			{1.002654107311333, 0.0384643285369352, -2.82302142880589e-16},
-			{1.002573643410853, 0, 4.131062417209885e-16},
-			{1.002573643410853, 0, -0.05063534883720874}
-		}}},
-		{{{
-			{0.28, -0.9599999999999999, -0.02102000000000028},
-			{0.2400000000000001, -0.9599999999999999, 0.01898000000000015},
-			{0.28, -0.9999999999999999, 0.01898000000000015},
-			{0.28, -0.9599999999999999, 0.01898000000000015}
-		}}}
-	};
-  // clang-format on
+		const auto tetrahedra = std::vector<Tetrahedron>{
+			{{{
+				{0.0357829, 0, 1.01271},
+				{0, 0, 1.01271},
+				{0.0356948, 0.0386086, 0.962075},
+				{0, 0, 0.962075}
+			}}},
+			{{{
+				{0.9667906976744187, 0, 3.098296812907414e-16},
+				{1.002654107311333, 0.0384643285369352, -2.82302142880589e-16},
+				{1.002573643410853, 0, 4.131062417209885e-16},
+				{1.002573643410853, 0, -0.05063534883720874}
+			}}},
+			{{{
+				{0.28, -0.9599999999999999, -0.02102000000000028},
+				{0.2400000000000001, -0.9599999999999999, 0.01898000000000015},
+				{0.28, -0.9999999999999999, 0.01898000000000015},
+				{0.28, -0.9599999999999999, 0.01898000000000015}
+			}}}
+		};
+    // clang-format on
 
-  ASSERT_EQ(spheres.size(), tetrahedra.size());
+    REQUIRE(spheres.size() == tetrahedra.size());
 
-  const auto epsilon = std::sqrt(std::numeric_limits<Scalar>::epsilon());
-  for (std::size_t idx = 0; idx < spheres.size(); ++idx) {
-    std::array<Tetrahedron, 4> tets4;
-    decompose(tetrahedra[idx], tets4);
+    const auto epsilon = std::sqrt(std::numeric_limits<Scalar>::epsilon());
+    for (std::size_t idx = 0; idx < spheres.size(); ++idx) {
+      std::array<Tetrahedron, 4> tets4;
+      decompose(tetrahedra[idx], tets4);
 
-    const auto overlapCalcTet = overlap_volume(spheres[idx], tetrahedra[idx]);
-    auto overlapCalcTets4 = Scalar{0};
-    for (const auto& tet : tets4) {
-      overlapCalcTets4 += overlap_volume(spheres[idx], tet);
+      const auto overlapCalcTet = overlap_volume(spheres[idx], tetrahedra[idx]);
+      auto overlapCalcTets4 = Scalar{0};
+      for (const auto& tet : tets4) {
+        overlapCalcTets4 += overlap_volume(spheres[idx], tet);
+      }
+
+      CHECK(overlapCalcTet ==
+            Approx(overlapCalcTets4).epsilon(epsilon * spheres[idx].volume));
     }
-
-    std::cout << "volume tet:  " << overlapCalcTet << std::endl;
-    std::cout << "volume tets4:  " << overlapCalcTets4 << std::endl;
-
-    ASSERT_NEAR(overlapCalcTet, overlapCalcTets4,
-                epsilon * spheres[idx].volume);
   }
 }

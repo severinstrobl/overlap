@@ -18,37 +18,38 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "gtest/gtest.h"
+#include "common.hpp"
 
-#include "overlap/overlap.hpp"
+TEST_SUITE("RegularizedWedgeArea") {
+  // Test regularized_wedge_area using different values for the distance of the
+  // intersection point from the center of the sphere `z`.
+  TEST_CASE("Distance") {
+    using namespace overlap::detail;
 
-// Test regularized_wedge_area using different values for the distance of the
-// intersection point from the center of the sphere `z`.
-TEST(RegularizedWedgeArea, Distance) {
-  using namespace overlap::detail;
+    // special cases should return precisely zero
+    CHECK(regularized_wedge_area(1.0, 1.0, 0.25 * pi) == Scalar{0});
+    CHECK(regularized_wedge_area(1.0, -1.0, 0.25 * pi) == Scalar{0});
 
-  // special cases should return precisely zero
-  ASSERT_EQ(regularized_wedge_area(1.0, 1.0, 0.25 * pi), 0.0);
-  ASSERT_EQ(regularized_wedge_area(1.0, -1.0, 0.25 * pi), 0.0);
+    constexpr auto epsilon =
+        Scalar{1e3} * std::numeric_limits<Scalar>::epsilon();
 
-  constexpr auto delta = Scalar{2e2} * std::numeric_limits<Scalar>::epsilon();
+    CHECK(regularized_wedge_area(1.0, tinyEpsilon, 0.5 * pi) ==
+          Approx(pi).epsilon(epsilon));
 
-  ASSERT_NEAR(regularized_wedge_area(1.0, tinyEpsilon, 0.5 * pi), pi,
-              5 * delta);
+    CHECK(regularized_wedge_area(1.0, -tinyEpsilon, 0.5 * pi) ==
+          Approx(pi).epsilon(epsilon));
+  }
 
-  ASSERT_NEAR(regularized_wedge_area(1.0, -tinyEpsilon, 0.5 * pi), pi,
-              5 * delta);
-}
+  // Test regularized_wedge_area using different values of the angle `alpha`.
+  TEST_CASE("Angle") {
+    using namespace overlap::detail;
 
-// Test regularized_wedge_area using different values of the angle `alpha`.
-TEST(regularized_wedge_area, Angle) {
-  using namespace overlap::detail;
+    // special cases should return constants values
+    CHECK(regularized_wedge_area(1.0, 0.0, 0.0) == Scalar{0});
+    CHECK(regularized_wedge_area(1.0, 0.0, 0.5 * pi) == pi);
 
-  // special cases should return constants values
-  ASSERT_EQ(regularized_wedge_area(1.0, 0.0, 0.0), 0.0);
-  ASSERT_EQ(regularized_wedge_area(1.0, 0.0, 0.5 * pi), pi);
-
-  ASSERT_NEAR(regularized_wedge_area(1.0, 0.0, 0.75 * pi),
-              2 * pi - regularized_wedge_area(1.0, 0.0, 0.25 * pi),
-              std::numeric_limits<Scalar>::epsilon());
+    CHECK(regularized_wedge_area(1.0, 0.0, 0.75 * pi) ==
+          Approx(2 * pi - regularized_wedge_area(1.0, 0.0, 0.25 * pi))
+              .epsilon(std::numeric_limits<Scalar>::epsilon()));
+  }
 }
