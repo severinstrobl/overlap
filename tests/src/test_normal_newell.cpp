@@ -21,8 +21,10 @@
 #include "common.hpp"
 
 TEST_SUITE("NormalNewell") {
-  inline auto format_msg(const overlap::Vector& normal,
-                         const overlap::Vector& expected)
+  using Scalar = overlap::Scalar;
+  using Vector = overlap::Vector;
+
+  inline auto format_msg(const Vector& normal, const Vector& expected)
       ->std::string {
     std::stringstream strm;
     strm << "invalid normal generated: [" << normal.transpose()
@@ -31,16 +33,21 @@ TEST_SUITE("NormalNewell") {
     return strm.str();
   }
 
-  TEST_CASE("Simple") {
-    using namespace overlap::detail;
+  template<typename Iterator>
+  inline auto calc_center(Iterator first, Iterator last) {
+    return ((Scalar{1} / static_cast<Scalar>(std::distance(first, last))) *
+            std::accumulate(first, last, Vector::Zero().eval()))
+        .eval();
+  }
 
+  TEST_CASE("Simple") {
     const auto points =
         std::array<Vector, 3>{{{0, 0, 0}, {1, 0, 0}, {1, 1, 0}}};
-    const auto center =
-        (Scalar{1} / Scalar{3}) *
-        std::accumulate(points.begin(), points.end(), Vector::Zero().eval());
 
-    const auto normal = normal_newell(points.begin(), points.end(), center);
+    const auto center = calc_center(points.begin(), points.end());
+    const auto normal =
+        overlap::detail::normal_newell(points.begin(), points.end(), center);
+
     const auto expected = Vector::UnitZ();
 
     REQUIRE_MESSAGE(
@@ -49,18 +56,15 @@ TEST_SUITE("NormalNewell") {
   }
 
   TEST_CASE("EdgeCase") {
-    using namespace overlap::detail;
-
     const std::array<Vector, 3> points = {
         {{-0.8482081444352685, -0.106496132943784, -0.5188463331100054},
          {-0.8482081363047198, -0.1064961977010221, -0.5188463331100054},
          {-0.8482081363047198, -0.106496132943784, -0.5188463464017972}}};
 
-    const auto center =
-        (Scalar{1} / Scalar{3}) *
-        std::accumulate(points.begin(), points.end(), Vector::Zero().eval());
+    const auto center = calc_center(points.begin(), points.end());
+    const auto normal =
+        overlap::detail::normal_newell(points.begin(), points.end(), center);
 
-    const auto normal = normal_newell(points.begin(), points.end(), center);
     const auto expected =
         Vector{0.8482081353353663, 0.1064961653160474, 0.5188463413419023};
 
@@ -70,15 +74,11 @@ TEST_SUITE("NormalNewell") {
   }
 
   TEST_CASE("Degenerated") {
-    using namespace overlap::detail;
-
     const std::array<Vector, 3> points = {{{0, 0, 0}, {1, 1, 0}, {0, 0, 0}}};
 
-    const auto center =
-        (Scalar{1} / Scalar{points.size()}) *
-        std::accumulate(points.begin(), points.end(), Vector::Zero().eval());
-
-    const auto normal = normal_newell(points.begin(), points.end(), center);
+    const auto center = calc_center(points.begin(), points.end());
+    const auto normal =
+        overlap::detail::normal_newell(points.begin(), points.end(), center);
 
     REQUIRE_MESSAGE(normal.norm() < std::numeric_limits<Scalar>::epsilon(),
                     format_msg(normal, Vector::Zero()));
