@@ -26,6 +26,7 @@ jobs:
       - name: Dependencies
         run: |
           sudo apt install libeigen3-dev
+          python -m pip install gcovr
 
       - name: Install sonar-scanner and build-wrapper
         uses: SonarSource/sonarcloud-github-c-cpp@v1
@@ -34,16 +35,29 @@ jobs:
         run: |
           cmake \
             -Bbuild \
-            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_BUILD_TYPE=Debug \
             -DCMAKE_C_COMPILER=clang-10 \
-            -DCMAKE_CXX_COMPILER=clang++-10
+            -DCMAKE_CXX_COMPILER=clang++-10 \
+            -DOVERLAP_WITH_COVERAGE=ON
           build-wrapper-linux-x86-64 \
             --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} \
-            cmake --build build --config Release
+            cmake --build build --config Debug
+
+      - name: Run tests and collect coverage information
+        run: |
+          cd build
+          ctest --output-on-failure
+          ~/.local/bin/gcovr \
+            --gcov-executable 'llvm-cov-10 gcov' \
+            --sonarqube coverage.xml \
+            -r ../ \
+            -e ../third_party/ -e ../tests/src
 
       - name: Run sonar-scanner
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
-          sonar-scanner --define sonar.cfamily.build-wrapper-output="${{ env.BUILD_WRAPPER_OUT_DIR }}"
+          sonar-scanner \
+            --define sonar.cfamily.build-wrapper-output="${{ env.BUILD_WRAPPER_OUT_DIR }}" \
+            --define sonar.coverageReportPaths=./build/coverage.xml
