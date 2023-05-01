@@ -21,74 +21,103 @@
 #include "common.hpp"
 
 TEST_SUITE("Elements") {
-  TEST_CASE("Tetrahedron") {
-    using namespace overlap;
+  using namespace overlap;
+  constexpr auto epsilon = std::numeric_limits<Scalar>::epsilon();
 
-    const auto tet0 = Tetrahedron{};
-    REQUIRE(tet0.volume == Scalar{0});
+  TEST_CASE("Tetrahedron") {
+    SUBCASE("DefaultConstructor") {
+      const auto tet0 = Tetrahedron{};
+      REQUIRE(tet0.volume == Scalar{0});
+    }
 
     const auto sqrt3 = std::sqrt(Scalar{3});
     const auto sqrt6 = std::sqrt(Scalar{6});
 
-    // clang-format off
-    const auto tet1 = Tetrahedron{{{
-      {-sqrt3 / 6.0, -1.0 / 2.0, 0}, {sqrt3 / 3.0, 0, 0},
-      {-sqrt3 / 6.0, +1.0 / 2.0, 0}, {0, 0, sqrt6 / 3.0}}}};
+    SUBCASE("ConstructFromInitializerList") {
+      // clang-format off
+      const auto tet = Tetrahedron{{{
+        {-sqrt3 / 6.0, -1.0 / 2.0, 0}, {sqrt3 / 3.0, 0, 0},
+        {-sqrt3 / 6.0, +1.0 / 2.0, 0}, {0, 0, sqrt6 / 3.0}}}};
+      // clang-format on
 
-    const auto tet2 = Tetrahedron{std::array<Vector, 4>{{
+      CHECK(tet.volume ==
+            Approx((1.0 / 12.0) * std::sqrt(2.0)).epsilon(epsilon));
+    }
+
+    // clang-format off
+    const auto vertices = std::array<Vector, 4>{{
       {-sqrt3 / 6.0, -1.0 / 2.0, 0}, {sqrt3 / 3.0, 0, 0},
-      {-sqrt3 / 6.0, +1.0 / 2.0, 0}, {0, 0, sqrt6 / 3.0}}}};
+      {-sqrt3 / 6.0, +1.0 / 2.0, 0}, {0, 0, sqrt6 / 3.0}}};
     // clang-format on
 
-    constexpr auto epsilon = std::numeric_limits<Scalar>::epsilon();
+    SUBCASE("ConstructFromArray") {
+      CHECK(Tetrahedron{vertices}.volume ==
+            Approx((1.0 / 12.0) * std::sqrt(2.0)).epsilon(epsilon));
+    }
 
-    CHECK(tet1.volume ==
-          Approx((1.0 / 12.0) * std::sqrt(2.0)).epsilon(epsilon));
-    CHECK(tet1.volume == Approx(tet2.volume).epsilon(epsilon));
+    SUBCASE("InvalidNodeOrder") {
+      REQUIRE_THROWS_AS(
+          Tetrahedron(vertices[0], vertices[1], vertices[3], vertices[2]),
+          AssertionError);
+    }
   }
 
   TEST_CASE("Wedge") {
-    using namespace overlap;
+    SUBCASE("DefaultConstructor") {
+      const auto wedge = Wedge{};
+      REQUIRE(wedge.volume == Scalar{0});
+    }
 
-    const auto wedge0 = Wedge{};
-    REQUIRE(wedge0.volume == Scalar{0});
+    SUBCASE("ConstructFromInitializerList") {
+      // clang-format off
+      const auto wedge = Wedge{{{
+        {-1, -1, -1}, {1, -1, -1}, {1, 1, -1},
+        {-1, -1, 1},  {1, -1, 1},  {1, 1, 1}}}};
+      // clang-format on
 
-    // clang-format off
-    const auto wedge1 = Wedge{{{
-      {-1, -1, -1}, {1, -1, -1}, {1, 1, -1},
-      {-1, -1, 1},  {1, -1, 1},  {1, 1, 1}}}};
+      CHECK(wedge.volume == Approx(Scalar{4}).epsilon(epsilon));
+    }
 
-    const auto wedge2 = Wedge{std::array<Vector, 6>{{
-      {-1, -1, -1}, {1, -1, -1}, {1, 1, -1},
-      {-1, -1, 1}, {1, -1, 1}, {1, 1, 1}}}};
-    // clang-format on
+    SUBCASE("ConstructFromArray") {
+      // clang-format off
+      const auto wedge = Wedge{std::array<Vector, 6>{{
+        {-1, -1, -1}, {1, -1, -1}, {1, 1, -1},
+        {-1, -1, 1}, {1, -1, 1}, {1, 1, 1}}}};
+      // clang-format on
 
-    constexpr auto epsilon = std::numeric_limits<Scalar>::epsilon();
-    CHECK(wedge1.volume == Approx(Scalar{4}).epsilon(epsilon));
-    CHECK(wedge1.volume == Approx(wedge2.volume).epsilon(epsilon));
+      CHECK(wedge.volume == Approx(Scalar{4}).epsilon(epsilon));
+    }
   }
 
   TEST_CASE("Hexahedron") {
-    using namespace overlap;
+    SUBCASE("DefaultConstructor") {
+      const auto hex = Hexahedron{};
+      REQUIRE(hex.volume == Scalar{0});
+    }
 
-    const auto hex0 = Hexahedron{};
-    REQUIRE(hex0.volume == Scalar{0});
+    SUBCASE("ConstructFromInitializerList") {
+      // clang-format off
+      const auto hex = Hexahedron{{{
+        {-1, -1, -1}, {1, -1, -1},
+        { 1,  1, -1}, {-1,  1, -1},
 
-    // clang-format off
-    const auto hex1 = Hexahedron{{{
-      {-1, -1, -1}, {1, -1, -1},
-      { 1,  1, -1}, {-1,  1, -1},
+        {-1, -1,  1}, {1, -1,  1},
+        { 1,  1,  1}, {-1,  1,  1}}}};
+      // clang-format on
 
-      {-1, -1,  1}, {1, -1,  1},
-      { 1,  1,  1}, {-1,  1,  1}}}};
+      CHECK(hex.volume == Approx(Scalar{8}).epsilon(epsilon));
+    }
 
-    const auto hex2 = Hexahedron{std::array<Vector, 8>{{
-      {-1, -1, -1}, {1, -1, -1}, {1,  1, -1}, {-1,  1, -1},
-      {-1, -1,  1}, {1, -1,  1}, {1,  1,  1}, {-1,  1,  1}}}};
-    // clang-format on
+    SUBCASE("ConstructFromArray") {
+      // clang-format off
 
-    constexpr auto epsilon = std::numeric_limits<Scalar>::epsilon();
-    CHECK(hex1.volume == Approx(Scalar{8}).epsilon(epsilon));
-    CHECK(hex1.volume == Approx(hex2.volume).epsilon(epsilon));
+      // clang-format off
+      const auto hex = Hexahedron{std::array<Vector, 8>{{
+        {-1, -1, -1}, {1, -1, -1}, {1,  1, -1}, {-1,  1, -1},
+        {-1, -1,  1}, {1, -1,  1}, {1,  1,  1}, {-1,  1,  1}}}};
+      // clang-format on
+
+      CHECK(hex.volume == Approx(Scalar{8}).epsilon(epsilon));
+    }
   }
 }

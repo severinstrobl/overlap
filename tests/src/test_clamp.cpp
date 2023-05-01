@@ -37,6 +37,14 @@ TEST_SUITE("clamp") {
     // clang-format on
   }
 
+  // Test clamping of numbers while exceeding the tolerance.
+  TEST_CASE("WithToleranceExceeded") {
+    // clang-format off
+    CHECK_EQ(overlap::detail::clamp(-1.1, -1.0, 1.0, 0.01), -1.1);
+    CHECK_EQ(overlap::detail::clamp( 1.1, -1.0, 1.0, 0.01),  1.1);
+    // clang-format on
+  }
+
   // Test clamping of numbers at lower/upper limit.
   TEST_CASE("Limits") {
     // clang-format off
@@ -47,11 +55,11 @@ TEST_SUITE("clamp") {
 
   // Test error handling of clamping of numbers using invalid inputs in debug
   // mode.
-  // NOLINTNEXTLINE(readability-function-cognitive-complexity)
   TEST_CASE("InvalidArguments") {
     // clang-format off
     REQUIRE_THROWS_AS(overlap::detail::clamp(0.0,  1.0, -1.0), AssertionError);
     REQUIRE_THROWS_AS(overlap::detail::clamp(0.0, -1.0,  1.0, -1.0), AssertionError);
+    REQUIRE_THROWS_AS(overlap::detail::clamp(0.0,  1.0, -1.0, -1.0), AssertionError);
     // clang-format on
   }
 }
