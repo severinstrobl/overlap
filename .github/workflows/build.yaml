@@ -6,7 +6,7 @@ on:
 
 jobs:
   build:
-    name: ${{ matrix.config.name }}
+    name: "${{ matrix.config.name }} [${{ matrix.build_type }}]"
     runs-on: ${{ matrix.config.os }}
     strategy:
       fail-fast: false
@@ -77,10 +77,10 @@ jobs:
               cc: "clang-14",
               cxx: "clang++-14",
             }
-
+        build_type: ["Debug", "Release"]
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           submodules: true
 
@@ -94,7 +94,7 @@ jobs:
         run: |
           cmake \
             -Bbuild \
-            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
             -DCMAKE_C_COMPILER=${{ matrix.config.cc }} \
             -DCMAKE_CXX_COMPILER=${{ matrix.config.cxx }}
 
