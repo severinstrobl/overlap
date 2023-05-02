@@ -24,40 +24,47 @@ TEST_SUITE("Sphere") {
   using namespace overlap;
 
   constexpr auto epsilon = std::numeric_limits<Scalar>::epsilon();
-  const auto s = Sphere{};
+  const auto sphere = Sphere{};
 
   TEST_CASE("Volume") {
-    CHECK(s.volume == Approx(4.0 / 3.0 * detail::pi).epsilon(epsilon));
+    CHECK(sphere.volume == Approx(4.0 / 3.0 * detail::pi).epsilon(epsilon));
   }
 
   TEST_CASE("CapVolume") {
-    CHECK(s.cap_volume(-1 * s.radius) == Scalar{0});
-    CHECK(s.cap_volume(0) == Scalar{0});
-    CHECK(s.cap_volume(0.5 * s.radius) ==
+    CHECK(sphere.cap_volume(-1 * sphere.radius) == Scalar{0});
+    CHECK(sphere.cap_volume(0) == Scalar{0});
+    CHECK(sphere.cap_volume(0.5 * sphere.radius) ==
           Approx(0.625 * detail::pi / 3.0).epsilon(epsilon));
-    CHECK(s.cap_volume(s.radius) == Approx(0.5 * s.volume).epsilon(epsilon));
-    CHECK(s.cap_volume(2 * s.radius) == s.volume);
-    CHECK(s.cap_volume(3 * s.radius) == s.volume);
+
+    CHECK(sphere.cap_volume(sphere.radius) ==
+          Approx(0.5 * sphere.volume).epsilon(epsilon));
+
+    CHECK(sphere.cap_volume(2 * sphere.radius) == sphere.volume);
+    CHECK(sphere.cap_volume(3 * sphere.radius) == sphere.volume);
   }
 
   TEST_CASE("SurfaceArea") {
-    CHECK(s.surface_area() == Approx(4.0 * detail::pi).epsilon(epsilon));
+    CHECK(sphere.surface_area() == Approx(4.0 * detail::pi).epsilon(epsilon));
   }
 
   TEST_CASE("CapSurfaceArea") {
-    CHECK(s.cap_surface_area(-1 * s.radius) == Scalar{0});
-    CHECK(s.cap_surface_area(0) == Scalar{0});
-    CHECK(s.cap_surface_area(s.radius) == 0.5 * s.surface_area());
-    CHECK(s.cap_surface_area(2 * s.radius) == s.surface_area());
-    CHECK(s.cap_surface_area(3 * s.radius) == s.surface_area());
+    CHECK(sphere.cap_surface_area(-1 * sphere.radius) == Scalar{0});
+    CHECK(sphere.cap_surface_area(0) == Scalar{0});
+    CHECK(sphere.cap_surface_area(sphere.radius) ==
+          0.5 * sphere.surface_area());
+
+    CHECK(sphere.cap_surface_area(2 * sphere.radius) == sphere.surface_area());
+    CHECK(sphere.cap_surface_area(3 * sphere.radius) == sphere.surface_area());
   }
 
   TEST_CASE("DiskArea") {
-    CHECK(s.disk_area(-1 * s.radius) == Scalar{0});
-    CHECK(s.disk_area(0) == Scalar{0});
-    CHECK(s.disk_area(s.radius) == Approx(detail::pi).epsilon(epsilon));
-    CHECK(s.disk_area(2 * s.radius) == Scalar{0});
-    CHECK(s.disk_area(3 * s.radius) == Scalar{0});
+    CHECK(sphere.disk_area(-1 * sphere.radius) == Scalar{0});
+    CHECK(sphere.disk_area(0) == Scalar{0});
+    CHECK(sphere.disk_area(sphere.radius) ==
+          Approx(detail::pi).epsilon(epsilon));
+
+    CHECK(sphere.disk_area(2 * sphere.radius) == Scalar{0});
+    CHECK(sphere.disk_area(3 * sphere.radius) == Scalar{0});
   }
 
   TEST_CASE("Contains") {

@@ -76,7 +76,7 @@ TEST_SUITE("SphereElementOverlap") {
 
   // Sphere outside of hexahedron, slightly overlapping one vertex.
   TEST_CASE("VertexOverlap") {
-    const auto sphere = Sphere{Vector{2 - 10 * detail::tinyEpsilon, -1, 1}, 1};
+    const auto sphere = Sphere{Vector{2 - 10 * detail::tiny_epsilon, -1, 1}, 1};
 
     validate_overlap_volume(sphere, unit_hexahedron(), epsilon, Scalar{0});
   }
@@ -94,5 +94,18 @@ TEST_SUITE("SphereElementOverlap") {
     const auto sphere = Sphere{Vector::Zero(), 0.5};
 
     validate_overlap_volume(sphere, unit_hexahedron(), epsilon, sphere.volume);
+  }
+
+  // Ensure non-planar faces are detected.
+  TEST_CASE("NonPlanarFaces") {
+    auto vertices = unit_hexahedron().vertices;
+    vertices[0] += Vector{0, 0, -0.25};
+
+    for (const auto& v : vertices) {
+      std::cout << v.transpose() << std::endl;
+    }
+
+    REQUIRE_THROWS_AS(overlap_volume(Sphere{}, Hexahedron{vertices}),
+                      std::invalid_argument);
   }
 }

@@ -2,7 +2,7 @@
  * Exact calculation of the overlap volume of spheres and mesh elements.
  * http://dx.doi.org/10.1016/j.jcp.2016.02.003
  *
- * Copyright (C) 2015-2022 Severin Strobl <git@severin-strobl.de>
+ * Copyright (C) 2015-2023 Severin Strobl <git@severin-strobl.de>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,11 +37,11 @@
 #include <type_traits>
 #include <utility>
 
-#if !defined(OVERLAP_ASSERT)
+#if !defined(overlap_assert)
 #include <cassert>
 
-// NOLINTNEXTLINE(cppcoreguidelines-macro-usage,bugprone-macro-parentheses)
-#define OVERLAP_ASSERT(expr, msg) assert((expr) && msg)
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage,bugprone-macro-parentheses,readability-identifier-naming)
+#define overlap_assert(expr, msg) assert((expr) && msg)
 #endif
 
 namespace overlap {
@@ -58,10 +58,10 @@ using Vector = Vector3;
 // constants
 const auto pi = Scalar{4} * std::atan(Scalar{1});
 
-static const auto tinyEpsilon =
+static constexpr auto tiny_epsilon =
     Scalar{2} * std::numeric_limits<Scalar>::epsilon();
-static const auto mediumEpsilon = Scalar{1e2} * tinyEpsilon;
-static const auto largeEpsilon = Scalar{1e-10};
+static constexpr auto medium_epsilon = Scalar{1e2} * tiny_epsilon;
+static constexpr auto large_epsilon = Scalar{1e-10};
 
 // Robust calculation of the normal vector of a polygon using Newell's method
 // and a pre-calculated center.
@@ -76,8 +76,8 @@ auto normal_newell(Iterator first, Iterator last, const Vector& center)
         (*(first + i) - center).cross(*(first + ((i + 1) % count)) - center);
   }
 
-  const auto length = normal.stableNorm();
-  if (length > std::numeric_limits<Scalar>::epsilon()) {
+  if (const auto length = normal.stableNorm();
+      length > std::numeric_limits<Scalar>::epsilon()) {
     return normal / length;
   }
 
@@ -294,15 +294,17 @@ inline auto angle(const Vector& u, const Vector& v) -> Scalar {
 // two orthogonal unit vectors.
 inline auto gram_schmidt(const Vector& v0, const Vector& v1)
     -> std::array<Vector, 2> {
-  assert(std::abs(v0.norm() - Vector::Scalar{1}) < tinyEpsilon);
-  assert(std::abs(v1.norm() - Vector::Scalar{1}) < tinyEpsilon);
+  overlap_assert(std::abs(v0.norm() - Vector::Scalar{1}) < tiny_epsilon,
+                 "vector v0 must be normalized");
+  overlap_assert(std::abs(v1.norm() - Vector::Scalar{1}) < tiny_epsilon,
+                 "vector v1 must be normalized");
 
   return {v0, (v1 - v1.dot(v0) * v0).normalized()};
 }
 
 inline auto clamp(Scalar value, Scalar min, Scalar max,
                   Scalar tolerance = Scalar{0}) -> Scalar {
-  OVERLAP_ASSERT(min <= max && tolerance >= Scalar{0},
+  overlap_assert(min <= max && tolerance >= Scalar{0},
                  "invalid arguments for clamp()");
 
   value = (value < min && value > (min - tolerance)) ? min : value;
@@ -324,7 +326,6 @@ struct Transformation {
 
 template<std::size_t VertexCount>
 class Polygon {
- private:
   static_assert(VertexCount >= 3 && VertexCount <= 4,
                 "only triangles and quadrilateral supported");
 
@@ -338,7 +339,8 @@ class Polygon {
   explicit Polygon(const Vector& v0, Types... verts) :
       Polygon{std::array<Vector, VertexCount>{v0, verts...}} {}
 
-  Polygon(std::array<Vector, VertexCount> verts) : vertices(std::move(verts)) {
+  explicit Polygon(std::array<Vector, VertexCount> verts) :
+      vertices(std::move(verts)) {
     center = (Scalar{1} / Scalar{VertexCount}) *
              std::accumulate(vertices.begin(), vertices.end(),
                              Vector::Zero().eval());
@@ -362,14 +364,14 @@ class Polygon {
   }
 
  public:
-  [[nodiscard]] auto is_planar(const Scalar tolerance = largeEpsilon) const
+  [[nodiscard]] auto is_planar(const Scalar tolerance = large_epsilon) const
       -> bool {
     if (VertexCount == 3U) {
       return true;
     }
 
     return std::all_of(std::begin(vertices), std::end(vertices),
-                       [&](const Vector& v) -> bool {
+                       [&](const Vector& v) {
                          return std::abs(normal.dot(v - center)) <= tolerance;
                        });
   }
@@ -390,7 +392,8 @@ class Triangle : public Polygon<3> {
     init();
   }
 
-  Triangle(std::array<Vector, 3> verts) : Polygon<3>{std::move(verts)} {
+  explicit Triangle(std::array<Vector, 3> verts) :
+      Polygon<3>{std::move(verts)} {
     init();
   }
 
@@ -417,7 +420,8 @@ class Quadrilateral : public Polygon<4> {
     init();
   }
 
-  Quadrilateral(std::array<Vector, 4> verts) : Polygon<4>{std::move(verts)} {
+  explicit Quadrilateral(std::array<Vector, 4> verts) :
+      Polygon<4>{std::move(verts)} {
     init();
   }
 
@@ -489,7 +493,7 @@ class Tetrahedron : public tet_mappings {
   template<typename... Types>
   Tetrahedron(const Vector& v0, Types... verts) : vertices{{v0, verts...}} {
     // Make sure the ordering of the vertices is correct.
-    OVERLAP_ASSERT((vertices[1] - vertices[0])
+    overlap_assert((vertices[1] - vertices[0])
                            .cross(vertices[2] - vertices[0])
                            .dot(vertices[3] - vertices[0]) >= Scalar{0},
                    "invalid vertex order detected");
@@ -835,11 +839,20 @@ constexpr auto num_faces() -> std::size_t {
 
 template<typename Element>
 constexpr auto num_edges() -> std::size_t {
-  return std::is_same<Element, Hexahedron>::value
-             ? 12
-             : (std::is_same<Element, Wedge>::value
-                    ? 9
-                    : (std::is_same<Element, Tetrahedron>::value ? 6 : -1));
+  if constexpr (std::is_same_v<Element, Hexahedron>) {
+    return 12U;
+  }
+
+  if constexpr (std::is_same_v<Element, Wedge>) {
+    return 9U;
+  }
+
+  if constexpr (std::is_same_v<Element, Tetrahedron>) {
+    return 6U;
+  }
+
+  // older versions of GCC cannot handle exceptions in constexpr contexts
+  return std::numeric_limits<std::size_t>::max();
 }
 
 template<typename T>
@@ -1015,7 +1028,7 @@ inline auto contains(const Element& element, const Vector& p) -> bool {
 template<typename Element, typename = std::enable_if_t<is_element_v<Element>>>
 inline auto contains(const Sphere& sphere, const Element& element) -> bool {
   return std::all_of(std::begin(element.vertices), std::end(element.vertices),
-                     [&](const Vector& vertex) -> bool {
+                     [&](const Vector& vertex) {
                        return (sphere.center - vertex).squaredNorm() <=
                               sphere.radius * sphere.radius;
                      });
@@ -1100,22 +1113,22 @@ inline auto line_sphere_intersection(const Vector& origin,
 inline auto regularized_wedge(Scalar r, Scalar d, Scalar alpha) -> Scalar {
 #ifndef NDEBUG
   // clamp slight deviations of the angle to valid range
-  if (alpha < Scalar{0} && alpha > -detail::tinyEpsilon) {
+  if (alpha < Scalar{0} && alpha > -detail::tiny_epsilon) {
     alpha = Scalar{0};
   }
 
   if (alpha > (Scalar{1} / Scalar{2}) * pi &&
-      alpha < (Scalar{1} / Scalar{2}) * pi + tinyEpsilon) {
+      alpha <= (Scalar{1} / Scalar{2}) * pi + tiny_epsilon) {
     alpha = (Scalar{1} / Scalar{2}) * pi;
   }
 #endif
 
-  OVERLAP_ASSERT(r > Scalar{0}, "invalid argument 'r' for regularized_wedge()");
+  overlap_assert(r > Scalar{0}, "invalid argument 'r' for regularized_wedge()");
 
-  OVERLAP_ASSERT(d >= Scalar{0} && d <= r,
+  overlap_assert(d >= Scalar{0} && d <= r,
                  "invalid argument 'd' for regularized_wedge()");
 
-  OVERLAP_ASSERT(alpha >= Scalar{0} && alpha <= (Scalar{1} / Scalar{2}) * pi,
+  overlap_assert(alpha >= Scalar{0} && alpha <= (Scalar{1} / Scalar{2}) * pi,
                  "invalid argument 'alpha' for regularized_wedge()");
 
   const auto sin_alpha = std::sin(alpha);
@@ -1159,32 +1172,32 @@ inline auto regularized_wedge(Scalar r, Scalar d, Scalar alpha, Scalar z)
 
 // Calculate the surface area of a regularized spherical wedge defined by the
 // radius, the distance of the intersection point from the center of the
-// sphere and the angle. Ref: Gibson, K. D. & Scheraga, H. A.: Exact
-// calculation of the volume and
-//      surface area of fused hard-sphere molecules with unequal atomic radii,
-//      Molecular Physics, 1987, 62, 1247-1265
+// sphere and the angle.
+// Ref: Gibson, K. D. & Scheraga, H. A.: Exact calculation of the volume and
+//    surface area of fused hard-sphere molecules with unequal atomic radii,
+//    Molecular Physics, 1987, 62, 1247-1265
 inline auto regularized_wedge_area(Scalar r, Scalar z, Scalar alpha) -> Scalar {
 #ifndef NDEBUG
   // clamp slight deviations of the angle to valid range
-  if (alpha < Scalar{0} && alpha > -detail::tinyEpsilon) {
+  if (alpha < Scalar{0} && alpha > -detail::tiny_epsilon) {
     alpha = Scalar{0};
   }
 
-  if (alpha > pi && alpha < pi + tinyEpsilon) {
+  if (alpha > pi && alpha <= pi + tiny_epsilon) {
     alpha = pi;
   }
 #endif
 
-  OVERLAP_ASSERT(r > Scalar{0},
+  overlap_assert(r > Scalar{0},
                  "invalid argument 'r' for regularized_wedge_area()");
 
-  OVERLAP_ASSERT(z >= -r && z <= r,
+  overlap_assert(z >= -r && z <= r,
                  "invalid argument 'z' for regularized_wedge_area()");
 
-  OVERLAP_ASSERT(alpha >= Scalar{0} && alpha <= pi,
+  overlap_assert(alpha >= Scalar{0} && alpha <= pi,
                  "invalid argument 'alpha' for regularized_wedge_area()");
 
-  if (alpha < tinyEpsilon || std::abs(r * r - z * z) <= tinyEpsilon) {
+  if (alpha < tiny_epsilon || std::abs(r * r - z * z) <= tiny_epsilon) {
     return Scalar{0};
   }
 
@@ -1193,16 +1206,16 @@ inline auto regularized_wedge_area(Scalar r, Scalar z, Scalar alpha) -> Scalar {
   const auto factor = Scalar{1} / std::sqrt(std::abs(r * r - z * z));
 
   // clamp slight deviations of the argument to acos() to valid range
-  const auto arg0 =
-      clamp(r * cos_alpha * factor, Scalar{-1}, Scalar{1}, detail::tinyEpsilon);
+  const auto arg0 = clamp(r * cos_alpha * factor, Scalar{-1}, Scalar{1},
+                          detail::tiny_epsilon);
 
   const auto arg1 = clamp((z * cos_alpha * factor) / sin_alpha, Scalar{-1},
-                          Scalar{1}, detail::tinyEpsilon);
+                          Scalar{1}, detail::tiny_epsilon);
 
-  OVERLAP_ASSERT(Scalar{-1} <= arg0 && arg0 <= Scalar(1),
+  overlap_assert(Scalar{-1} <= arg0 && arg0 <= Scalar(1),
                  "invalid value for arg0 in regularized_wedge_area()");
 
-  OVERLAP_ASSERT(Scalar{-1} <= arg1 && arg1 <= Scalar(1),
+  overlap_assert(Scalar{-1} <= arg1 && arg1 <= Scalar(1),
                  "invalid value for arg1 in regularized_wedge_area()");
 
   return Scalar{2} * r * (r * std::acos(arg0) - z * std::acos(arg1));
@@ -1229,7 +1242,7 @@ inline auto general_wedge(const Sphere& s, const Plane& p0, const Plane& p1,
   static_assert(Dim == 2 || Dim == 3, "invalid dimensionality, must be 2 or 3");
 
   const auto dist = d.stableNorm();
-  if (dist < detail::tinyEpsilon) {
+  if (dist < detail::tiny_epsilon) {
     // the wedge (almost) touches the center, the volume/area depends only on
     // the angle
     return spherical_wedge<Dim>(s, pi - detail::angle(p0.normal, p1.normal));
@@ -1240,8 +1253,8 @@ inline auto general_wedge(const Sphere& s, const Plane& p0, const Plane& p1,
 
   // detect degenerated general spherical wedge that can be treated as
   // a regularized spherical wedge
-  if (std::abs(s0) < detail::tinyEpsilon ||
-      std::abs(s1) < detail::tinyEpsilon) {
+  if (std::abs(s0) < detail::tiny_epsilon ||
+      std::abs(s1) < detail::tiny_epsilon) {
     const auto angle = pi - detail::angle(p0.normal, p1.normal);
 
     if (Dim == 2) {
@@ -1254,15 +1267,15 @@ inline auto general_wedge(const Sphere& s, const Plane& p0, const Plane& p1,
   }
 
   auto d_unit = Vector{d * (Scalar{1} / dist)};
-  if (dist < detail::largeEpsilon) {
+  if (dist < detail::large_epsilon) {
     d_unit = detail::gram_schmidt(p0.normal.cross(p1.normal).stableNormalized(),
                                   d_unit)[1];
   }
 
-  OVERLAP_ASSERT(p0.normal.dot(p1.center - p0.center) <= Scalar{0},
+  overlap_assert(p0.normal.dot(p1.center - p0.center) <= Scalar{0},
                  "invalid plane in general_wedge()");
 
-  OVERLAP_ASSERT(p1.normal.dot(p0.center - p1.center) <= Scalar{0},
+  overlap_assert(p1.normal.dot(p0.center - p1.center) <= Scalar{0},
                  "invalid plane in general_wedge()");
 
   // calculate the angles between the vector from the sphere center
@@ -1370,7 +1383,7 @@ inline auto correct_marked_vertices(
     for (std::size_t local_edge_idx = 0U; local_edge_idx < 3U;
          ++local_edge_idx) {
       auto edge_idx = Element::vertex_mapping[vertex_idx][0][local_edge_idx];
-      all_edges_marked &= marked_edges[edge_idx];
+      all_edges_marked &= static_cast<bool>(marked_edges[edge_idx]);
     }
 
     corrected_marked_vertices[vertex_idx] = all_edges_marked;
@@ -1408,7 +1421,7 @@ auto overlap_volume(const Sphere& sOrig, const Element& elementOrig) -> Scalar {
   // Sanity check: All faces of the mesh element have to be planar.
   for (const auto& face : elementOrig.faces) {
     if (!face.is_planar()) {
-      throw std::runtime_error{"non-planer face detected in element"};
+      throw std::invalid_argument{"non-planer face detected in element"};
     }
   }
 
@@ -1449,10 +1462,10 @@ auto overlap_volume(const Sphere& sOrig, const Element& elementOrig) -> Scalar {
     // sphere, but the case of the edge only touching the sphere has to
     // be avoided.
     if (!solutions.second ||
-        (solutions.first[0] >= Scalar{1} - detail::mediumEpsilon) ||
-        solutions.first[1] <= detail::mediumEpsilon ||
+        (solutions.first[0] >= Scalar{1} - detail::medium_epsilon) ||
+        solutions.first[1] <= detail::medium_epsilon ||
         (solutions.first[0] > Scalar{0} && solutions.first[1] < Scalar{1} &&
-         (solutions.first[1] - solutions.first[0] < detail::largeEpsilon))) {
+         (solutions.first[1] - solutions.first[0] < detail::large_epsilon))) {
       continue;
     }
 
@@ -1507,8 +1520,6 @@ auto overlap_volume(const Sphere& sOrig, const Element& elementOrig) -> Scalar {
 
     result -= s.cap_volume(s.radius + dist);
   }
-
-  // result -= accumulate_cap_volumes(s, element, fMarked);
 
   // Handle the edges and add back the volume subtracted twice above in the
   // processing of the faces.
@@ -1575,7 +1586,7 @@ auto overlap_volume(const Sphere& sOrig, const Element& elementOrig) -> Scalar {
                 return a.second < b.second;
               });
 
-    if (distances[1].second < distances[2].second * detail::largeEpsilon) {
+    if (distances[1].second < distances[2].second * detail::large_epsilon) {
       // Use the general spherical wedge defined by the edge with the
       // non-degenerated intersection point and the normals of the
       // two faces forming it.
@@ -1608,7 +1619,7 @@ auto overlap_volume(const Sphere& sOrig, const Element& elementOrig) -> Scalar {
     // There is no way to actually calculate them with reasonable
     // precision, so just the volume of the tetrahedron at the tip is
     // used.
-    if (cap_volume < detail::tinyEpsilon) {
+    if (cap_volume < detail::tiny_epsilon) {
       result -= tipTetVolume;
       continue;
     }
@@ -1637,13 +1648,13 @@ auto overlap_volume(const Sphere& sOrig, const Element& elementOrig) -> Scalar {
         std::max(tipTetVolume + cap_volume - segmentVolume, Scalar{0});
 
     // Sanity check: detect negative cone volume.
-    OVERLAP_ASSERT(coneVolume > -std::sqrt(detail::tinyEpsilon),
+    overlap_assert(coneVolume > -std::sqrt(detail::tiny_epsilon),
                    "negative cone volume in overlap_volume()");
 
     result -= coneVolume;
 
     // Sanity check: detect negative intermediate result.
-    OVERLAP_ASSERT(result > -std::sqrt(detail::tinyEpsilon),
+    overlap_assert(result > -std::sqrt(detail::tiny_epsilon),
                    "negative intermediate result in overlap_volume()");
   }
 
@@ -1664,7 +1675,7 @@ auto overlap_volume(const Sphere& sOrig, const Element& elementOrig) -> Scalar {
   }
 
   // Perform a sanity check on the final result (debug version only).
-  OVERLAP_ASSERT(result >= Scalar{0} && result <= maxOverlap,
+  overlap_assert(result >= Scalar{0} && result <= maxOverlap,
                  "negative volume detected in overlap_volume()");
 
   // Scale the overlap volume back for the original objects.
@@ -1763,10 +1774,10 @@ auto overlap_area(const Sphere& sOrig, const Element& elementOrig)
     // sphere, but the case of the edge only touching the sphere has to
     // be avoided.
     if (!solutions.second ||
-        solutions.first[0] >= Scalar(1) - detail::mediumEpsilon ||
-        solutions.first[1] <= detail::mediumEpsilon ||
+        solutions.first[0] >= Scalar(1) - detail::medium_epsilon ||
+        solutions.first[1] <= detail::medium_epsilon ||
         (solutions.first[0] > Scalar(0) && solutions.first[1] < Scalar(1) &&
-         solutions.first[1] - solutions.first[0] < detail::largeEpsilon)) {
+         solutions.first[1] - solutions.first[0] < detail::large_epsilon)) {
       continue;
     }
 
@@ -1964,7 +1975,7 @@ auto overlap_area(const Sphere& sOrig, const Element& elementOrig)
                 return a.second < b.second;
               });
 
-    if (distances[1].second < distances[2].second * detail::largeEpsilon) {
+    if (distances[1].second < distances[2].second * detail::large_epsilon) {
       // Use the general spherical wedge defined by the edge with the
       // non-degenerated intersection point and the normals of the
       // two faces forming it.
@@ -1991,7 +2002,7 @@ auto overlap_area(const Sphere& sOrig, const Element& elementOrig)
     // If cap surface area is small, the corrections will be even smaller.
     // There is no way to actually calculate them with reasonable
     // precision, so they are just ignored.
-    if (capSurface < detail::largeEpsilon) {
+    if (capSurface < detail::large_epsilon) {
       continue;
     }
 
@@ -2018,10 +2029,10 @@ auto overlap_area(const Sphere& sOrig, const Element& elementOrig)
 
     // Sanity checks: detect negative/excessively large intermediate
     // result.
-    OVERLAP_ASSERT(result[0] > -std::sqrt(detail::tinyEpsilon),
+    overlap_assert(result[0] > -std::sqrt(detail::tiny_epsilon),
                    "negative area as intermediate result in overlap_area()");
 
-    OVERLAP_ASSERT(result[0] < s.surface_area() + detail::tinyEpsilon,
+    overlap_assert(result[0] < s.surface_area() + detail::tiny_epsilon,
                    "invalid intermediate result in overlap_area()");
   }
 
@@ -2090,8 +2101,8 @@ auto overlap_area(const Sphere& sOrig, const Element& elementOrig)
       result[faceIdx + 1] += triaArea + segmentArea;
 
       // Sanity checks: detect excessively large intermediate result.
-      OVERLAP_ASSERT(result[faceIdx + 1] < element.faces[faceIdx].area +
-                                               std::sqrt(detail::largeEpsilon),
+      overlap_assert(result[faceIdx + 1] < element.faces[faceIdx].area +
+                                               std::sqrt(detail::large_epsilon),
                      "invalid intermediate result in overlap_area()");
     }
   }
@@ -2112,10 +2123,10 @@ auto overlap_area(const Sphere& sOrig, const Element& elementOrig)
   // Sanity checks: detect negative/excessively large results for the
   // surface area of the facets.
   for (std::size_t n = 0; n < nrFaces; ++n) {
-    OVERLAP_ASSERT(result[n + 1] > -fLimit,
+    overlap_assert(result[n + 1] > -fLimit,
                    "negative overlap area for face in overlap_area()");
 
-    OVERLAP_ASSERT(result[n + 1] <= element.faces[n].area + fLimit,
+    overlap_assert(result[n + 1] <= element.faces[n].area + fLimit,
                    "invalid overlap area for face in overlap_area()");
   }
 
@@ -2136,10 +2147,10 @@ auto overlap_area(const Sphere& sOrig, const Element& elementOrig)
 
   // Perform some more sanity checks on the final result (debug version
   // only).
-  OVERLAP_ASSERT(Scalar(0) <= result[0] && result[0] <= sOrig.surface_area(),
+  overlap_assert(Scalar(0) <= result[0] && result[0] <= sOrig.surface_area(),
                  "invalid overlap area for sphere surface in overlap_area()");
 
-  OVERLAP_ASSERT(
+  overlap_assert(
       Scalar(0) <= result.back() && result.back() <= elementOrig.surface_area(),
       "invalid total overlap area for faces in overlap_area()");
 

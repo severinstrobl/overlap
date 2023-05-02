@@ -22,6 +22,7 @@
 #define OVERLAP_TEST_COMMON_HPP
 
 #include <iostream>
+#include <string_view>
 
 #include <doctest/doctest.h>
 
@@ -30,17 +31,17 @@ class AssertionError : public std::runtime_error {
   static inline constexpr auto assertion_failed_msg =
       "[overlap] assertion failed: ";
 
-  AssertionError(std::string msg) :
-      std::runtime_error{assertion_failed_msg + std::move(msg)} {}
+  explicit AssertionError(std::string_view msg) :
+      std::runtime_error{assertion_failed_msg + std::string{msg}} {}
 };
 
-// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
-#define OVERLAP_ASSERT(expr, msg) \
-  {                               \
-    if (!(expr)) {                \
-      throw AssertionError{msg};  \
-    }                             \
-  }
+[[noreturn]] inline void throw_assertion_error(std::string_view msg) {
+  throw AssertionError{msg};
+}
+
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage,readability-identifier-naming)
+#define overlap_assert(expr, msg) \
+  (static_cast<bool>(expr) ? static_cast<void>(0) : throw_assertion_error(msg))
 
 #include "overlap/overlap.hpp"
 

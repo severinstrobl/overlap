@@ -61,11 +61,11 @@ class TestElements:
             (-1, -1,  1), (1, -1,  1), (1,  1,  1), (-1,  1,  1)
         ]
 
-        hex = overlap.Hexahedron(vertices)
+        hexa = overlap.Hexahedron(vertices)
 
-        np.testing.assert_almost_equal(hex.volume, 8.0)
-        np.testing.assert_almost_equal(hex.center, [0, 0, 0])
-        np.testing.assert_almost_equal(hex.surface_area, 24.0)
+        np.testing.assert_almost_equal(hexa.volume, 8.0)
+        np.testing.assert_almost_equal(hexa.center, [0, 0, 0])
+        np.testing.assert_almost_equal(hexa.surface_area, 24.0)
 
 
 class TestOverlap:
@@ -94,11 +94,11 @@ class TestOverlap:
             (-1, -1,  1), (1, -1,  1), (1,  1,  1), (-1,  1,  1)
         ]
 
-        hex = overlap.Hexahedron(vertices)
+        hexa = overlap.Hexahedron(vertices)
         sphere = overlap.Sphere((1, 1, 1), 1)
 
         np.testing.assert_almost_equal(
-            overlap.overlap_volume(sphere, hex), np.pi / 6)
+            overlap.overlap_volume(sphere, hexa), np.pi / 6)
 
 
 class TestOverlapArea:
@@ -125,11 +125,11 @@ class TestOverlapArea:
             (-1, -1,  1), (1, -1,  1), (1,  1,  1), (-1,  1,  1)
         ]
 
-        hex = overlap.Hexahedron(vertices)
+        hexa = overlap.Hexahedron(vertices)
 
         face_overlap = sphere.radius**2 * np.pi / 4
 
-        np.testing.assert_almost_equal(overlap.overlap_area(sphere, hex), [
+        np.testing.assert_almost_equal(overlap.overlap_area(sphere, hexa), [
             sphere.surface_area / 8,
             0., 0., face_overlap, face_overlap, 0, face_overlap,
             3 * face_overlap
