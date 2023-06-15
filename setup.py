@@ -1,11 +1,11 @@
 from skbuild import setup, exceptions, cmaker
-from packaging.version import LegacyVersion
+from packaging.version import Version
 
 # Add CMake as a build requirement if no or only an outdated version is
 # available.
 setup_requires = []
 try:
-    if LegacyVersion(cmaker.get_cmake_version()) < LegacyVersion('3.10'):
+    if Version(cmaker.get_cmake_version()) < Version('3.10'):
         setup_requires.append('cmake')
 except exceptions.SKBuildError:
     setup_requires.append('cmake')
