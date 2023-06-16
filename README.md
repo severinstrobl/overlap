@@ -1,6 +1,6 @@
 # Exact calculation of the overlap volume and area of spheres and mesh elements
 
-![Build Status](https://img.shields.io/github/actions/workflow/status/severinstrobl/overlap/build.yml?branch=master)
+![Build Status](https://img.shields.io/github/actions/workflow/status/severinstrobl/overlap/build.yaml?branch=master)
 [![codecov](https://codecov.io/gh/severinstrobl/overlap/branch/master/graph/badge.svg?token=GQ2L62OXXK)](https://codecov.io/gh/severinstrobl/overlap)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](./COPYING)
 [![DOI](https://img.shields.io/badge/DOI-10.1016/j.jcp.2016.02.003-blue.svg)](https://dx.doi.org/10.1016/j.jcp.2016.02.003)
