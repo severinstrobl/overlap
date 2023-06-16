@@ -176,6 +176,7 @@ jobs:
             brew install openblas &&
             export OPENBLAS="$(brew --prefix openblas)" &&
             python -m pip install numpy
+          CIBW_BUILD_VERBOSITY: 1
           CIBW_TEST_REQUIRES: pytest
           CIBW_TEST_COMMAND: "python -m pytest {project}/test"
         run: |
