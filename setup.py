@@ -13,9 +13,11 @@ except exceptions.SKBuildError:
 with open('README.md', 'r', encoding='utf-8') as fh:
     long_description = fh.read()
 
+VERSION = '0.1.1dev0'
+
 setup(
     name='overlap',
-    version='0.0.5',
+    version=VERSION,
     author='Severin Strobl',
     author_email='git@severin-strobl.de',
     description='Exact calculation of the overlap volume and area of spheres '
@@ -32,6 +34,7 @@ setup(
         'numpy'
     ],
     cmake_install_dir='python',
+    cmake_args=[f"-DSKBUILD_PROJECT_VERSION={VERSION}"],
     classifiers=[
         'Programming Language :: Python :: 3',
         'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
