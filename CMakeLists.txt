@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 3.12)
-project(overlap LANGUAGES CXX)
+
+if(NOT SKBUILD OR SKBUILD_PROJECT_VERSION MATCHES "dev")
+  project(overlap LANGUAGES CXX)
+else()
+  project(overlap VERSION ${SKBUILD_PROJECT_VERSION} LANGUAGES CXX)
+endif()
 
 option(OVERLAP_TESTS "Build the tests" on)
 option(OVERLAP_COVERAGE "Build with coverage support" off)

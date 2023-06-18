@@ -30,4 +30,9 @@ pybind11_add_module(_overlap MODULE overlap.cpp)
 
 target_link_libraries(_overlap PRIVATE Eigen3::Eigen)
 
+if(CMAKE_PROJECT_VERSION)
+target_compile_definitions(_overlap
+                           PRIVATE VERSION_INFO="${CMAKE_PROJECT_VERSION}")
+endif()
+
 install(TARGETS _overlap DESTINATION .)
