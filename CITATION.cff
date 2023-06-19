@@ -9,8 +9,8 @@ title: "overlap - Exact calculation of the overlap volume and area of spheres an
 message: "If you use this software, please cite the article from preferred-citation and the software itself."
 repository-code: "https://github.com/severinstrobl/overlap"
 license: GPLv3
-date-released: "2021-02-08"
-version: 0.1.0
+date-released: "2023-06-19"
+version: 0.1.1
 type: software
 preferred-citation:
   authors:

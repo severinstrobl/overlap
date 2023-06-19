@@ -13,7 +13,7 @@ except exceptions.SKBuildError:
 with open('README.md', 'r', encoding='utf-8') as fh:
     long_description = fh.read()
 
-VERSION = '0.1.1dev0'
+VERSION = '0.1.1'
 
 setup(
     name='overlap',
