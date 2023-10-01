@@ -89,9 +89,9 @@ jobs:
 
       - name: Compare benchmark results
         run: |
-          mv ${{ needs.check_reference.outputs.reference_sha }}/benchmarks.json Reference
           mv ${{ github.sha }}/benchmarks.json Current
-          python -m pyperf compare_to --table --table-format md Current Reference > report.md
+          mv ${{ needs.check_reference.outputs.reference_sha }}/benchmarks.json Reference
+          python -m pyperf compare_to --table --table-format md Reference Current > report.md
 
       - name: Create PR comment
         if: ${{ github.event_name == 'pull_request' }}
