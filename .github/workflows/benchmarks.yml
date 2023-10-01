@@ -58,7 +58,7 @@ jobs:
   benchmark_reference:
     name: Benchmark reference version
     needs: check_reference
-    if: ${{ needs.check_reference.outputs.reference_results_available }}
+    if: ${{ !needs.check_reference.outputs.reference_results_available }}
     uses: ./.github/workflows/run_benchmarks.yml
     with:
       ref: ${{ needs.check_reference.outputs.reference_sha }}
@@ -67,7 +67,7 @@ jobs:
   compare_benchmarks:
     name: Compare benchmark results
     needs: [benchmark, benchmark_reference, check_reference]
-    if: ${{ needs.benchmark_reference.outputs.outcome == 'success' }}
+    if: ${{ always() && (needs.check_reference.outputs.reference_results_available || needs.benchmark_reference.outputs.outcome == 'success') }}
     runs-on: ubuntu-latest
     steps:
       - name: Dependencies
@@ -76,10 +76,12 @@ jobs:
           npm install fs
 
       - name: Obtain benchmark results for reference version
-        uses: actions/download-artifact@v3
+        uses: dawidd6/action-download-artifact@v2
         with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           name: benchmarks-${{ needs.check_reference.outputs.reference_sha }}
           path: ${{ needs.check_reference.outputs.reference_sha }}
+          search_artifacts: true
 
       - name: Obtain benchmark results for current version
         uses: actions/download-artifact@v3
@@ -98,8 +100,13 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const fs = require('fs')
-            const msg = '## C++ benchmark results\n' + fs.readFileSync('./report.md')
+            const fs = require('fs');
+            const report = fs.readFileSync('./report.md')
+              .toString()
+              .replace(/Current/, 'Current (${{ github.sha }})')
+              .replace(/Reference/, 'Reference (${{ needs.check_reference.outputs.reference_sha }})');
+
+            const msg = '## C++ benchmark results\n' + report;
             try {
               const result = await github.rest.issues.createComment({
                 owner: context.repo.owner,
@@ -107,9 +114,9 @@ jobs:
                 issue_number: context.issue.number,
                 body: msg,
               })
-              return result.data
+              return result.data;
             } catch (err) {
-              core.setFailed(`Request failed with error ${err}`)
+              core.setFailed(`Request failed with error ${err}`);
             }
 
       - name: Report via annotation
@@ -117,5 +124,5 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const fs = require('fs')
-            core.notice('## C++ benchmark results\n# + fs.readFileSync('./report.md'))
+            const fs = require('fs');
+            core.notice('## C++ benchmark results\n# + fs.readFileSync('./report.md'));
