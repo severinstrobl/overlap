@@ -99,7 +99,7 @@ jobs:
         with:
           script: |
             const fs = require('fs')
-            const msg = '## C++ benchmark results\n# + fs.readFileSync('./report.md')
+            const msg = '## C++ benchmark results\n' + fs.readFileSync('./report.md')
             try {
               const result = await github.rest.issues.createComment({
                 owner: context.repo.owner,
