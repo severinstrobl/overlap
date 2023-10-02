@@ -1,0 +1,121 @@
+name: Trigger and compare benchmarks
+on:
+  pull_request:
+  workflow_dispatch:
+
+env:
+  DEFAULT_REFERENCE_VERSION: develop
+
+jobs:
+  benchmark:
+    name: Benchmark current version
+    uses: ./.github/workflows/run_benchmarks.yml
+    with:
+      ref: ${{ github.sha }}
+
+  check_reference:
+    name: Check for reference benchmark results
+    runs-on: ubuntu-latest
+    steps:
+      - name: Obtain SHA of reference version
+        id: obtain_ref
+        if: ${{ github.event_name == 'pull_request' }}
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            reference_sha="${{ github.event.pull_request.base.sha }}"
+          else
+            reference_sha=$(git rev-parse origin/$DEFAULT_REFERENCE_VERSION)
+          fi
+
+          echo "reference_sha=${reference_sha}" >> $GITHUB_OUTPUT
+
+      - name: Check if benchmark results for reference version exist
+        id:  check_ref_results
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const ref = "${{ steps.obtain_ref.outputs.reference_sha }}";
+            const artifact_name = "benchmarks-" + ref;
+            const artifacts = await github.rest.actions.listArtifactsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: artifact_name,
+            });
+
+            if (artifacts.data.total_count) {
+              console.log(`Benchmark results for revision '${ref}' exist.`);
+            } else {
+              console.log(`Benchmark results for revision '${ref}' do not exist, requesting run.`);
+            }
+
+            return artifacts.data.total_count != 0
+
+    outputs:
+      reference_sha: ${{ steps.obtain_ref.outputs.reference_sha }}
+      reference_results_available: ${{ steps.check_ref_results.outputs.result }}
+
+  benchmark_reference:
+    name: Benchmark reference version
+    needs: check_reference
+    if: ${{ needs.check_reference.outputs.reference_results_available }}
+    uses: ./.github/workflows/run_benchmarks.yml
+    with:
+      ref: ${{ needs.check_reference.outputs.reference_sha }}
+      allow_failure: true
+
+  compare_benchmarks:
+    name: Compare benchmark results
+    needs: [benchmark, benchmark_reference, check_reference]
+    if: ${{ needs.benchmark_reference.outputs.outcome == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dependencies
+        run: |
+          python -m pip install pyperf
+          npm install fs
+
+      - name: Obtain benchmark results for reference version
+        uses: actions/download-artifact@v3
+        with:
+          name: benchmarks-${{ needs.check_reference.outputs.reference_sha }}
+          path: ${{ needs.check_reference.outputs.reference_sha }}
+
+      - name: Obtain benchmark results for current version
+        uses: actions/download-artifact@v3
+        with:
+          name: benchmarks-${{ github.sha }}
+          path: ${{ github.sha }}
+
+      - name: Compare benchmark results
+        run: |
+          mv ${{ needs.check_reference.outputs.reference_sha }}/benchmarks.json Reference
+          mv ${{ github.sha }}/benchmarks.json Current
+          python -m pyperf compare_to --table --table-format md Current Reference > report.md
+
+      - name: Create PR comment
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs')
+            const msg = '## C++ benchmark results\n# + fs.readFileSync('./report.md')
+            try {
+              const result = await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: msg,
+              })
+              return result.data
+            } catch (err) {
+              core.setFailed(`Request failed with error ${err}`)
+            }
+
+      - name: Report via annotation
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs')
+            core.notice('## C++ benchmark results\n# + fs.readFileSync('./report.md'))
