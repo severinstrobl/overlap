@@ -1,0 +1,65 @@
+name: Run benchmarks
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: "Branch, tag, or SHA1 hash to benchmark"
+        required: true
+        type: string
+      allow_failure:
+        description: "Allow workflow to continue on failure"
+        required: false
+        default: false
+        type: boolean
+    outputs:
+      outcome:
+        description: "Outcome of the actual benchmarking job"
+        value: ${{ jobs.benchmark.outputs.outcome }}
+
+jobs:
+  benchmark:
+    name: C++ benchmarks
+    runs-on: ubuntu-latest
+    outputs:
+      outcome: ${{ steps.benchmark_step.outcome }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+          submodules: true
+
+      - name: Dependencies
+        run: |
+          python -m pip install pyperf
+
+      - name: Build and run benchmark for selected revision
+        id: benchmark_step
+        continue-on-error: ${{ inputs.allow_failure }}
+        run: |
+          cmake \
+            -Bbuild \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DOVERLAP_WITH_BENCHMARKS=ON \
+            -DOVERLAP_WITH_TESTS=OFF
+
+          cmake --build build
+
+          ctest --test-dir build -L benchmark
+
+          results=(`ls build/benchmarks/*.json`)
+          cp "${results[0]}" benchmarks.json
+
+          for f in "${results[@]:1}"; do
+            python -m pyperf convert --stdout --add=$f benchmarks.json | jq > combined.json
+            mv combined.json benchmarks.json
+          done
+
+          echo "ref_sha=$(git rev-parse ${{ inputs.ref }})" >> $GITHUB_OUTPUT
+
+      - name: Store benchmark results for selected revision
+        if: ${{ steps.benchmark_step.outcome == 'success' }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: benchmarks-${{ steps.benchmark_step.outputs.ref_sha }}
+          path: benchmarks.json

@@ -5,6 +5,7 @@ enable_language(CXX)
 
 option(OVERLAP_WITH_PYTHON "Build the Python bindings" on)
 option(OVERLAP_WITH_TESTS "Build the tests" on)
+option(OVERLAP_WITH_BENCHMARKS "Build the benchmarks" off)
 option(OVERLAP_WITH_COVERAGE "Build with coverage support for tests" off)
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
@@ -53,6 +54,13 @@ if(OVERLAP_WITH_TESTS)
   enable_testing()
   add_subdirectory(tests/src)
 endif()
+
+# optional: C++ benchmarks
+if(OVERLAP_WITH_BENCHMARKS)
+  enable_testing()
+  add_subdirectory(benchmarks)
+endif()
+
 
 # optional: build the Python bindings using pybind11
 if(OVERLAP_WITH_PYTHON)
