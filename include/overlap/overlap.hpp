@@ -332,11 +332,10 @@ class Polygon {
  public:
   static constexpr std::size_t vertex_count = VertexCount;
 
- protected:
   Polygon() = default;
 
   template<typename... Types>
-  explicit Polygon(const Vector& v0, Types... verts) :
+  explicit constexpr Polygon(const Vector& v0, Types... verts) :
       Polygon{std::array<Vector, VertexCount>{v0, verts...}} {}
 
   explicit Polygon(std::array<Vector, VertexCount> verts) :
@@ -350,9 +349,12 @@ class Polygon {
     if constexpr (VertexCount == 4) {
       normal = ((vertices[2] - vertices[0]).cross(vertices[3] - vertices[1]))
                    .normalized();
+
     } else {
       normal = detail::normal_newell(vertices.begin(), vertices.end(), center);
     }
+
+    update_area();
   }
 
   void apply(const Transformation& t) {
@@ -361,12 +363,13 @@ class Polygon {
     }
 
     center = t.scaling * (center + t.translation);
+
+    update_area();
   }
 
- public:
   [[nodiscard]] auto is_planar(const Scalar tolerance = large_epsilon) const
       -> bool {
-    if (VertexCount == 3U) {
+    if constexpr (VertexCount == 3U) {
       return true;
     }
 
@@ -376,69 +379,30 @@ class Polygon {
                        });
   }
 
+ private:
+  void update_area() {
+    if constexpr (VertexCount == 4) {
+      area = Scalar{0.5} *
+             (((vertices[1] - vertices[0]).cross(vertices[2] - vertices[0]))
+                  .stableNorm() +
+              ((vertices[2] - vertices[0]).cross(vertices[3] - vertices[0]))
+                  .stableNorm());
+    } else {
+      area = Scalar{0.5} *
+             ((vertices[1] - vertices[0]).cross(vertices[2] - vertices[0]))
+                 .stableNorm();
+    }
+  }
+
+ public:
   std::array<Vector, VertexCount> vertices = {};
   Vector center = Vector::Zero();
   Vector normal = Vector::Identity();
   Scalar area = Scalar{0};
 };
 
-class Triangle : public Polygon<3> {
- public:
-  Triangle() = default;
-
-  template<typename... Types>
-  explicit Triangle(const Vector& v0, Types... verts) :
-      Polygon<3>{v0, verts...} {
-    init();
-  }
-
-  explicit Triangle(std::array<Vector, 3> verts) :
-      Polygon<3>{std::move(verts)} {
-    init();
-  }
-
-  void apply(const Transformation& t) {
-    Polygon<3>::apply(t);
-    init();
-  }
-
- private:
-  void init() {
-    area = Scalar{0.5} *
-           ((vertices[1] - vertices[0]).cross(vertices[2] - vertices[0]))
-               .stableNorm();
-  }
-};
-
-class Quadrilateral : public Polygon<4> {
- public:
-  Quadrilateral() = default;
-
-  template<typename... Types>
-  explicit Quadrilateral(const Vector& v0, Types... verts) :
-      Polygon<4>(v0, verts...) {
-    init();
-  }
-
-  explicit Quadrilateral(std::array<Vector, 4> verts) :
-      Polygon<4>{std::move(verts)} {
-    init();
-  }
-
-  void apply(const Transformation& t) {
-    Polygon<4>::apply(t);
-    init();
-  }
-
- private:
-  void init() {
-    area = Scalar{0.5} *
-           (((vertices[1] - vertices[0]).cross(vertices[2] - vertices[0]))
-                .stableNorm() +
-            ((vertices[2] - vertices[0]).cross(vertices[3] - vertices[0]))
-                .stableNorm());
-  }
-};
+using Triangle = Polygon<3>;
+using Quadrilateral = Polygon<4>;
 
 // Forward declarations of the mesh elements.
 class Tetrahedron;
