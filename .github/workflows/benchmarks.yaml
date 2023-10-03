@@ -80,6 +80,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           name: benchmarks-${{ needs.check_reference.outputs.reference_sha }}
           path: ${{ needs.check_reference.outputs.reference_sha }}
+          workflow: run_benchmarks.yaml
           search_artifacts: true
 
       - name: Obtain benchmark results for current version
