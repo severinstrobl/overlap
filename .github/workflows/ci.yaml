@@ -27,6 +27,7 @@ jobs:
     name: Static analysis
     needs: [cpp]
     uses: ./.github/workflows/sonarcloud.yaml
+    secrets: inherit
 
   benchmarks:
       name: Benchmarks
