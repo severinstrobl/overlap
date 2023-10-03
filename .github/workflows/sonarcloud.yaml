@@ -41,7 +41,7 @@ jobs:
           cd build
           ctest --output-on-failure
           ~/.local/bin/gcovr \
-            --gcov-executable 'llvm-cov-10 gcov' \
+            --gcov-executable 'llvm-cov-14 gcov' \
             --sonarqube coverage.xml \
             -r ../ \
             -e ../third_party/ -e ../tests/src
