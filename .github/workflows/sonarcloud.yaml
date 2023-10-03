@@ -29,8 +29,8 @@ jobs:
           cmake \
             -Bbuild \
             -DCMAKE_BUILD_TYPE=Debug \
-            -DCMAKE_C_COMPILER=clang-10 \
-            -DCMAKE_CXX_COMPILER=clang++-10 \
+            -DCMAKE_C_COMPILER=clang-14 \
+            -DCMAKE_CXX_COMPILER=clang++-14 \
             -DOVERLAP_WITH_COVERAGE=ON
           build-wrapper-linux-x86-64 \
             --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} \
