@@ -1,6 +1,6 @@
 name: Trigger and compare benchmarks
 on:
-  pull_request:
+  workflow_call:
   workflow_dispatch:
 
 env:
@@ -9,13 +9,16 @@ env:
 jobs:
   benchmark:
     name: Benchmark current version
-    uses: ./.github/workflows/run_benchmarks.yml
+    uses: ./.github/workflows/run_benchmarks.yaml
     with:
       ref: ${{ github.sha }}
 
   check_reference:
     name: Check for reference benchmark results
     runs-on: ubuntu-latest
+    outputs:
+      reference_sha: ${{ steps.obtain_ref.outputs.reference_sha }}
+      reference_results_available: ${{ steps.check_ref_results.outputs.available }}
     steps:
       - name: Obtain SHA of reference version
         id: obtain_ref
@@ -49,17 +52,13 @@ jobs:
               console.log(`Benchmark results for revision '${ref}' do not exist, requesting run.`);
             }
 
-            return artifacts.data.total_count != 0
-
-    outputs:
-      reference_sha: ${{ steps.obtain_ref.outputs.reference_sha }}
-      reference_results_available: ${{ steps.check_ref_results.outputs.result }}
+            core.setOutput("available", artifacts.data.total_count != 0)
 
   benchmark_reference:
     name: Benchmark reference version
     needs: check_reference
     if: ${{ !needs.check_reference.outputs.reference_results_available }}
-    uses: ./.github/workflows/run_benchmarks.yml
+    uses: ./.github/workflows/run_benchmarks.yaml
     with:
       ref: ${{ needs.check_reference.outputs.reference_sha }}
       allow_failure: true
