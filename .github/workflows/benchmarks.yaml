@@ -57,7 +57,7 @@ jobs:
   benchmark_reference:
     name: Benchmark reference version
     needs: check_reference
-    if: ${{ !needs.check_reference.outputs.reference_results_available }}
+    if: ${{ !fromJSON(needs.check_reference.outputs.reference_results_available) }}
     uses: ./.github/workflows/run_benchmarks.yaml
     with:
       ref: ${{ needs.check_reference.outputs.reference_sha }}
@@ -66,7 +66,7 @@ jobs:
   compare_benchmarks:
     name: Compare benchmark results
     needs: [benchmark, benchmark_reference, check_reference]
-    if: ${{ always() && (needs.check_reference.outputs.reference_results_available || needs.benchmark_reference.outputs.outcome == 'success') }}
+    if: ${{ always() && (fromJSON(needs.check_reference.outputs.reference_results_available) || needs.benchmark_reference.outputs.outcome == 'success') }}
     runs-on: ubuntu-latest
     steps:
       - name: Dependencies
