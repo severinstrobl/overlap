@@ -54,8 +54,6 @@ jobs:
               console.log(`Benchmark results for revision '${ref}' do not exist, requesting run.`);
             }
 
-            console.log(request.data)
-
             core.setOutput("available", request.data.total_count != 0)
 
   benchmark_reference:
@@ -83,7 +81,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require("fs");
-            const fs = require("child_process");
+            const child_process = require("child_process");
 
             const ref = "${{ needs.check_reference.outputs.reference_sha }}";
             const artifact_id = ${{ needs.check_reference.outputs.artifact_id }};
