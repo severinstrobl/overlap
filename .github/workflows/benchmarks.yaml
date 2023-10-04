@@ -1,6 +1,6 @@
 name: Trigger and compare benchmarks
 on:
-  pull_request:
+  workflow_call:
   workflow_dispatch:
 
 env:
@@ -9,13 +9,17 @@ env:
 jobs:
   benchmark:
     name: Benchmark current version
-    uses: ./.github/workflows/run_benchmarks.yml
+    uses: ./.github/workflows/run_benchmarks.yaml
     with:
       ref: ${{ github.sha }}
 
   check_reference:
     name: Check for reference benchmark results
     runs-on: ubuntu-latest
+    outputs:
+      reference_sha: ${{ steps.obtain_ref.outputs.reference_sha }}
+      reference_results_available: ${{ steps.check_ref_results.outputs.available }}
+      artifact_id: ${{ steps.check_ref_results.outputs.artifact_id }}
     steps:
       - name: Obtain SHA of reference version
         id: obtain_ref
@@ -37,29 +41,26 @@ jobs:
           script: |
             const ref = "${{ steps.obtain_ref.outputs.reference_sha }}";
             const artifact_name = "benchmarks-" + ref;
-            const artifacts = await github.rest.actions.listArtifactsForRepo({
+            const request = await github.rest.actions.listArtifactsForRepo({
               owner: context.repo.owner,
               repo: context.repo.repo,
               name: artifact_name,
             });
 
-            if (artifacts.data.total_count) {
+            if (request.data.total_count) {
               console.log(`Benchmark results for revision '${ref}' exist.`);
+              core.setOutput("artifact_id", request.data.artifacts[0].id)
             } else {
               console.log(`Benchmark results for revision '${ref}' do not exist, requesting run.`);
             }
 
-            return artifacts.data.total_count != 0
-
-    outputs:
-      reference_sha: ${{ steps.obtain_ref.outputs.reference_sha }}
-      reference_results_available: ${{ steps.check_ref_results.outputs.result }}
+            core.setOutput("available", request.data.total_count != 0)
 
   benchmark_reference:
     name: Benchmark reference version
     needs: check_reference
-    if: ${{ !needs.check_reference.outputs.reference_results_available }}
-    uses: ./.github/workflows/run_benchmarks.yml
+    if: ${{ !fromJSON(needs.check_reference.outputs.reference_results_available) }}
+    uses: ./.github/workflows/run_benchmarks.yaml
     with:
       ref: ${{ needs.check_reference.outputs.reference_sha }}
       allow_failure: true
@@ -67,21 +68,33 @@ jobs:
   compare_benchmarks:
     name: Compare benchmark results
     needs: [benchmark, benchmark_reference, check_reference]
-    if: ${{ always() && (needs.check_reference.outputs.reference_results_available || needs.benchmark_reference.outputs.outcome == 'success') }}
+    if: ${{ always() && (fromJSON(needs.check_reference.outputs.reference_results_available) || needs.benchmark_reference.outputs.outcome == 'success') }}
     runs-on: ubuntu-latest
     steps:
       - name: Dependencies
         run: |
           python -m pip install pyperf
-          npm install fs
 
       - name: Obtain benchmark results for reference version
-        uses: dawidd6/action-download-artifact@v2
+        uses: actions/github-script@v6
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          name: benchmarks-${{ needs.check_reference.outputs.reference_sha }}
-          path: ${{ needs.check_reference.outputs.reference_sha }}
-          search_artifacts: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require("fs");
+            const child_process = require("child_process");
+
+            const ref = "${{ needs.check_reference.outputs.reference_sha }}";
+            const artifact_id = ${{ needs.check_reference.outputs.artifact_id }};
+            const artifact_name = `benchmarks-${ref}`;
+            const request = await github.rest.actions.downloadArtifact ({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              artifact_id: artifact_id,
+              archive_format: "zip",
+            });
+
+            fs.writeFileSync(artifact_name, Buffer.from(request.data));
+            child_process.execSync(`unzip -o ${artifact_name} -d ${ref}`);
 
       - name: Obtain benchmark results for current version
         uses: actions/download-artifact@v3
@@ -100,13 +113,13 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const fs = require('fs');
-            const report = fs.readFileSync('./report.md')
+            const fs = require("fs");
+            const report = fs.readFileSync("./report.md")
               .toString()
-              .replace(/Current/, 'Current (${{ github.sha }})')
-              .replace(/Reference/, 'Reference (${{ needs.check_reference.outputs.reference_sha }})');
+              .replace(/Current/, "Current (${{ github.sha }})")
+              .replace(/Reference/, "Reference (${{ needs.check_reference.outputs.reference_sha }})");
 
-            const msg = '## C++ benchmark results\n' + report;
+            const msg = `## C++ benchmark results\n${report}`;
             try {
               const result = await github.rest.issues.createComment({
                 owner: context.repo.owner,

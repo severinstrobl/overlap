@@ -1,19 +1,12 @@
 name: SonarCloud
 
 on:
-  push:
-    branches:
-      - develop
-  pull_request:
-    types:
-      - opened
-      - synchronize
-      - reopened
+  workflow_call:
 
 jobs:
   analyze:
     name: Build and analyze
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     env:
       BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory
     steps:
@@ -36,8 +29,8 @@ jobs:
           cmake \
             -Bbuild \
             -DCMAKE_BUILD_TYPE=Debug \
-            -DCMAKE_C_COMPILER=clang-10 \
-            -DCMAKE_CXX_COMPILER=clang++-10 \
+            -DCMAKE_C_COMPILER=clang-14 \
+            -DCMAKE_CXX_COMPILER=clang++-14 \
             -DOVERLAP_WITH_COVERAGE=ON
           build-wrapper-linux-x86-64 \
             --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} \
@@ -48,7 +41,7 @@ jobs:
           cd build
           ctest --output-on-failure
           ~/.local/bin/gcovr \
-            --gcov-executable 'llvm-cov-10 gcov' \
+            --gcov-executable 'llvm-cov-14 gcov' \
             --sonarqube coverage.xml \
             -r ../ \
             -e ../third_party/ -e ../tests/src

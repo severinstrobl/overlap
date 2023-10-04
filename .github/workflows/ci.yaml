@@ -1,0 +1,35 @@
+name: CI
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  linting:
+    name: Linting
+    uses: ./.github/workflows/style.yaml
+
+  cpp:
+    name: C++ build and test
+    needs: [linting]
+    uses: ./.github/workflows/cpp.yaml
+
+  python:
+      name: Python build and test
+      needs: [cpp]
+      uses: ./.github/workflows/python.yaml
+
+  coverage:
+    name: Code coverage
+    needs: [cpp]
+    uses: ./.github/workflows/coverage.yaml
+
+  static_analysis:
+    name: Static analysis
+    needs: [cpp]
+    uses: ./.github/workflows/sonarcloud.yaml
+    secrets: inherit
+
+  benchmarks:
+      name: Benchmarks
+      needs: [cpp, python]
+      uses: ./.github/workflows/benchmarks.yaml
