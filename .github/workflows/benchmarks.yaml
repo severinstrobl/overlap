@@ -19,6 +19,7 @@ jobs:
     outputs:
       reference_sha: ${{ steps.obtain_ref.outputs.reference_sha }}
       reference_results_available: ${{ steps.check_ref_results.outputs.available }}
+      artifact_id: ${{ steps.check_ref_results.outputs.artifact_id }}
     steps:
       - name: Obtain SHA of reference version
         id: obtain_ref
@@ -40,19 +41,22 @@ jobs:
           script: |
             const ref = "${{ steps.obtain_ref.outputs.reference_sha }}";
             const artifact_name = "benchmarks-" + ref;
-            const artifacts = await github.rest.actions.listArtifactsForRepo({
+            const request = await github.rest.actions.listArtifactsForRepo({
               owner: context.repo.owner,
               repo: context.repo.repo,
               name: artifact_name,
             });
 
-            if (artifacts.data.total_count) {
+            if (request.data.total_count) {
               console.log(`Benchmark results for revision '${ref}' exist.`);
+              core.setOutput("artifact_id", request.data.artifacts[0].id)
             } else {
               console.log(`Benchmark results for revision '${ref}' do not exist, requesting run.`);
             }
 
-            core.setOutput("available", artifacts.data.total_count != 0)
+            console.log(request.data)
+
+            core.setOutput("available", request.data.total_count != 0)
 
   benchmark_reference:
     name: Benchmark reference version
@@ -72,16 +76,27 @@ jobs:
       - name: Dependencies
         run: |
           python -m pip install pyperf
-          npm install fs
 
       - name: Obtain benchmark results for reference version
-        uses: dawidd6/action-download-artifact@v2
+        uses: actions/github-script@v6
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          name: benchmarks-${{ needs.check_reference.outputs.reference_sha }}
-          path: ${{ needs.check_reference.outputs.reference_sha }}
-          run_id: ${{ github.run_id }}
-          search_artifacts: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require("fs");
+            const fs = require("child_process");
+
+            const ref = "${{ needs.check_reference.outputs.reference_sha }}";
+            const artifact_id = ${{ needs.check_reference.outputs.artifact_id }};
+            const artifact_name = `benchmarks-${ref}`;
+            const request = await github.rest.actions.downloadArtifact ({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              artifact_id: artifact_id,
+              archive_format: "zip",
+            });
+
+            fs.writeFileSync(artifact_name, Buffer.from(request.data));
+            child_process.execSync(`unzip -o ${artifact_name} -d ${ref}`);
 
       - name: Obtain benchmark results for current version
         uses: actions/download-artifact@v3
@@ -100,13 +115,13 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const fs = require('fs');
-            const report = fs.readFileSync('./report.md')
+            const fs = require("fs");
+            const report = fs.readFileSync("./report.md")
               .toString()
-              .replace(/Current/, 'Current (${{ github.sha }})')
-              .replace(/Reference/, 'Reference (${{ needs.check_reference.outputs.reference_sha }})');
+              .replace(/Current/, "Current (${{ github.sha }})")
+              .replace(/Reference/, "Reference (${{ needs.check_reference.outputs.reference_sha }})");
 
-            const msg = '## C++ benchmark results\n' + report;
+            const msg = `## C++ benchmark results\n${report}`;
             try {
               const result = await github.rest.issues.createComment({
                 owner: context.repo.owner,
