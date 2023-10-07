@@ -24,10 +24,8 @@
 
 #include "common.hpp"
 
-TEST_CASE("HexOverlapVolume") {
+TEST_SUITE("HexOverlap") {
   using namespace overlap;
-
-  const auto sphere = Sphere{Vector::Zero(), 1.5};
 
   // clang-format off
   const auto hex = Hexahedron{{{
@@ -36,26 +34,21 @@ TEST_CASE("HexOverlapVolume") {
   }}};
   // clang-format on
 
-  create_benchmark("hex_overlap_volume", [&]() {
-    const auto result = overlap_volume(sphere, hex);
-    ankerl::nanobench::doNotOptimizeAway(result);
-  });
-}
+  TEST_CASE("HexOverlapVolume") {
+    const auto sphere = Sphere{Vector::Zero(), 1.5};
 
-TEST_CASE("HexOverlapVolumeAABB") {
-  using namespace overlap;
+    create_benchmark("hex_overlap_volume", [&]() {
+      const auto result = overlap_volume(sphere, hex);
+      ankerl::nanobench::doNotOptimizeAway(result);
+    });
+  }
 
-  const auto sphere = Sphere{Vector{5, 0, 0}, 1};
+  TEST_CASE("HexOverlapVolumeAABB") {
+    const auto sphere = Sphere{Vector{5, 0, 0}, 1};
 
-  // clang-format off
-  const auto hex = Hexahedron{{{
-      {-1, -1, -1}, {1, -1, -1}, {1, 1, -1}, {-1, 1, -1},
-      {-1, -1,  1}, {1, -1,  1}, {1, 1,  1}, {-1, 1,  1},
-  }}};
-  // clang-format on
-
-  create_benchmark("hex_overlap_volume_aabb", [&]() {
-    const auto result = overlap_volume(sphere, hex);
-    ankerl::nanobench::doNotOptimizeAway(result);
-  });
+    create_benchmark("hex_overlap_volume_aabb", [&]() {
+      const auto result = overlap_volume(sphere, hex);
+      ankerl::nanobench::doNotOptimizeAway(result);
+    });
+  }
 }

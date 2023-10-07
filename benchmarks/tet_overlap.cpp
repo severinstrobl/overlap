@@ -24,10 +24,8 @@
 
 #include "common.hpp"
 
-TEST_CASE("TetOverlapVolume") {
+TEST_SUITE("TetOverlap") {
   using namespace overlap;
-
-  const auto sphere = Sphere{Vector::Zero(), 0.5};
 
   const auto sqrt3 = std::sqrt(Scalar{3});
   const auto sqrt6 = std::sqrt(Scalar{6});
@@ -38,28 +36,21 @@ TEST_CASE("TetOverlapVolume") {
     {-sqrt3 / 6.0, +1.0 / 2.0, 0}, {0, 0, sqrt6 / 3.0}}}};
   // clang-format on
 
-  create_benchmark("tet_overlap_volume", [&]() {
-    const auto result = overlap_volume(sphere, tet);
-    ankerl::nanobench::doNotOptimizeAway(result);
-  });
-}
+  TEST_CASE("TetOverlapVolume") {
+    const auto sphere = Sphere{Vector::Zero(), 0.5};
 
-TEST_CASE("TetOverlapVolumeAABB") {
-  using namespace overlap;
+    create_benchmark("tet_overlap_volume", [&]() {
+      const auto result = overlap_volume(sphere, tet);
+      ankerl::nanobench::doNotOptimizeAway(result);
+    });
+  }
 
-  const auto sphere = Sphere{Vector{2, 0, 0}, 0.5};
+  TEST_CASE("TetOverlapVolumeAABB") {
+    const auto sphere = Sphere{Vector{2, 0, 0}, 0.5};
 
-  const auto sqrt3 = std::sqrt(Scalar{3});
-  const auto sqrt6 = std::sqrt(Scalar{6});
-
-  // clang-format off
-  const auto tet = Tetrahedron{{{
-    {-sqrt3 / 6.0, -1.0 / 2.0, 0}, {sqrt3 / 3.0, 0, 0},
-    {-sqrt3 / 6.0, +1.0 / 2.0, 0}, {0, 0, sqrt6 / 3.0}}}};
-  // clang-format on
-
-  create_benchmark("tet_overlap_volume_aabb", [&]() {
-    const auto result = overlap_volume(sphere, tet);
-    ankerl::nanobench::doNotOptimizeAway(result);
-  });
+    create_benchmark("tet_overlap_volume_aabb", [&]() {
+      const auto result = overlap_volume(sphere, tet);
+      ankerl::nanobench::doNotOptimizeAway(result);
+    });
+  }
 }
