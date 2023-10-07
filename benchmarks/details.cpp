@@ -19,9 +19,10 @@
  */
 
 #include <doctest/doctest.h>
-#include <nanobench.h>
 
 #include "overlap/overlap.hpp"
+
+#include "common.hpp"
 
 TEST_CASE("NormalNewell") {
   using namespace overlap::detail;
@@ -35,33 +36,19 @@ TEST_CASE("NormalNewell") {
       (Scalar{1} / Scalar{3}) *
       std::accumulate(points.begin(), points.end(), Vector::Zero().eval());
 
-  auto log = std::ofstream{"normal_newell.json"};
-  ankerl::nanobench::Bench()
-      .title("normal_newell")
-      .run("normal_newell",
-           [&]() {
-             const auto normal =
-                 normal_newell(points.begin(), points.end(), center);
-             ankerl::nanobench::doNotOptimizeAway(normal);
-           })
-      .render(ankerl::nanobench::templates::pyperf(), log);
+  create_benchmark("normal_newell", [&]() {
+    const auto normal = normal_newell(points.begin(), points.end(), center);
+    ankerl::nanobench::doNotOptimizeAway(normal);
+  });
 }
 
 TEST_CASE("RegularizedWedge") {
   using namespace overlap::detail;
 
-  auto log = std::ofstream{"regularized_wedge.json"};
   auto rng = ankerl::nanobench::Rng{};
-  ankerl::nanobench::Bench()
-      .title("regularized_wedge")
-      .run("regularized_wedge",
-           [&]() {
-             const auto result = regularized_wedge(1.0, rng.uniform01(),
-                                                   rng.uniform01() * 0.5 * pi);
-
-             ankerl::nanobench::doNotOptimizeAway(result);
-           })
-      .doNotOptimizeAway(rng)
-      .render(ankerl::nanobench::templates::pyperf(), log);
-  ;
+  create_benchmark("normal_newell", [&]() {
+    const auto result =
+        regularized_wedge(1.0, rng.uniform01(), rng.uniform01() * 0.5 * pi);
+    ankerl::nanobench::doNotOptimizeAway(result);
+  }).doNotOptimizeAway(rng);
 }

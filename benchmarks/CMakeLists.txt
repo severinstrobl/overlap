@@ -15,7 +15,7 @@ add_subdirectory(
 )
 
 # list of benchmarks
-set(benchmarks details hex_overlap)
+set(benchmarks details hex_overlap tet_overlap)
 
 # register the individual benchmarks
 foreach(benchmark ${benchmarks})
