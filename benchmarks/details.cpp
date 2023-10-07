@@ -46,7 +46,7 @@ TEST_CASE("RegularizedWedge") {
   using namespace overlap::detail;
 
   auto rng = ankerl::nanobench::Rng{};
-  create_benchmark("normal_newell", [&]() {
+  create_benchmark("regularized_wedge", [&]() {
     const auto result =
         regularized_wedge(1.0, rng.uniform01(), rng.uniform01() * 0.5 * pi);
     ankerl::nanobench::doNotOptimizeAway(result);
