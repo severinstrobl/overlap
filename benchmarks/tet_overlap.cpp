@@ -2,7 +2,7 @@
  * Exact calculation of the overlap volume of spheres and mesh elements.
  * http://dx.doi.org/10.1016/j.jcp.2016.02.003
  *
- * Copyright (C) 2022 Severin Strobl <severin.strobl@fau.de>
+ * Copyright (C) 2023 Severin Strobl <severin.strobl@fau.de>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,30 +24,32 @@
 
 #include "common.hpp"
 
-TEST_SUITE("HexOverlap") {
+TEST_SUITE("TetOverlap") {
   using namespace overlap;
 
+  const auto sqrt3 = std::sqrt(Scalar{3});
+  const auto sqrt6 = std::sqrt(Scalar{6});
+
   // clang-format off
-  const auto hex = Hexahedron{{{
-      {-1, -1, -1}, {1, -1, -1}, {1, 1, -1}, {-1, 1, -1},
-      {-1, -1,  1}, {1, -1,  1}, {1, 1,  1}, {-1, 1,  1},
-  }}};
+  const auto tet = Tetrahedron{{{
+    {-sqrt3 / 6.0, -1.0 / 2.0, 0}, {sqrt3 / 3.0, 0, 0},
+    {-sqrt3 / 6.0, +1.0 / 2.0, 0}, {0, 0, sqrt6 / 3.0}}}};
   // clang-format on
 
-  TEST_CASE("HexOverlapVolume") {
-    const auto sphere = Sphere{Vector::Zero(), 1.5};
+  TEST_CASE("TetOverlapVolume") {
+    const auto sphere = Sphere{Vector::Zero(), 0.5};
 
-    create_benchmark("hex_overlap_volume", [&]() {
-      const auto result = overlap_volume(sphere, hex);
+    create_benchmark("tet_overlap_volume", [&]() {
+      const auto result = overlap_volume(sphere, tet);
       ankerl::nanobench::doNotOptimizeAway(result);
     });
   }
 
-  TEST_CASE("HexOverlapVolumeAABB") {
-    const auto sphere = Sphere{Vector{5, 0, 0}, 1};
+  TEST_CASE("TetOverlapVolumeAABB") {
+    const auto sphere = Sphere{Vector{2, 0, 0}, 0.5};
 
-    create_benchmark("hex_overlap_volume_aabb", [&]() {
-      const auto result = overlap_volume(sphere, hex);
+    create_benchmark("tet_overlap_volume_aabb", [&]() {
+      const auto result = overlap_volume(sphere, tet);
       ankerl::nanobench::doNotOptimizeAway(result);
     });
   }
