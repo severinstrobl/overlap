@@ -59,7 +59,7 @@ jobs:
 
       - name: Store benchmark results for selected revision
         if: ${{ steps.benchmark_step.outcome == 'success' }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: benchmarks-${{ steps.benchmark_step.outputs.ref_sha }}
           path: benchmarks.json
