@@ -116,7 +116,7 @@ jobs:
           mv ${{ needs.check_reference.outputs.reference_sha }}/benchmarks.json Reference
           python -m pyperf compare_to --table --table-format md Reference Current > report.md
 
-      - name: Create PR comment
+      - name: Prepare PR comment
         if: ${{ github.event_name == 'pull_request' }}
         uses: actions/github-script@v7
         with:
@@ -128,18 +128,14 @@ jobs:
               .replace(/Current/, "Current (${{ github.sha }})")
               .replace(/Reference/, "Reference (${{ needs.check_reference.outputs.reference_sha }})");
 
-            const msg = `## C++ benchmark results\n${report}`;
-            try {
-              const result = await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body: msg,
-              })
-              return result.data;
-            } catch (err) {
-              core.setFailed(`Request failed with error ${err}`);
-            }
+            fs.writeFileSync("./report.md", `## C++ benchmark results\n${report}`);
+
+      - name: Upload PR comment as artifact
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmarks-report-${{ github.run_id }}
+          path: report.md
 
       - name: Report via annotation
         if: ${{ github.event_name != 'pull_request' }}
