@@ -99,13 +99,13 @@ jobs:
 
       - name: Obtain new benchmark results for reference version
         if: ${{ !fromJSON(needs.check_reference.outputs.reference_results_available) }}
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: benchmarks-${{ needs.check_reference.outputs.reference_sha }}
           path: ${{ needs.check_reference.outputs.reference_sha }}
 
       - name: Obtain benchmark results for current version
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: benchmarks-${{ github.sha }}
           path: ${{ github.sha }}
