@@ -27,8 +27,8 @@ element can also be calculated with this library.
 The overlap calculation directly supports these element types:
 
 - tetrahedra (4 nodes/vertices, data type `Tetrahedron`)
-- pentahedra/wedges/triangular prisms (5 nodes/vertices, data type `Wedge`)
-- hexahedra (6 nodes/vertices, data type `Hexahedron`)
+- pentahedra/wedges/triangular prisms (6 nodes/vertices, data type `Wedge`)
+- hexahedra (8 nodes/vertices, data type `Hexahedron`)
 
 The elements must be convex and have to be specified as a list of three-dimensional nodes/vertices,
 while the sphere (data type `Sphere`) requires a center point and the radius.
