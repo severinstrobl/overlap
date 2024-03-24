@@ -30,12 +30,17 @@
 #include <array>
 #include <bitset>
 #include <cmath>
+#include <cstddef>
+#include <cstdint>
 #include <iterator>
 #include <limits>
 #include <numeric>
+#include <optional>
 #include <stdexcept>
+#include <tuple>
 #include <type_traits>
 #include <utility>
+#include <variant>
 
 #if !defined(overlap_assert)
 #include <cassert>
@@ -95,14 +100,14 @@ template<>
 struct double_prec_constant<float> {
   // Constant used to split double precision values:
   // 2^(24 - 24/2) + 1 = 2^12 + 1 = 4097
-  static const uint32_t value = 4097;
+  static const std::uint32_t value = 4097;
 };
 
 template<>
 struct double_prec_constant<double> {
   // Constant used to split double precision values:
   // 2^(53 - int(53/2)) + 1 = 2^27 + 1 = 134217729
-  static const uint32_t value = 134217729;
+  static const std::uint32_t value = 134217729;
 };
 
 // For GCC and Clang an attribute can be used to control the FP precision...
@@ -140,7 +145,7 @@ inline double_prec<T> operator*(const double_prec<T>& lhs,
 template<typename T>
 class double_prec {
  private:
-  static const uint32_t c = detail::double_prec_constant<T>::value;
+  static const std::uint32_t c = detail::double_prec_constant<T>::value;
 
   template<typename TF>
   friend double_prec<TF> operator+(const double_prec<TF>&,
@@ -302,8 +307,8 @@ inline auto gram_schmidt(const Vector& v0, const Vector& v1)
   return {v0, (v1 - v1.dot(v0) * v0).normalized()};
 }
 
-inline auto clamp(Scalar value, Scalar min, Scalar max,
-                  Scalar tolerance = Scalar{0}) -> Scalar {
+constexpr auto clamp(Scalar value, Scalar min, Scalar max,
+                     Scalar tolerance = Scalar{0}) -> Scalar {
   overlap_assert(min <= max && tolerance >= Scalar{0},
                  "invalid arguments for clamp()");
 
@@ -313,58 +318,36 @@ inline auto clamp(Scalar value, Scalar min, Scalar max,
   return value;
 }
 
-struct Transformation {
-  Transformation() = default;
-
-  template<typename Derived>
-  Transformation(const Eigen::MatrixBase<Derived>& t, Scalar s) :
-      translation{t.eval()}, scaling{s} {}
-
-  Vector translation = Vector::Zero();
-  Scalar scaling = Scalar{1};
-};
-
 template<std::size_t VertexCount>
 class Polygon {
   static_assert(VertexCount >= 3 && VertexCount <= 4,
                 "only triangles and quadrilateral supported");
 
  public:
-  static constexpr std::size_t vertex_count = VertexCount;
-
   Polygon() = default;
 
   template<typename... Types>
-  explicit constexpr Polygon(const Vector& v0, Types... verts) :
+  explicit Polygon(const Vector& v0, Types... verts) :
       Polygon{std::array<Vector, VertexCount>{v0, verts...}} {}
 
-  explicit Polygon(std::array<Vector, VertexCount> verts) :
-      vertices(std::move(verts)) {
-    center = (Scalar{1} / Scalar{VertexCount}) *
-             std::accumulate(vertices.begin(), vertices.end(),
-                             Vector::Zero().eval());
+  // NOLINTNEXTLINE(google-explicit-constructor,hicpp-explicit-conversions)
+  Polygon(std::array<Vector, VertexCount> verts) :
+      vertices_{std::move(verts)} {}
 
-    // For a quadrilateral, Newell's method can be simplified significantly.
-    // Ref: Christer Ericson - Real-Time Collision Detection (2005)
-    if constexpr (VertexCount == 4) {
-      normal = ((vertices[2] - vertices[0]).cross(vertices[3] - vertices[1]))
-                   .normalized();
+  static constexpr auto num_vertices() -> std::size_t { return VertexCount; }
 
-    } else {
-      normal = detail::normal_newell(vertices.begin(), vertices.end(), center);
-    }
-
-    update_area();
+  auto vertices() const -> const std::array<Vector, VertexCount>& {
+    return vertices_;
   }
 
-  void apply(const Transformation& t) {
-    for (auto& v : vertices) {
-      v = t.scaling * (v + t.translation);
+  auto center() const -> const Vector& {
+    if (!center_) {
+      center_.emplace((Scalar{1} / Scalar{VertexCount}) *
+                      std::accumulate(vertices_.begin(), vertices_.end(),
+                                      Vector::Zero().eval()));
     }
 
-    center = t.scaling * (center + t.translation);
-
-    update_area();
+    return *center_;
   }
 
   [[nodiscard]] auto is_planar(const Scalar tolerance = large_epsilon) const
@@ -373,32 +356,58 @@ class Polygon {
       return true;
     }
 
-    return std::all_of(std::begin(vertices), std::end(vertices),
-                       [&](const Vector& v) {
-                         return std::abs(normal.dot(v - center)) <= tolerance;
-                       });
+    return std::all_of(
+        std::begin(vertices_), std::end(vertices_), [&](const Vector& v) {
+          return std::abs(normal().dot(v - center())) <= tolerance;
+        });
   }
+
+  [[nodiscard]] auto normal() const -> const Vector& {
+    if (!normal_) {
+      if constexpr (VertexCount == 4) {
+        // For a quadrilateral, Newell's method can be simplified significantly.
+        // Ref: Christer Ericson - Real-Time Collision Detection (2005)
+        normal_.emplace(
+            ((vertices_[2] - vertices_[0]).cross(vertices_[3] - vertices_[1]))
+                .normalized());
+
+      } else {
+        normal_.emplace(detail::normal_newell(vertices_.begin(),
+                                              vertices_.end(), center()));
+      }
+    }
+
+    return *normal_;
+  }
+
+  [[nodiscard]] auto area() const -> Scalar {
+    if (!area_) {
+      if constexpr (VertexCount == 4) {
+        area_ =
+            Scalar{0.5} *
+            (((vertices_[1] - vertices_[0]).cross(vertices_[2] - vertices_[0]))
+                 .stableNorm() +
+             ((vertices_[2] - vertices_[0]).cross(vertices_[3] - vertices_[0]))
+                 .stableNorm());
+
+      } else {
+        area_ =
+            Scalar{0.5} *
+            ((vertices_[1] - vertices_[0]).cross(vertices_[2] - vertices_[0]))
+                .stableNorm();
+      }
+    }
+
+    return *area_;
+  }
+
+  // FIXME: make private again
+  std::array<Vector, VertexCount> vertices_;
+  mutable std::optional<Vector> center_;
+  mutable std::optional<Vector> normal_;
 
  private:
-  void update_area() {
-    if constexpr (VertexCount == 4) {
-      area = Scalar{0.5} *
-             (((vertices[1] - vertices[0]).cross(vertices[2] - vertices[0]))
-                  .stableNorm() +
-              ((vertices[2] - vertices[0]).cross(vertices[3] - vertices[0]))
-                  .stableNorm());
-    } else {
-      area = Scalar{0.5} *
-             ((vertices[1] - vertices[0]).cross(vertices[2] - vertices[0]))
-                 .stableNorm();
-    }
-  }
-
- public:
-  std::array<Vector, VertexCount> vertices = {};
-  Vector center = Vector::Zero();
-  Vector normal = Vector::Identity();
-  Scalar area = Scalar{0};
+  mutable std::optional<Scalar> area_;
 };
 
 using Triangle = Polygon<3>;
@@ -409,424 +418,470 @@ class Tetrahedron;
 class Wedge;
 class Hexahedron;
 
-// Some tricks are required to keep this code header-only.
-template<typename T, typename Nil>
-struct mappings;
+using VertexIndexList =
+    std::variant<std::array<std::uint8_t, 3>, std::array<std::uint8_t, 4>>;
 
-template<typename Nil>
-struct mappings<Tetrahedron, Nil> {
-  // Map edges of a tetrahedron to vertices and faces.
-  static const uint32_t edge_mapping[6][2][2];
+template<typename... Vertices>
+constexpr auto vl(const Vertices&... vertices) -> VertexIndexList {
+  return std::array{static_cast<std::uint8_t>(vertices)...};
+}
 
-  // Map vertices of a tetrahedron to edges and faces.
-  // 0: local IDs of the edges intersecting at this vertex
-  // 1: 0 if the edge is pointing away from the vertex, 1 otherwise
-  // 2: faces joining at the vertex
-  static const uint32_t vertex_mapping[4][3][3];
+template<typename T, typename U>
+struct is_one_of;
 
-  // This mapping contains the three sets of the two edges for each of the
-  // faces joining at a vertex. The indices are mapped to the local edge IDs
-  // using the first value field of the 'vertex_mapping' table.
-  static const uint32_t face_mapping[3][2];
+template<typename T, typename... Ts>
+struct is_one_of<T, std::variant<Ts...>>
+    : std::bool_constant<(std::is_same_v<T, Ts> || ...)> {};
+
+template<typename T, typename Ts>
+inline constexpr bool is_one_of_v = is_one_of<T, Ts>::value;
+
+template<typename VariantT>
+class Facet {
+ public:
+  explicit Facet(const VariantT& variant) : variant_{variant} {}
+
+  Facet() = delete;
+  Facet(const Facet&) = delete;
+  Facet(Facet&&) noexcept = delete;
+
+  auto operator=(const Facet&) -> Facet& = delete;
+  auto operator=(Facet&&) -> Facet& = delete;
+
+  template<typename T>
+  auto get_if() const -> std::add_pointer_t<std::add_const_t<T>> {
+    if constexpr (std::is_same_v<T, Triangle> &&
+                  is_one_of_v<Triangle, VariantT>) {
+      return std::get_if<Triangle>(&variant_);
+    }
+
+    if constexpr (std::is_same_v<T, Quadrilateral> &&
+                  is_one_of_v<Quadrilateral, VariantT>) {
+      return std::get_if<Quadrilateral>(&variant_);
+    }
+
+    return nullptr;
+  }
+
+  [[nodiscard]] auto inline vertex(std::size_t idx) const -> const Vector& {
+    if (std::holds_alternative<std::monostate>(variant_)) {
+      throw std::logic_error{"invalid facet state"};
+    }
+
+    if constexpr (is_one_of_v<Triangle, VariantT>) {
+      if (const auto tri = std::get_if<Triangle>(&variant_)) {
+        return tri->vertices()[idx];
+      }
+    }
+
+    if constexpr (is_one_of_v<Quadrilateral, VariantT>) {
+      if (const auto quad = std::get_if<Quadrilateral>(&variant_)) {
+        return quad->vertices()[idx];
+      }
+    }
+
+    throw std::logic_error{"invalid facet type"};
+  }
+
+  [[nodiscard]] auto inline is_planar() const -> bool {
+    if (std::holds_alternative<std::monostate>(variant_)) {
+      throw std::logic_error{"invalid facet state"};
+    }
+
+    if constexpr (is_one_of_v<Triangle, VariantT>) {
+      if (const auto tri = std::get_if<Triangle>(&variant_)) {
+        return tri->is_planar();
+      }
+    }
+
+    if constexpr (is_one_of_v<Quadrilateral, VariantT>) {
+      if (const auto quad = std::get_if<Quadrilateral>(&variant_)) {
+        return quad->is_planar();
+      }
+    }
+
+    throw std::logic_error{"invalid facet type"};
+  }
+
+  [[nodiscard]] auto inline area() const -> Scalar {
+    if (std::holds_alternative<std::monostate>(variant_)) {
+      throw std::logic_error{"invalid facet state"};
+    }
+
+    if constexpr (is_one_of_v<Triangle, VariantT>) {
+      if (const auto tri = std::get_if<Triangle>(&variant_)) {
+        return tri->area();
+      }
+    }
+
+    if constexpr (is_one_of_v<Quadrilateral, VariantT>) {
+      if (const auto quad = std::get_if<Quadrilateral>(&variant_)) {
+        return quad->area();
+      }
+    }
+
+    throw std::logic_error{"invalid facet type"};
+  }
+
+  [[nodiscard]] auto inline center() const -> const Vector3& {
+    if (std::holds_alternative<std::monostate>(variant_)) {
+      throw std::logic_error{"invalid facet state"};
+    }
+
+    if constexpr (is_one_of_v<Triangle, VariantT>) {
+      if (const auto tri = std::get_if<Triangle>(&variant_)) {
+        return tri->center();
+      }
+    }
+
+    if constexpr (is_one_of_v<Quadrilateral, VariantT>) {
+      if (const auto quad = std::get_if<Quadrilateral>(&variant_)) {
+        return quad->center();
+      }
+    }
+
+    throw std::logic_error{"invalid facet type"};
+  }
+
+  [[nodiscard]] auto inline normal() const -> const Vector3& {
+    if (std::holds_alternative<std::monostate>(variant_)) {
+      throw std::logic_error{"invalid facet state"};
+    }
+
+    if constexpr (is_one_of_v<Triangle, VariantT>) {
+      if (const auto tri = std::get_if<Triangle>(&variant_)) {
+        return tri->normal();
+      }
+    }
+
+    if constexpr (is_one_of_v<Quadrilateral, VariantT>) {
+      if (const auto quad = std::get_if<Quadrilateral>(&variant_)) {
+        return quad->normal();
+      }
+    }
+
+    throw std::logic_error{"invalid facet type"};
+  }
+
+ private:
+  const VariantT& variant_;
 };
 
-template<typename Nil>
-const uint32_t mappings<Tetrahedron, Nil>::edge_mapping[6][2][2] = {
-    {{0, 1}, {0, 1}}, {{1, 2}, {0, 2}}, {{2, 0}, {0, 3}},
-    {{0, 3}, {1, 3}}, {{1, 3}, {1, 2}}, {{2, 3}, {2, 3}}};
+template<typename Derived>
+struct PolyhedronTrait;
 
-template<typename Nil>
-const uint32_t mappings<Tetrahedron, Nil>::vertex_mapping[4][3][3] = {
-    {{0, 2, 3}, {0, 1, 0}, {0, 1, 3}},
-    {{0, 1, 4}, {1, 0, 0}, {0, 1, 2}},
-    {{1, 2, 5}, {1, 0, 0}, {0, 2, 3}},
-    {{3, 4, 5}, {1, 1, 1}, {1, 3, 2}}};
+template<typename Derived>
+class Polyhedron : public PolyhedronTrait<Derived> {
+  using DerivedTrait = PolyhedronTrait<Derived>;
+  using FacetVariant = typename DerivedTrait::FacetVariant;
 
-template<typename Nil>
-const uint32_t mappings<Tetrahedron, Nil>::face_mapping[3][2] = {
-    {0, 1}, {0, 2}, {1, 2}};
+  template<typename, typename = void>
+  static constexpr bool has_initializer_check = false;
 
-using tet_mappings = mappings<Tetrahedron, void>;
-
-class Tetrahedron : public tet_mappings {
  public:
-  Tetrahedron() {
-    std::fill(std::begin(vertices), std::end(vertices), Vector::Zero());
+  using FacetInterface = Facet<FacetVariant>;
+
+  Polyhedron() {
+    std::fill(std::begin(vertices_), std::end(vertices_), Vector::Zero());
   }
 
   template<typename... Types>
-  Tetrahedron(const Vector& v0, Types... verts) : vertices{{v0, verts...}} {
+  explicit constexpr Polyhedron(const Vector& v0, Types... verts) :
+      Polyhedron{
+          std::array<Vector, DerivedTrait::num_vertices()>{v0, verts...}} {}
+
+  Polyhedron(std::array<Vector, DerivedTrait::num_vertices()> verts) :
+      vertices_{std::move(verts)} {
+    if constexpr (has_initializer_check<Derived>) {
+      derived().initializer_check();
+    }
+  }
+
+  auto vertex(std::size_t idx) const -> const Vector& {
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
+    return vertices_[idx];
+  }
+
+  auto vertices() const
+      -> const std::array<Vector, DerivedTrait::num_vertices()>& {
+    return vertices_;
+  }
+
+  auto center() const -> const Vector& {
+    if (!center_) {
+      center_.emplace((Scalar{1} / Scalar{DerivedTrait::num_vertices()}) *
+                      std::accumulate(vertices_.begin(), vertices_.end(),
+                                      Vector::Zero().eval()));
+    }
+
+    return *center_;
+  }
+
+  [[nodiscard]] auto volume() const -> Scalar {
+    if (!volume_) {
+      volume_ = derived().calc_volume();
+    }
+
+    return *volume_;
+  }
+
+  auto inline face(std::size_t face_idx) const -> FacetInterface {
+    if (std::holds_alternative<std::monostate>(faces_[face_idx])) {
+      set_face(face_idx, faces_[face_idx]);
+    }
+
+    return FacetInterface{faces_[face_idx]};
+  }
+
+  [[nodiscard]] auto surface_area() const -> Scalar {
+    auto area = Scalar{0};
+    for (auto face_idx = 0U; face_idx < DerivedTrait::num_faces(); ++face_idx) {
+      area += face(face_idx).area();
+    }
+
+    return area;
+  }
+
+ private:
+  constexpr auto derived() const -> const Derived& {
+    return static_cast<const Derived&>(*this);
+  }
+
+  inline void set_face(std::size_t face_idx, FacetVariant& facet) const {
+    std::visit(
+        [&facet, this](const auto& indices) {
+          constexpr auto num_vertices =
+              std::tuple_size<std::decay_t<decltype(indices)>>{};
+
+          using Facet =
+              std::conditional_t<num_vertices == 3, Triangle, Quadrilateral>;
+
+          if constexpr (is_one_of_v<Facet, FacetVariant>) {
+            auto vertices = std::array<Vector, num_vertices>{};
+            for (auto idx = 0U; idx < indices.size(); ++idx) {
+              vertices[idx] = vertices_[indices[idx]];
+            }
+
+            facet.template emplace<Facet>(std::move(vertices));
+          }
+        },
+        face_vertex_indices(face_idx));
+  }
+
+  [[nodiscard]] static constexpr auto face_vertex_indices(
+      const std::size_t face_idx) -> const VertexIndexList& {
+    return Derived::face_vertices_list[face_idx];
+  }
+
+ protected:
+  std::array<Vector, DerivedTrait::num_vertices()> vertices_;
+  mutable std::optional<Vector> center_;
+  mutable std::optional<Scalar> volume_;
+  mutable std::array<FacetVariant, DerivedTrait::num_faces()> faces_;
+};
+
+// workaround for GCC bug #71954
+template<typename Derived>
+template<typename T>
+constexpr bool Polyhedron<Derived>::has_initializer_check<
+    T, std::void_t<decltype(std::declval<T>().initializer_check())>> = true;
+
+template<typename Derived>
+inline constexpr bool is_element_v =
+    std::is_base_of_v<Polyhedron<Derived>, Derived>;
+
+template<>
+struct PolyhedronTrait<Tetrahedron> {
+  using FacetVariant = std::variant<std::monostate, Triangle>;
+
+  static constexpr auto num_vertices() -> std::uint32_t { return 4; }
+  static constexpr auto num_faces() -> std::uint32_t { return 4; }
+  static constexpr auto num_edges() -> std::uint32_t { return 6; }
+
+  // Map edges to vertices and faces.
+  static constexpr std::array<std::array<std::array<std::uint32_t, 2>, 2>, 6>
+      edge_mapping = {{{{{0, 1}, {0, 1}}},
+                       {{{1, 2}, {0, 2}}},
+                       {{{2, 0}, {0, 3}}},
+                       {{{0, 3}, {1, 3}}},
+                       {{{1, 3}, {1, 2}}},
+                       {{{2, 3}, {2, 3}}}}};
+
+  // Map vertices to edges and faces.
+  // 0: local IDs of the edges intersecting at this vertex
+  // 1: 0 if the edge is pointing away from the vertex, 1 otherwise
+  // 2: faces joining at the vertex
+  static constexpr std::array<std::array<std::array<std::uint32_t, 3>, 3>, 4>
+      vertex_mapping = {{{{{0, 2, 3}, {0, 1, 0}, {0, 1, 3}}},
+                         {{{0, 1, 4}, {1, 0, 0}, {0, 1, 2}}},
+                         {{{1, 2, 5}, {1, 0, 0}, {0, 2, 3}}},
+                         {{{3, 4, 5}, {1, 1, 1}, {1, 3, 2}}}}};
+
+  // This mapping contains the offsets for the three sets of the two edges for
+  // each of the faces joining at a vertex. The offsets are mapped to the edges
+  // using the first value field of the `vertex_mapping` table.
+  static constexpr std::array<std::array<std::uint32_t, 2>, 3> face_mapping = {
+      {{0, 1}, {0, 2}, {1, 2}}};
+};
+
+template<>
+struct PolyhedronTrait<Wedge> {
+  using FacetVariant = std::variant<std::monostate, Triangle, Quadrilateral>;
+
+  static constexpr auto num_vertices() -> std::uint32_t { return 6; }
+  static constexpr auto num_faces() -> std::uint32_t { return 5; }
+  static constexpr auto num_edges() -> std::uint32_t { return 9; }
+
+  static constexpr std::array<std::array<std::array<std::uint32_t, 2>, 2>, 9>
+      edge_mapping = {{{{{0, 1}, {3, 0}}},
+                       {{{1, 2}, {3, 1}}},
+                       {{{2, 0}, {3, 2}}},
+                       {{{0, 3}, {0, 2}}},
+                       {{{1, 4}, {0, 1}}},
+                       {{{2, 5}, {1, 2}}},
+                       {{{3, 4}, {0, 4}}},
+                       {{{4, 5}, {1, 4}}},
+                       {{{5, 3}, {2, 4}}}
+
+      }};
+
+  static constexpr std::array<std::array<std::array<std::uint32_t, 3>, 3>, 6>
+      vertex_mapping = {{{{{0, 2, 3}, {0, 1, 0}, {3, 0, 2}}},
+                         {{{0, 1, 4}, {1, 0, 0}, {3, 0, 1}}},
+                         {{{1, 2, 5}, {1, 0, 0}, {3, 1, 2}}},
+                         {{{3, 6, 8}, {1, 0, 1}, {0, 2, 4}}},
+                         {{{4, 6, 7}, {1, 1, 0}, {0, 1, 4}}},
+                         {{{5, 7, 8}, {1, 1, 0}, {1, 2, 4}}}}};
+
+  static constexpr std::array<std::array<std::uint32_t, 2>, 3> face_mapping = {
+      {{0, 1}, {0, 2}, {1, 2}}};
+};
+
+template<>
+struct PolyhedronTrait<Hexahedron> {
+  using FacetVariant = std::variant<std::monostate, Quadrilateral>;
+
+  static constexpr auto num_vertices() -> std::uint32_t { return 8; }
+  static constexpr auto num_faces() -> std::uint32_t { return 6; }
+  static constexpr auto num_edges() -> std::uint32_t { return 12; }
+
+  static constexpr std::array<std::array<std::array<std::uint32_t, 2>, 2>, 12>
+      edge_mapping = {{{{{0, 1}, {0, 1}}},
+                       {{{1, 2}, {0, 2}}},
+                       {{{2, 3}, {0, 3}}},
+                       {{{3, 0}, {0, 4}}},
+                       {{{0, 4}, {1, 4}}},
+                       {{{1, 5}, {1, 2}}},
+                       {{{2, 6}, {2, 3}}},
+                       {{{3, 7}, {3, 4}}},
+                       {{{4, 5}, {1, 5}}},
+                       {{{5, 6}, {2, 5}}},
+                       {{{6, 7}, {3, 5}}},
+                       {{{7, 4}, {4, 5}}}}};
+
+  static constexpr std::array<std::array<std::array<std::uint32_t, 3>, 3>, 8>
+      vertex_mapping = {{{{{0, 3, 4}, {0, 1, 0}, {0, 1, 4}}},
+                         {{{0, 1, 5}, {1, 0, 0}, {0, 1, 2}}},
+                         {{{1, 2, 6}, {1, 0, 0}, {0, 2, 3}}},
+                         {{{2, 3, 7}, {1, 0, 0}, {0, 3, 4}}},
+                         {{{4, 8, 11}, {1, 0, 1}, {1, 4, 5}}},
+                         {{{5, 8, 9}, {1, 1, 0}, {1, 2, 5}}},
+                         {{{6, 9, 10}, {1, 1, 0}, {2, 3, 5}}},
+                         {{{7, 10, 11}, {1, 1, 0}, {3, 4, 5}}}}};
+
+  static constexpr std::array<std::array<std::uint32_t, 2>, 3> face_mapping = {
+      {{0, 1}, {0, 2}, {1, 2}}};
+};
+
+class Tetrahedron : public Polyhedron<Tetrahedron> {
+ private:
+  friend class Polyhedron<Tetrahedron>;
+
+  using FacetVariant = std::variant<std::monostate, Triangle>;
+
+  // corner nodes of faces according to CGNS convention
+  static inline constexpr auto face_vertices_list =
+      std::array{vl(0, 2, 1), vl(0, 1, 3), vl(1, 2, 3), vl(2, 0, 3)};
+
+ public:
+  using Polyhedron::Polyhedron;
+
+  // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+  void initializer_check() const {
     // Make sure the ordering of the vertices is correct.
-    overlap_assert((vertices[1] - vertices[0])
-                           .cross(vertices[2] - vertices[0])
-                           .dot(vertices[3] - vertices[0]) >= Scalar{0},
+    // TODO: should this be an exception
+    overlap_assert((vertices_[1] - vertices_[0])
+                           .cross(vertices_[2] - vertices_[0])
+                           .dot(vertices_[3] - vertices_[0]) >= Scalar{0},
                    "invalid vertex order detected");
-
-    init();
-  }
-
-  Tetrahedron(std::array<Vector, 4> verts) : vertices(std::move(verts)) {
-    init();
-  }
-
-  void apply(const Transformation& t) {
-    for (auto& v : vertices) {
-      v = t.scaling * (v + t.translation);
-    }
-
-    for (auto& f : faces) {
-      f.apply(t);
-    }
-
-    center = Scalar{0.25} * std::accumulate(vertices.begin(), vertices.end(),
-                                            Vector::Zero().eval());
-
-    volume = calc_volume();
-  }
-
-  [[nodiscard]] auto surface_area() const -> Scalar {
-    return std::accumulate(
-        std::begin(faces), std::end(faces), Scalar{0},
-        [](auto sum, const auto& face) { return sum + face.area; });
   }
 
  private:
-  void init() {
-    // 0: v2, v1, v0
-    faces[0] = Triangle{vertices[2], vertices[1], vertices[0]};
-
-    // 1: v0, v1, v3
-    faces[1] = Triangle{vertices[0], vertices[1], vertices[3]};
-
-    // 2: v1, v2, v3
-    faces[2] = Triangle{vertices[1], vertices[2], vertices[3]};
-
-    // 3: v2, v0, v3
-    faces[3] = Triangle{vertices[2], vertices[0], vertices[3]};
-
-    center = Scalar{0.25} * std::accumulate(vertices.begin(), vertices.end(),
-                                            Vector::Zero().eval());
-
-    volume = calc_volume();
-  }
-
-  [[nodiscard]] auto calc_volume() const -> Scalar {
+  auto calc_volume() const -> Scalar {
     return (Scalar{1} / Scalar{6}) *
-           std::abs((vertices[0] - vertices[3])
-                        .dot((vertices[1] - vertices[3])
-                                 .cross(vertices[2] - vertices[3])));
+           std::abs((vertices_[0] - vertices_[3])
+                        .dot((vertices_[1] - vertices_[3])
+                                 .cross(vertices_[2] - vertices_[3])));
   }
-
- public:
-  std::array<Vector, 4> vertices;
-  std::array<Triangle, 4> faces = {};
-  Vector center = Vector::Zero();
-  Scalar volume = Scalar{0};
 };
 
-template<typename Nil>
-struct mappings<Wedge, Nil> {
-  // Map edges of a wedge to vertices and faces.
-  static const uint32_t edge_mapping[9][2][2];
+class Wedge : public Polyhedron<Wedge> {
+ private:
+  friend class Polyhedron<Wedge>;
 
-  // Map vertices of a wedge to edges and faces.
-  // 0: local IDs of the edges intersecting at this vertex
-  // 1: 0 if the edge is pointing away from the vertex, 1 otherwise
-  // 2: faces joining at the vertex
-  static const uint32_t vertex_mapping[6][3][3];
+  using FacetVariant = std::variant<std::monostate, Triangle, Quadrilateral>;
 
-  // This mapping contains the three sets of the two edges for each of the
-  // faces joining at a vertex. The indices are mapped to the local edge IDs
-  // using the first value field of the 'vertex_mapping' table.
-  static const uint32_t face_mapping[3][2];
-};
+  // corner nodes of faces according to CGNS convention
+  static inline constexpr auto face_vertices_list = std::array{
+      vl(0, 1, 4, 3), vl(1, 2, 5, 4), vl(2, 0, 3, 5), vl(0, 2, 1), vl(3, 4, 5)};
 
-template<typename Nil>
-const uint32_t mappings<Wedge, Nil>::edge_mapping[9][2][2] = {
-    {{0, 1}, {0, 1}}, {{1, 2}, {0, 2}}, {{2, 0}, {0, 3}},
-    {{0, 3}, {1, 3}}, {{1, 4}, {1, 2}}, {{2, 5}, {2, 3}},
-    {{3, 4}, {1, 4}}, {{4, 5}, {2, 4}}, {{5, 3}, {3, 4}}};
-
-// clang-format off
-template<typename Nil>
-const uint32_t mappings<Wedge, Nil>::vertex_mapping[6][3][3] = {
-    {{0, 2, 3}, {0, 1, 0}, {0, 1, 3}},
-    {{0, 1, 4}, {1, 0, 0}, {0, 1, 2}},
-    {{1, 2, 5}, {1, 0, 0}, {0, 2, 3}},
-
-    {{3, 6, 8}, {1, 0, 1}, {1, 3, 4}},
-    {{4, 6, 7}, {1, 1, 0}, {1, 2, 4}},
-    {{5, 7, 8}, {1, 1, 0}, {2, 3, 4}}};
-// clang-format on
-
-template<typename Nil>
-const uint32_t mappings<Wedge, Nil>::face_mapping[3][2] = {
-    {0, 1}, {0, 2}, {1, 2}};
-
-using wedge_mappings = mappings<Wedge, void>;
-
-class Wedge : public wedge_mappings {
  public:
-  Wedge() {
-    std::fill(std::begin(vertices), std::end(vertices), Vector::Zero());
-  }
-
-  template<typename... Types>
-  Wedge(const Vector& v0, Types... verts) : vertices{{v0, verts...}} {
-    init();
-  }
-
-  Wedge(std::array<Vector, 6> verts) : vertices{std::move(verts)} { init(); }
-
-  void apply(const Transformation& t) {
-    for (auto& v : vertices) {
-      v = t.scaling * (v + t.translation);
-    }
-
-    for (auto& f : faces) {
-      f.apply(t);
-    }
-
-    center = (Scalar{1} / Scalar{6}) * std::accumulate(vertices.begin(),
-                                                       vertices.end(),
-                                                       Vector::Zero().eval());
-
-    volume = calc_volume();
-  }
-
-  [[nodiscard]] auto surface_area() const -> Scalar {
-    return std::accumulate(
-        std::begin(faces), std::end(faces), Scalar{0},
-        [](auto sum, const auto& face) { return sum + face.area; });
-  }
+  using Polyhedron::Polyhedron;
 
  private:
-  void init() {
-    // All faces of the wedge are stored as quadrilaterals, so an
-    // additional point is inserted between v0 and v1.
-    // 0: v2, v1, v0, v02
-    faces[0] = Quadrilateral(vertices[2], vertices[1], vertices[0],
-                             Scalar{0.5} * (vertices[0] + vertices[2]));
-
-    // 1: v0, v1, v4, v3
-    faces[1] =
-        Quadrilateral(vertices[0], vertices[1], vertices[4], vertices[3]);
-
-    // 2: v1, v2, v5, v4
-    faces[2] =
-        Quadrilateral(vertices[1], vertices[2], vertices[5], vertices[4]);
-
-    // 3: v2, v0, v3, v5
-    faces[3] =
-        Quadrilateral(vertices[2], vertices[0], vertices[3], vertices[5]);
-
-    // All faces of the wedge are stored as quadrilaterals, so an
-    // additional point is inserted between v3 and v5.
-    // 4: v3, v4, v5, v53
-    faces[4] = Quadrilateral(vertices[3], vertices[4], vertices[5],
-                             Scalar{0.5} * (vertices[5] + vertices[3]));
-
-    center = (Scalar{1} / Scalar{6}) * std::accumulate(vertices.begin(),
-                                                       vertices.end(),
-                                                       Vector::Zero().eval());
-
-    volume = calc_volume();
-  }
-
-  [[nodiscard]] auto calc_volume() const -> Scalar {
+  auto calc_volume() const -> Scalar {
     // The wedge is treated as a degenerate hexahedron here by adding
     // two fake vertices v02 and v35.
-    const Vector diagonal = vertices[5] - vertices[0];
-
+    const auto diagonal = (vertices_[5] - vertices_[0]).eval();
     return (Scalar{1} / Scalar{6}) *
            (diagonal.dot(
-               ((vertices[1] - vertices[0]).cross(vertices[2] - vertices[4])) +
-               ((vertices[3] - vertices[0])
-                    .cross(vertices[4] -
-                           Scalar{0.5} * (vertices[3] + vertices[5]))) +
-               ((Scalar{0.5} * (vertices[0] + vertices[2]) - vertices[0])
-                    .cross(Scalar{0.5} * (vertices[3] + vertices[5]) -
-                           vertices[2]))));
+               ((vertices_[1] - vertices_[0])
+                    .cross(vertices_[2] - vertices_[4])) +
+               ((vertices_[3] - vertices_[0])
+                    .cross(vertices_[4] -
+                           Scalar{0.5} * (vertices_[3] + vertices_[5]))) +
+               ((Scalar{0.5} * (vertices_[0] + vertices_[2]) - vertices_[0])
+                    .cross(Scalar{0.5} * (vertices_[3] + vertices_[5]) -
+                           vertices_[2]))));
   }
-
- public:
-  std::array<Vector, 6> vertices;
-  std::array<Quadrilateral, 5> faces = {};
-  Vector center = Vector::Zero();
-  Scalar volume = Scalar{0};
 };
 
-template<typename Nil>
-struct mappings<Hexahedron, Nil> {
-  // Map edges of a hexahedron to vertices and faces.
-  static const uint32_t edge_mapping[12][2][2];
+class Hexahedron : public Polyhedron<Hexahedron> {
+ private:
+  friend class Polyhedron<Hexahedron>;
 
-  // Map vertices of a hexahedron to edges and faces.
-  // 0: local IDs of the edges intersecting at this vertex
-  // 1: 0 if the edge is pointing away from the vertex, 1 otherwise
-  // 2: faces joining at the vertex
-  static const uint32_t vertex_mapping[8][3][3];
+  using FacetVariant = std::variant<std::monostate, Quadrilateral>;
 
-  // This mapping contains the three sets of the two edges for each of the
-  // faces joining at a vertex. The indices are mapped to the local edge IDs
-  // using the first value field of the 'vertex_mapping' table.
-  static const uint32_t face_mapping[3][2];
-};
+  // corner nodes of faces according to CGNS convention
+  static inline constexpr auto face_vertices_list =
+      std::array{vl(0, 3, 2, 1), vl(0, 1, 5, 4), vl(1, 2, 6, 5),
+                 vl(2, 3, 7, 6), vl(0, 4, 7, 3), vl(4, 5, 6, 7)};
 
-// clang-format off
-template<typename Nil>
-const uint32_t mappings<Hexahedron, Nil>::edge_mapping[12][2][2] = {
-    {{0, 1}, {0, 1}}, {{1, 2}, {0, 2}},
-    {{2, 3}, {0, 3}}, {{3, 0}, {0, 4}},
-
-    {{0, 4}, {1, 4}}, {{1, 5}, {1, 2}},
-    {{2, 6}, {2, 3}}, {{3, 7}, {3, 4}},
-
-    {{4, 5}, {1, 5}}, {{5, 6}, {2, 5}},
-    {{6, 7}, {3, 5}}, {{7, 4}, {4, 5}}};
-
-template<typename Nil>
-const uint32_t mappings<Hexahedron, Nil>::vertex_mapping[8][3][3] = {
-    {{0, 3, 4}, {0, 1, 0}, {0, 1, 4}},
-    {{0, 1, 5}, {1, 0, 0}, {0, 1, 2}},
-    {{1, 2, 6}, {1, 0, 0}, {0, 2, 3}},
-    {{2, 3, 7}, {1, 0, 0}, {0, 3, 4}},
-
-    {{4, 8, 11}, {1, 0, 1}, {1, 4, 5}},
-    {{5, 8, 9}, {1, 1, 0}, {1, 2, 5}},
-    {{6, 9, 10}, {1, 1, 0}, {2, 3, 5}},
-    {{7, 10, 11}, {1, 1, 0}, {3, 4, 5}}};
-// clang-format on
-
-template<typename Nil>
-const uint32_t mappings<Hexahedron, Nil>::face_mapping[3][2] = {
-    {0, 1}, {0, 2}, {1, 2}};
-
-using hex_mappings = mappings<Hexahedron, void>;
-
-class Hexahedron : public hex_mappings {
  public:
-  Hexahedron() {
-    std::fill(std::begin(vertices), std::end(vertices), Vector::Zero());
-  }
-
-  template<typename... Types>
-  Hexahedron(const Vector& v0, Types... verts) : vertices{{v0, verts...}} {
-    init();
-  }
-
-  Hexahedron(std::array<Vector, 8> verts) : vertices{std::move(verts)} {
-    init();
-  }
-
-  void apply(const Transformation& t) {
-    for (auto& v : vertices) {
-      v = t.scaling * (v + t.translation);
-    }
-
-    for (auto& f : faces) {
-      f.apply(t);
-    }
-
-    center = (Scalar{1} / Scalar{8}) * std::accumulate(vertices.begin(),
-                                                       vertices.end(),
-                                                       Vector::Zero().eval());
-
-    volume = calc_volume();
-  }
-
-  [[nodiscard]] auto surface_area() const -> Scalar {
-    return std::accumulate(
-        std::begin(faces), std::end(faces), Scalar{0},
-        [](auto sum, const auto& face) { return sum + face.area; });
-  }
+  using Polyhedron::Polyhedron;
 
  private:
-  void init() {
-    // 0: v3, v2, v1, v0
-    faces[0] =
-        Quadrilateral(vertices[3], vertices[2], vertices[1], vertices[0]);
-
-    // 1: v0, v1, v5, v4
-    faces[1] =
-        Quadrilateral(vertices[0], vertices[1], vertices[5], vertices[4]);
-
-    // 2: v1, v2, v6, v5
-    faces[2] =
-        Quadrilateral(vertices[1], vertices[2], vertices[6], vertices[5]);
-
-    // 3: v2, v3, v7, v6
-    faces[3] =
-        Quadrilateral(vertices[2], vertices[3], vertices[7], vertices[6]);
-
-    // 4: v3, v0, v4, v7
-    faces[4] =
-        Quadrilateral(vertices[3], vertices[0], vertices[4], vertices[7]);
-
-    // 5: v4, v5, v6, v7
-    faces[5] =
-        Quadrilateral(vertices[4], vertices[5], vertices[6], vertices[7]);
-
-    center = (Scalar{1} / Scalar{8}) * std::accumulate(vertices.begin(),
-                                                       vertices.end(),
-                                                       Vector::Zero().eval());
-
-    volume = calc_volume();
-  }
-
-  [[nodiscard]] auto calc_volume() const -> Scalar {
-    const auto diagonal = vertices[6] - vertices[0];
-
+  auto calc_volume() const -> Scalar {
+    const auto diagonal = (vertices_[6] - vertices_[0]).eval();
     return (Scalar{1} / Scalar{6}) *
-           diagonal.dot(
-               ((vertices[1] - vertices[0]).cross(vertices[2] - vertices[5])) +
-               ((vertices[4] - vertices[0]).cross(vertices[5] - vertices[7])) +
-               ((vertices[3] - vertices[0]).cross(vertices[7] - vertices[2])));
+           diagonal.dot(((vertices_[1] - vertices_[0])
+                             .cross(vertices_[2] - vertices_[5])) +
+                        ((vertices_[4] - vertices_[0])
+                             .cross(vertices_[5] - vertices_[7])) +
+                        ((vertices_[3] - vertices_[0])
+                             .cross(vertices_[7] - vertices_[2])));
   }
-
- public:
-  std::array<Vector, 8> vertices = {};
-  std::array<Quadrilateral, 6> faces = {};
-  Vector center = Vector::Zero();
-  Scalar volume = Scalar{0};
 };
-
-template<typename Element>
-constexpr auto num_vertices() -> std::size_t {
-  return std::tuple_size_v<decltype(Element::vertices)>;
-}
-
-template<typename Element>
-constexpr auto num_faces() -> std::size_t {
-  return std::tuple_size_v<decltype(Element::faces)>;
-}
-
-template<typename Element>
-constexpr auto num_edges() -> std::size_t {
-  if constexpr (std::is_same_v<Element, Hexahedron>) {
-    return 12U;
-  }
-
-  if constexpr (std::is_same_v<Element, Wedge>) {
-    return 9U;
-  }
-
-  if constexpr (std::is_same_v<Element, Tetrahedron>) {
-    return 6U;
-  }
-
-  // older versions of GCC cannot handle exceptions in constexpr contexts
-  return std::numeric_limits<std::size_t>::max();
-}
-
-template<typename T>
-struct is_element
-    : public std::integral_constant<bool, std::is_same_v<T, Tetrahedron> ||
-                                              std::is_same_v<T, Wedge> ||
-                                              std::is_same_v<T, Hexahedron>> {};
-
-template<typename T>
-inline constexpr bool is_element_v = is_element<T>::value;
 
 class Sphere {
  public:
@@ -889,65 +944,54 @@ class Plane {
 // Decomposition of a tetrahedron into 4 tetrahedra.
 inline void decompose(const Tetrahedron& tet,
                       std::array<Tetrahedron, 4>& tets) {
-  tets[0] = Tetrahedron(tet.vertices[0], tet.vertices[1], tet.vertices[2],
-                        tet.center);
-
-  tets[1] = Tetrahedron(tet.vertices[0], tet.vertices[1], tet.center,
-                        tet.vertices[3]);
-
-  tets[2] = Tetrahedron(tet.vertices[1], tet.vertices[2], tet.center,
-                        tet.vertices[3]);
-
-  tets[3] = Tetrahedron(tet.vertices[2], tet.vertices[0], tet.center,
-                        tet.vertices[3]);
+  tets = {{
+      // clang-format off
+      Tetrahedron{tet.vertex(0), tet.vertex(1), tet.vertex(2), tet.center()},
+      Tetrahedron{tet.vertex(0), tet.vertex(1), tet.center(), tet.vertex(3)},
+      Tetrahedron{tet.vertex(1), tet.vertex(2), tet.center(), tet.vertex(3)},
+      Tetrahedron{tet.vertex(2), tet.vertex(0), tet.center(), tet.vertex(3)}
+      // clang-format on
+  }};
 }
 
 // Decomposition of a hexahedron into 2 wedges.
 inline void decompose(const Hexahedron& hex, std::array<Wedge, 2>& wedges) {
-  wedges[0] = Wedge(hex.vertices[0], hex.vertices[1], hex.vertices[2],
-                    hex.vertices[4], hex.vertices[5], hex.vertices[6]);
+  wedges = {{
+      // clang-format off
+      Wedge{hex.vertex(0), hex.vertex(1), hex.vertex(2), hex.vertex(4),
+                hex.vertex(5), hex.vertex(6)},
 
-  wedges[1] = Wedge(hex.vertices[0], hex.vertices[2], hex.vertices[3],
-                    hex.vertices[4], hex.vertices[6], hex.vertices[7]);
+      Wedge{hex.vertex(0), hex.vertex(2), hex.vertex(3), hex.vertex(4),
+                hex.vertex(6), hex.vertex(7)}
+      // clang-format on
+  }};
 }
 
 // Decomposition of a hexahedron into 5 tetrahedra.
 inline void decompose(const Hexahedron& hex, std::array<Tetrahedron, 5>& tets) {
-  tets[0] = Tetrahedron(hex.vertices[0], hex.vertices[1], hex.vertices[2],
-                        hex.vertices[5]);
-
-  tets[1] = Tetrahedron(hex.vertices[0], hex.vertices[2], hex.vertices[7],
-                        hex.vertices[5]);
-
-  tets[2] = Tetrahedron(hex.vertices[0], hex.vertices[2], hex.vertices[3],
-                        hex.vertices[7]);
-
-  tets[3] = Tetrahedron(hex.vertices[0], hex.vertices[5], hex.vertices[7],
-                        hex.vertices[4]);
-
-  tets[4] = Tetrahedron(hex.vertices[2], hex.vertices[7], hex.vertices[5],
-                        hex.vertices[6]);
+  tets = {{
+      // clang-format off
+      Tetrahedron{hex.vertex(0), hex.vertex(1), hex.vertex(2), hex.vertex(5)},
+      Tetrahedron{hex.vertex(0), hex.vertex(2), hex.vertex(7), hex.vertex(5)},
+      Tetrahedron{hex.vertex(0), hex.vertex(2), hex.vertex(3), hex.vertex(7)},
+      Tetrahedron{hex.vertex(0), hex.vertex(5), hex.vertex(7), hex.vertex(4)},
+      Tetrahedron{hex.vertex(2), hex.vertex(7), hex.vertex(5), hex.vertex(6)}
+      // clang-format on
+  }};
 }
 
 // Decomposition of a hexahedron into 6 tetrahedra.
 inline void decompose(const Hexahedron& hex, std::array<Tetrahedron, 6>& tets) {
-  tets[0] = Tetrahedron(hex.vertices[0], hex.vertices[5], hex.vertices[7],
-                        hex.vertices[4]);
-
-  tets[1] = Tetrahedron(hex.vertices[0], hex.vertices[1], hex.vertices[7],
-                        hex.vertices[5]);
-
-  tets[2] = Tetrahedron(hex.vertices[1], hex.vertices[6], hex.vertices[7],
-                        hex.vertices[5]);
-
-  tets[3] = Tetrahedron(hex.vertices[0], hex.vertices[7], hex.vertices[2],
-                        hex.vertices[3]);
-
-  tets[4] = Tetrahedron(hex.vertices[0], hex.vertices[7], hex.vertices[1],
-                        hex.vertices[2]);
-
-  tets[5] = Tetrahedron(hex.vertices[1], hex.vertices[7], hex.vertices[6],
-                        hex.vertices[2]);
+  tets = {{
+      // clang-format off
+      Tetrahedron{hex.vertex(0), hex.vertex(5), hex.vertex(7), hex.vertex(4)},
+      Tetrahedron{hex.vertex(0), hex.vertex(1), hex.vertex(7), hex.vertex(5)},
+      Tetrahedron{hex.vertex(1), hex.vertex(6), hex.vertex(7), hex.vertex(5)},
+      Tetrahedron{hex.vertex(0), hex.vertex(7), hex.vertex(2), hex.vertex(3)},
+      Tetrahedron{hex.vertex(0), hex.vertex(7), hex.vertex(1), hex.vertex(2)},
+      Tetrahedron{hex.vertex(1), hex.vertex(7), hex.vertex(6), hex.vertex(2)}
+      // clang-format on
+  }};
 }
 
 inline auto contains(const Sphere& s, const Vector& p) -> bool {
@@ -959,16 +1003,16 @@ inline auto contains(const Sphere& s, const Vector& p) -> bool {
 // containment within the polygon.
 template<std::size_t VertexCount>
 auto contains(const Polygon<VertexCount>& poly, const Vector& point) -> bool {
-  const Vector proj =
-      point - poly.normal.dot(point - poly.center) * poly.normal;
+  const auto proj =
+      (point - poly.normal().dot(point - poly.center()) * poly.normal()).eval();
 
-  for (std::size_t n = 0; n < poly.vertices.size(); ++n) {
-    const auto& v0 = poly.vertices[n];
-    const auto& v1 = poly.vertices[(n + 1) % poly.vertices.size()];
+  for (std::size_t n = 0; n < VertexCount; ++n) {
+    const auto& v0 = poly.vertices()[n];
+    const auto& v1 = poly.vertices()[(n + 1) % VertexCount];
 
     // Note: Only the sign of the projection is of interest, so this vector
     // does not have to be normalized.
-    const auto dir = (v1 - v0).cross(poly.normal);
+    const auto dir = (v1 - v0).cross(poly.normal());
 
     // Check whether the projection of the point lies inside of the
     // polygon.
@@ -983,16 +1027,36 @@ auto contains(const Polygon<VertexCount>& poly, const Vector& point) -> bool {
 
 template<typename Element, typename = std::enable_if_t<is_element_v<Element>>>
 inline auto contains(const Element& element, const Vector& p) -> bool {
-  return std::all_of(std::begin(element.faces), std::end(element.faces),
-                     [&](const auto& face) -> bool {
-                       return face.normal.dot(p - face.center) <= Scalar{0};
+  // return std::all_of(std::begin(element.faces), std::end(element.faces),
+  //                    [&](const auto& face) -> bool {
+  //                      return face.normal.dot(p - face.center) <=
+  //                      Scalar{0};
+  //                    });
+
+  for (auto face_idx = 0U; face_idx < Element::num_faces(); ++face_idx) {
+    const auto& face = element.face(face_idx);
+    if (face.normal().dot(p - face.center()) > Scalar{0}) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+inline auto contains(const Sphere& sphere, const Tetrahedron& element) -> bool {
+  return std::all_of(std::begin(element.vertices()),
+                     std::end(element.vertices()), [&](const Vector& vertex) {
+                       return (sphere.center - vertex).squaredNorm() <=
+                              sphere.radius * sphere.radius;
                      });
 }
 
-template<typename Element, typename = std::enable_if_t<is_element_v<Element>>>
+template<typename Element,
+         typename = std::enable_if_t<(is_element_v<Element> &&
+                                      !std::is_same_v<Element, Tetrahedron>)>>
 inline auto contains(const Sphere& sphere, const Element& element) -> bool {
-  return std::all_of(std::begin(element.vertices), std::end(element.vertices),
-                     [&](const Vector& vertex) {
+  return std::all_of(std::begin(element.vertices()),
+                     std::end(element.vertices()), [&](const Vector& vertex) {
                        return (sphere.center - vertex).squaredNorm() <=
                               sphere.radius * sphere.radius;
                      });
@@ -1007,10 +1071,46 @@ inline auto intersects(const Sphere& s, const Plane& p) -> bool {
 template<std::size_t VertexCount>
 inline auto intersects(const Sphere& s, const Polygon<VertexCount>& poly)
     -> bool {
-  return intersects(s, {poly.center, poly.normal}) && contains(poly, s.center);
+  return intersects(s, {poly.center(), poly.normal()}) &&
+         contains(poly, s.center);
 }
 
-template<typename Element, typename = std::enable_if_t<is_element_v<Element>>>
+template<typename VariantT>
+inline auto intersects(const Sphere& s, const Facet<VariantT>& facet) -> bool {
+  if constexpr (is_one_of_v<Triangle, VariantT>) {
+    if (const auto tri = facet.template get_if<Triangle>()) {
+      return intersects(s, *tri);
+    }
+  }
+
+  if constexpr (is_one_of_v<Quadrilateral, VariantT>) {
+    if (const auto quad = facet.template get_if<Quadrilateral>()) {
+      return intersects(s, *quad);
+    }
+  }
+
+  throw std::logic_error{"invalid facet type"};
+}
+
+inline auto intersects_coarse(const Sphere& sphere, const Tetrahedron& element)
+    -> bool {
+  using AABB = Eigen::AlignedBox<Scalar, 3>;
+
+  const auto sphere_aabb =
+      AABB{sphere.center - Vector::Constant(sphere.radius),
+           sphere.center + Vector::Constant(sphere.radius)};
+
+  auto element_aabb = AABB{};
+  for (const auto& v : element.vertices()) {
+    element_aabb.extend(v);
+  }
+
+  return sphere_aabb.intersects(element_aabb);
+}
+
+template<typename Element,
+         typename = std::enable_if_t<is_element_v<Element> &&
+                                     !std::is_same_v<Element, Tetrahedron>>>
 inline auto intersects_coarse(const Sphere& sphere, const Element& element)
     -> bool {
   using AABB = Eigen::AlignedBox<Scalar, 3>;
@@ -1020,7 +1120,7 @@ inline auto intersects_coarse(const Sphere& sphere, const Element& element)
            sphere.center + Vector::Constant(sphere.radius)};
 
   auto element_aabb = AABB{};
-  for (const auto& v : element.vertices) {
+  for (const auto& v : element.vertices()) {
     element_aabb.extend(v);
   }
 
@@ -1309,21 +1409,21 @@ template<std::size_t Dim, typename Element>
 auto general_wedge(const Sphere& sphere, const Element& element,
                    std::size_t edge,
                    const std::array<std::array<Vector, 2>,
-                                    num_edges<Element>()>& intersections) {
+                                    Element::num_edges()>& intersections) {
   static_assert(Dim == 2 || Dim == 3, "invalid dimensionality, must be 2 or 3");
 
-  const auto& f0 = element.faces[Element::edge_mapping[edge][1][0]];
-  const auto& f1 = element.faces[Element::edge_mapping[edge][1][1]];
+  const auto& f0 = element.face(Element::edge_mapping[edge][1][0]);
+  const auto& f1 = element.face(Element::edge_mapping[edge][1][1]);
 
   const auto edge_midpoint =
       Vector{(Scalar{1} / Scalar{2}) *
              ((intersections[edge][0] +
-               element.vertices[Element::edge_mapping[edge][0][0]]) +
+               element.vertices()[Element::edge_mapping[edge][0][0]]) +
               (intersections[edge][1] +
-               element.vertices[Element::edge_mapping[edge][0][1]]))};
+               element.vertices()[Element::edge_mapping[edge][0][1]]))};
 
-  const auto p0 = Plane{f0.center, f0.normal};
-  const auto p1 = Plane{f1.center, f1.normal};
+  const auto p0 = Plane{f0.center(), f0.normal()};
+  const auto p1 = Plane{f1.center(), f1.normal()};
 
   return general_wedge<Dim>(sphere, p0, p1, edge_midpoint - sphere.center);
 }
@@ -1332,9 +1432,9 @@ auto general_wedge(const Sphere& sphere, const Element& element,
 // sphere is only touching this vertex
 template<typename Element, typename = std::enable_if_t<is_element_v<Element>>>
 inline auto correct_marked_vertices(
-    const std::bitset<num_vertices<Element>()>& marked_vertices,
-    const std::bitset<num_edges<Element>()>& marked_edges)
-    -> std::bitset<num_vertices<Element>()> {
+    const std::bitset<Element::num_vertices()>& marked_vertices,
+    const std::bitset<Element::num_edges()>& marked_edges)
+    -> std::bitset<Element::num_vertices()> {
   auto corrected_marked_vertices = marked_vertices;
 
   for (std::size_t vertex_idx = 0U; vertex_idx < marked_vertices.size();
@@ -1379,45 +1479,51 @@ auto overlap_volume(const Sphere& sOrig, const Element& elementOrig) -> Scalar {
 
   // Check for trivial case: element fully contained in sphere.
   if (contains(sOrig, elementOrig)) {
-    return elementOrig.volume;
+    return elementOrig.volume();
   }
 
   // Sanity check: All faces of the mesh element have to be planar.
-  for (const auto& face : elementOrig.faces) {
-    if (!face.is_planar()) {
+  // for (const auto& face : elementOrig.faces) {
+  //   if (!face.is_planar()) {
+  for (auto face_idx = 0U; face_idx < Element::num_faces(); ++face_idx) {
+    if (!elementOrig.face(face_idx).is_planar()) {
       throw std::invalid_argument{"non-planer face detected in element"};
     }
   }
 
   // Use scaled and shifted versions of the sphere and the element.
-  Transformation transformation{-sOrig.center, Scalar{1} / sOrig.radius};
-
   const auto s = Sphere{};
-  auto element = Element{elementOrig};
-  element.apply(transformation);
+  const auto transformation =
+      Eigen::UniformScaling<Scalar>{Scalar{1} / sOrig.radius} *
+      Eigen::Translation<Scalar, 3>{-sOrig.center};
 
-  // Constants: Number of vertices and faces.
-  constexpr auto nrVertices = num_vertices<Element>();
-  constexpr auto nrFaces = num_faces<Element>();
+  auto transformed_vertices = elementOrig.vertices();
+  std::transform(std::begin(transformed_vertices),
+                 std::end(transformed_vertices),
+                 std::begin(transformed_vertices),
+                 [&](const auto& v) { return transformation * v; });
+
+  const auto element = Element{transformed_vertices};
 
   // Sets of overlapping primitives.
-  std::bitset<nrVertices> vMarked;
-  std::bitset<num_edges<Element>()> eMarked;
-  std::bitset<nrFaces> fMarked;
+  std::bitset<Element::num_vertices()> vMarked;
+  std::bitset<Element::num_edges()> eMarked;
+  std::bitset<Element::num_faces()> fMarked;
 
   // Initial value: Volume of the full sphere.
   auto result = s.volume;
 
   // The intersection points between the single edges and the sphere, this
   // is needed later on.
-  std::array<std::array<Vector, 2>, num_edges<Element>()> eIntersections;
+  std::array<std::array<Vector, 2>, Element::num_edges()> eIntersections;
 
   // Process all edges of the element.
-  for (std::size_t n = 0; n < num_edges<Element>(); ++n) {
-    Vector start(element.vertices[Element::edge_mapping[n][0][0]]);
-    Vector direction(element.vertices[Element::edge_mapping[n][0][1]] - start);
+  for (std::size_t edge_idx = 0; edge_idx < Element::num_edges(); ++edge_idx) {
+    Vector start(element.vertices()[Element::edge_mapping[edge_idx][0][0]]);
+    Vector direction(element.vertices()[Element::edge_mapping[edge_idx][0][1]] -
+                     start);
 
-    auto solutions = line_sphere_intersection(start, direction, s);
+    const auto solutions = line_sphere_intersection(start, direction, s);
 
     // No intersection between the edge and the sphere, where intersection
     // points close to the surface of the sphere are ignored.
@@ -1433,19 +1539,21 @@ auto overlap_volume(const Sphere& sOrig, const Element& elementOrig) -> Scalar {
       continue;
     }
 
-    vMarked[Element::edge_mapping[n][0][0]] = solutions.first[0] < Scalar{0};
-    vMarked[Element::edge_mapping[n][0][1]] = solutions.first[1] > Scalar{1};
+    vMarked[Element::edge_mapping[edge_idx][0][0]] =
+        solutions.first[0] < Scalar{0};
+    vMarked[Element::edge_mapping[edge_idx][0][1]] =
+        solutions.first[1] > Scalar{1};
 
     // Store the two intersection points of the edge with the sphere for
     // later usage.
-    eIntersections[n][0] = solutions.first[0] * direction;
-    eIntersections[n][1] = (solutions.first[1] - Scalar{1}) * direction;
-    eMarked[n] = true;
+    eIntersections[edge_idx][0] = solutions.first[0] * direction;
+    eIntersections[edge_idx][1] = (solutions.first[1] - Scalar{1}) * direction;
+    eMarked[edge_idx] = true;
 
     // If the edge is marked as having an overlap, the two faces forming it
     // have to be marked as well.
-    fMarked[Element::edge_mapping[n][1][0]] = true;
-    fMarked[Element::edge_mapping[n][1][1]] = true;
+    fMarked[Element::edge_mapping[edge_idx][1][0]] = true;
+    fMarked[Element::edge_mapping[edge_idx][1][1]] = true;
   }
 
   // Check whether the dependencies for a vertex intersection are fulfilled.
@@ -1453,8 +1561,8 @@ auto overlap_volume(const Sphere& sOrig, const Element& elementOrig) -> Scalar {
 
   // Process all faces of the element, ignoring the edges as those where
   // already checked above.
-  for (std::size_t n = 0; n < nrFaces; ++n) {
-    if (intersects(s, element.faces[n])) {
+  for (std::size_t n = 0; n < Element::num_faces(); ++n) {
+    if (intersects(s, element.face(n))) {
       fMarked[n] = true;
     }
   }
@@ -1474,20 +1582,20 @@ auto overlap_volume(const Sphere& sOrig, const Element& elementOrig) -> Scalar {
 
   // Iterate over all the marked faces and subtract the volume of the cap cut
   // off by the plane.
-  for (std::size_t n = 0; n < nrFaces; ++n) {
+  for (std::size_t n = 0; n < Element::num_faces(); ++n) {
     if (!fMarked[n]) {
       continue;
     }
 
-    const auto& f = element.faces[n];
-    const auto dist = f.normal.dot(s.center - f.center);
+    const auto& f = element.face(n);
+    const auto dist = f.normal().dot(s.center - f.center());
 
     result -= s.cap_volume(s.radius + dist);
   }
 
   // Handle the edges and add back the volume subtracted twice above in the
   // processing of the faces.
-  for (std::size_t n = 0; n < num_edges<Element>(); ++n) {
+  for (std::size_t n = 0; n < Element::num_edges(); ++n) {
     if (!eMarked[n]) {
       continue;
     }
@@ -1497,8 +1605,9 @@ auto overlap_volume(const Sphere& sOrig, const Element& elementOrig) -> Scalar {
 
   // Handle the vertices and subtract the volume added twice above in the
   // processing of the edges.
-  for (std::size_t n = 0; n < nrVertices; ++n) {
-    if (!vMarked[n]) {
+  for (std::size_t vertex_idx = 0; vertex_idx < Element::num_vertices();
+       ++vertex_idx) {
+    if (!vMarked[vertex_idx]) {
       continue;
     }
 
@@ -1508,21 +1617,21 @@ auto overlap_volume(const Sphere& sOrig, const Element& elementOrig) -> Scalar {
     std::array<Vector, 3> intersectionPointsRelative;
     std::array<Vector, 3> intersectionPoints;
     for (std::size_t e = 0; e < 3; ++e) {
-      const auto edgeIdx = Element::vertex_mapping[n][0][e];
+      const auto edgeIdx = Element::vertex_mapping[vertex_idx][0][e];
       intersectionPointsRelative[e] =
-          eIntersections[edgeIdx][Element::vertex_mapping[n][1][e]];
+          eIntersections[edgeIdx][Element::vertex_mapping[vertex_idx][1][e]];
 
       intersectionPoints[e] =
-          intersectionPointsRelative[e] + element.vertices[n];
+          intersectionPointsRelative[e] + element.vertices()[vertex_idx];
     }
 
     // This triangle is constructed by hand to have more freedom of how
     // the normal vector is calculated.
     Triangle coneTria;
-    coneTria.vertices = {
+    coneTria.vertices_ = {
         {intersectionPoints[0], intersectionPoints[1], intersectionPoints[2]}};
 
-    coneTria.center =
+    coneTria.center_ =
         (Scalar{1} / Scalar{3}) * std::accumulate(intersectionPoints.begin(),
                                                   intersectionPoints.end(),
                                                   Vector::Zero().eval());
@@ -1530,13 +1639,9 @@ auto overlap_volume(const Sphere& sOrig, const Element& elementOrig) -> Scalar {
     // Calculate the normal of the triangle defined by the intersection
     // points in relative coordinates to improve accuracy.
     // Also use double the normal precision to calculate this normal.
-    coneTria.normal = detail::triangle_normal(intersectionPointsRelative[0],
-                                              intersectionPointsRelative[1],
-                                              intersectionPointsRelative[2]);
-
-    // The area of this triangle is never needed, so it is set to an
-    // invalid value.
-    coneTria.area = std::numeric_limits<Scalar>::infinity();
+    coneTria.normal_ = detail::triangle_normal(intersectionPointsRelative[0],
+                                               intersectionPointsRelative[1],
+                                               intersectionPointsRelative[2]);
 
     std::array<std::pair<std::size_t, Scalar>, 3> distances;
     for (std::size_t i = 0; i < 3; ++i) {
@@ -1545,17 +1650,17 @@ auto overlap_volume(const Sphere& sOrig, const Element& elementOrig) -> Scalar {
     }
 
     std::sort(distances.begin(), distances.end(),
-              [](const std::pair<std::size_t, Scalar>& a,
-                 const std::pair<std::size_t, Scalar>& b) -> bool {
-                return a.second < b.second;
+              [](const auto& lhs, const auto& rhs) {
+                return lhs.second < rhs.second;
               });
 
     if (distances[1].second < distances[2].second * detail::large_epsilon) {
       // Use the general spherical wedge defined by the edge with the
       // non-degenerated intersection point and the normals of the
       // two faces forming it.
-      const auto correction = general_wedge<3, Element>(
-          s, element, Element::vertex_mapping[n][0][distances[2].first],
+      const auto correction = general_wedge<3>(
+          s, element,
+          Element::vertex_mapping[vertex_idx][0][distances[2].first],
           eIntersections);
 
       result -= correction;
@@ -1572,11 +1677,12 @@ auto overlap_volume(const Sphere& sOrig, const Element& elementOrig) -> Scalar {
 
     // Make sure the normal points in the right direction i.e. away from
     // the center of the element.
-    if (coneTria.normal.dot(element.center - coneTria.center) > Scalar{0}) {
-      coneTria.normal = -coneTria.normal;
+    if (coneTria.normal().dot(element.center() - coneTria.center()) >
+        Scalar{0}) {
+      coneTria.normal_ = -coneTria.normal();
     }
 
-    const auto dist = coneTria.normal.dot(s.center - coneTria.center);
+    const auto dist = coneTria.normal().dot(s.center - coneTria.center());
     const auto cap_volume = s.cap_volume(s.radius + dist);
 
     // The cap volume is tiny, so the corrections will be even smaller.
@@ -1591,18 +1697,18 @@ auto overlap_volume(const Sphere& sOrig, const Element& elementOrig) -> Scalar {
     // Calculate the volume of the three spherical segments between
     // the faces joining at the vertex and the plane through the
     // intersection points.
-    const auto plane = Plane{coneTria.center, coneTria.normal};
+    const auto plane = Plane{coneTria.center(), coneTria.normal()};
     auto segmentVolume = Scalar{0};
 
     for (std::size_t e = 0; e < 3; ++e) {
-      const auto& f = element.faces[Element::vertex_mapping[n][2][e]];
-      const auto e0 = Element::face_mapping[e][0];
-      const auto e1 = Element::face_mapping[e][1];
-      const Vector center = (Scalar{1} / Scalar{2}) *
-                            (intersectionPoints[e0] + intersectionPoints[e1]);
+      const auto [e0, e1] = Element::face_mapping[e];
+      const auto center = ((Scalar{1} / Scalar{2}) *
+                           (intersectionPoints[e0] + intersectionPoints[e1]))
+                              .eval();
 
+      const auto& f = element.face(Element::vertex_mapping[vertex_idx][2][e]);
       const auto wedgeVolume = general_wedge<3>(
-          s, plane, Plane(f.center, -f.normal), center - s.center);
+          s, plane, Plane{f.center(), -f.normal()}, center - s.center);
 
       segmentVolume += wedgeVolume;
     }
@@ -1624,7 +1730,7 @@ auto overlap_volume(const Sphere& sOrig, const Element& elementOrig) -> Scalar {
 
   // In case of different sized objects the error can become quite large,
   // so a relative limit is used.
-  const auto maxOverlap = std::min(s.volume, element.volume);
+  const auto maxOverlap = std::min(s.volume, element.volume());
   const auto limit =
       std::sqrt(std::numeric_limits<Scalar>::epsilon()) * maxOverlap;
 
@@ -1635,7 +1741,7 @@ auto overlap_volume(const Sphere& sOrig, const Element& elementOrig) -> Scalar {
 
   // Clamp results slightly too large.
   if (result > maxOverlap && result - maxOverlap < limit) {
-    return std::min(sOrig.volume, elementOrig.volume);
+    return std::min(sOrig.volume, elementOrig.volume());
   }
 
   // Perform a sanity check on the final result (debug version only).
@@ -1665,21 +1771,15 @@ auto overlap_volume(const Sphere& s, Iterator eBegin, Iterator eEnd) -> Scalar {
 //   - surface area of the region of the sphere intersecting the element
 //   - for each face of the element: area contained within the sphere
 //   - total surface area of the element intersecting the sphere
-template<typename Element,
-         std::size_t NrFaces = detail::num_faces<Element>() + 2>
+template<typename Element>
 auto overlap_area(const Sphere& sOrig, const Element& elementOrig)
-    -> std::array<Scalar, NrFaces> {
+    -> std::array<Scalar, Element::num_faces() + 2> {
   using namespace detail;
 
   static_assert(is_element_v<Element>, "invalid element type detected");
-  static_assert(NrFaces == num_faces<Element>() + 2,
-                "invalid number of faces for the element provided");
-
-  constexpr auto nrVertices = num_vertices<Element>();
-  constexpr auto nrFaces = num_faces<Element>();
 
   // Initial value: Zero overlap.
-  std::array<Scalar, nrFaces + 2> result{};
+  std::array<Scalar, Element::num_faces() + 2> result{};
 
   if (!intersects_coarse(sOrig, elementOrig)) {
     return result;
@@ -1688,48 +1788,56 @@ auto overlap_area(const Sphere& sOrig, const Element& elementOrig)
   // Check for trivial case: element fully contained in sphere resulting in
   // a full coverage of all faces.
   if (contains(sOrig, elementOrig)) {
-    for (std::size_t n = 0; n < nrFaces; ++n) {
-      result[n + 1] = elementOrig.faces[n].area;
-      result[nrFaces + 1] += elementOrig.faces[n].area;
+    for (std::size_t n = 0; n < Element::num_faces(); ++n) {
+      const auto area = elementOrig.face(n).area();
+      result[n + 1] = area;
+      result[Element::num_faces() + 1] += area;
     }
 
     return result;
   }
 
   // Sanity check: All faces of the mesh element have to be planar.
-  for (const auto& face : elementOrig.faces) {
-    if (!face.is_planar()) {
-      throw std::runtime_error{"non-planer face detected in element"};
-    }
-  }
+  // for (const auto& face : elementOrig.faces) {
+  //   if (!face.is_planar()) {
+  //     throw std::runtime_error{"non-planer face detected in element"};
+  //   }
+  // }
 
   // Use scaled and shifted versions of the sphere and the element.
-  Transformation transformation(-sOrig.center, Scalar(1) / sOrig.radius);
+  const auto s = Sphere{Vector::Zero(), Scalar{1}};
+  const auto transformation =
+      Eigen::UniformScaling<Scalar>{Scalar{1} / sOrig.radius} *
+      Eigen::Translation<Scalar, 3>{-sOrig.center};
 
-  Sphere s(Vector::Zero(), Scalar(1));
+  auto transformed_vertices = elementOrig.vertices();
+  std::transform(std::begin(transformed_vertices),
+                 std::end(transformed_vertices),
+                 std::begin(transformed_vertices),
+                 [&](const auto& v) { return transformation * v; });
 
-  Element element(elementOrig);
-  element.apply(transformation);
+  const auto element = Element{transformed_vertices};
 
   // Sets of overlapping primitives.
-  std::bitset<nrVertices> vMarked;
-  std::bitset<num_edges<Element>()> eMarked;
-  std::bitset<nrFaces> fMarked;
+  std::bitset<Element::num_vertices()> vMarked;
+  std::bitset<Element::num_edges()> eMarked;
+  std::bitset<Element::num_faces()> fMarked;
 
   // The intersection points between the single edges and the sphere, this
   // is needed later on.
-  std::array<std::array<Vector, 2>, num_edges<Element>()> eIntersections;
+  std::array<std::array<Vector, 2>, Element::num_edges()> eIntersections;
 
   // Cache the squared radius of the disk formed by the intersection between
   // the planes defined by each face and the sphere.
-  std::array<Scalar, nrFaces> intersectionRadiusSq;
+  std::array<Scalar, Element::num_faces()> intersectionRadiusSq;
 
   // Process all edges of the element.
-  for (std::size_t n = 0; n < num_edges<Element>(); ++n) {
-    Vector start(element.vertices[Element::edge_mapping[n][0][0]]);
-    Vector direction(element.vertices[Element::edge_mapping[n][0][1]] - start);
+  for (std::size_t n = 0; n < Element::num_edges(); ++n) {
+    Vector start(element.vertices()[Element::edge_mapping[n][0][0]]);
+    Vector direction(element.vertices()[Element::edge_mapping[n][0][1]] -
+                     start);
 
-    auto solutions = line_sphere_intersection(start, direction, s);
+    const auto solutions = line_sphere_intersection(start, direction, s);
 
     // No intersection between the edge and the sphere, where intersection
     // points close to the surface of the sphere are ignored.
@@ -1752,7 +1860,7 @@ auto overlap_area(const Sphere& sOrig, const Element& elementOrig)
     // Store the two intersection points of the edge with the sphere for
     // later usage.
     eIntersections[n][0] = solutions.first[0] * direction;
-    eIntersections[n][1] = (solutions.first[1] - Scalar(1)) * direction;
+    eIntersections[n][1] = (solutions.first[1] - Scalar{1}) * direction;
 
     eMarked[n] = true;
 
@@ -1763,7 +1871,7 @@ auto overlap_area(const Sphere& sOrig, const Element& elementOrig)
   }
 
   // Check whether the dependencies for a vertex intersection are fulfilled.
-  for (std::size_t n = 0; n < nrVertices; ++n) {
+  for (std::size_t n = 0; n < Element::num_vertices(); ++n) {
     if (!vMarked[n]) {
       continue;
     }
@@ -1783,8 +1891,8 @@ auto overlap_area(const Sphere& sOrig, const Element& elementOrig)
 
   // Process all faces of the element, ignoring the edges as those where
   // already checked above.
-  for (std::size_t n = 0; n < nrFaces; ++n) {
-    if (intersects(s, element.faces[n])) {
+  for (std::size_t n = 0; n < Element::num_faces(); ++n) {
+    if (intersects(s, element.face(n))) {
       fMarked[n] = true;
     }
   }
@@ -1799,7 +1907,9 @@ auto overlap_area(const Sphere& sOrig, const Element& elementOrig)
 
   // Spurious intersection: The initial intersection test was positive, but
   // the detailed checks revealed no overlap.
-  if (!vMarked.count() && !eMarked.count() && !fMarked.count()) return result;
+  if (!vMarked.count() && !eMarked.count() && !fMarked.count()) {
+    return result;
+  }
 
   // Initial value for the surface of the sphere: Surface area of the full
   // sphere.
@@ -1807,12 +1917,13 @@ auto overlap_area(const Sphere& sOrig, const Element& elementOrig)
 
   // Iterate over all the marked faces and calculate the area of the disk
   // defined by the plane as well as the cap surfaces.
-  for (std::size_t n = 0; n < nrFaces; ++n) {
+  for (std::size_t n = 0; n < Element::num_faces(); ++n) {
     if (!fMarked[n]) {
       continue;
     }
-    const auto& f = element.faces[n];
-    Scalar dist = f.normal.dot(s.center - f.center);
+
+    const auto& f = element.face(n);
+    const auto dist = f.normal().dot(s.center - f.center());
     result[0] -= s.cap_surface_area(s.radius + dist);
     result[n + 1] = s.disk_area(s.radius + dist);
   }
@@ -1820,18 +1931,18 @@ auto overlap_area(const Sphere& sOrig, const Element& elementOrig)
   // Handle the edges and subtract the area of the respective disk cut off by
   // the edge and add back the surface area of the spherical wedge defined
   // by the edge.
-  for (std::size_t n = 0; n < num_edges<Element>(); ++n) {
+  for (std::size_t n = 0; n < Element::num_edges(); ++n) {
     if (!eMarked[n]) {
       continue;
     }
 
-    result[0] += general_wedge<2, Element>(s, element, n, eIntersections);
+    result[0] += general_wedge<2>(s, element, n, eIntersections);
 
     // The intersection points are relative to the vertices forming the
     // edge.
-    const Vector chord = ((element.vertices[Element::edge_mapping[n][0][0]] +
+    const Vector chord = ((element.vertices()[Element::edge_mapping[n][0][0]] +
                            eIntersections[n][0]) -
-                          (element.vertices[Element::edge_mapping[n][0][1]] +
+                          (element.vertices()[Element::edge_mapping[n][0][1]] +
                            eIntersections[n][1]));
 
     const Scalar chordLength = chord.stableNorm();
@@ -1840,39 +1951,38 @@ auto overlap_area(const Sphere& sOrig, const Element& elementOrig)
     // Element::edge_mapping[n][1][{0,1}].
     for (std::size_t e = 0; e < 2; ++e) {
       const auto faceIdx = Element::edge_mapping[n][1][e];
-      const auto& f = element.faces[faceIdx];
+      const auto& f = element.face(faceIdx);
 
       // Height of the spherical cap cut off by the plane containing the
       // face.
-      const Scalar dist = f.normal.dot(s.center - f.center) + s.radius;
-      intersectionRadiusSq[faceIdx] = dist * (Scalar(2) * s.radius - dist);
+      const Scalar dist = f.normal().dot(s.center - f.center()) + s.radius;
+      intersectionRadiusSq[faceIdx] = dist * (Scalar{2} * s.radius - dist);
 
       // Calculate the height of the triangular segment in the plane of
       // the base.
       const Scalar factor = std::sqrt(
-          std::max(Scalar(0), intersectionRadiusSq[faceIdx] -
-                                  Scalar(0.25) * chordLength * chordLength));
+          std::max(Scalar{0}, intersectionRadiusSq[faceIdx] -
+                                  Scalar{0.25} * chordLength * chordLength));
 
       const Scalar theta =
-          Scalar(2) * std::atan2(chordLength, Scalar(2) * factor);
+          Scalar{2} * std::atan2(chordLength, Scalar{2} * factor);
 
       Scalar area = Scalar(0.5) * intersectionRadiusSq[faceIdx] *
                     (theta - std::sin(theta));
 
-      // FIXME: Might not be necessary to use the center of the chord.
-      const Vector chordCenter =
-          Scalar(0.5) * ((element.vertices[Element::edge_mapping[n][0][0]] +
-                          eIntersections[n][0]) +
-                         (element.vertices[Element::edge_mapping[n][0][1]] +
-                          eIntersections[n][1]));
+      const auto chord_base =
+          (element.vertices()[Element::edge_mapping[n][0][0]] +
+           eIntersections[n][0])
+              .eval();
 
-      const Vector proj(s.center -
-                        f.normal.dot(s.center - f.center) * f.normal);
+      const auto proj =
+          (s.center - f.normal().dot(s.center - f.center()) * f.normal())
+              .eval();
 
       // If the projected sphere center and the face center fall on
       // opposite sides of the edge, the area has to be inverted.
-      if (chord.cross(proj - chordCenter)
-              .dot(chord.cross(f.center - chordCenter)) < Scalar(0)) {
+      if (chord.cross(proj - chord_base)
+              .dot(chord.cross(f.center() - chord_base)) < Scalar{0}) {
         area = intersectionRadiusSq[faceIdx] * pi - area;
       }
 
@@ -1886,7 +1996,7 @@ auto overlap_area(const Sphere& sOrig, const Element& elementOrig)
   // First, handle the spherical surface area of the intersection.
   // This is to a large part code duplicated from the volume calculation.
   // TODO: Unify the area and volume calculation to remove duplicate code.
-  for (std::size_t n = 0; n < nrVertices; ++n) {
+  for (std::size_t n = 0; n < Element::num_vertices(); ++n) {
     if (!vMarked[n]) {
       continue;
     }
@@ -1902,16 +2012,16 @@ auto overlap_area(const Sphere& sOrig, const Element& elementOrig)
           eIntersections[edgeIdx][Element::vertex_mapping[n][1][e]];
 
       intersectionPoints[e] =
-          intersectionPointsRelative[e] + element.vertices[n];
+          intersectionPointsRelative[e] + element.vertices()[n];
     }
 
     // This triangle is constructed by hand to have more freedom of how
     // the normal vector is calculated.
     Triangle coneTria;
-    coneTria.vertices = {
+    coneTria.vertices_ = {
         {intersectionPoints[0], intersectionPoints[1], intersectionPoints[2]}};
 
-    coneTria.center =
+    coneTria.center_ =
         (Scalar{1} / Scalar{3}) * std::accumulate(intersectionPoints.begin(),
                                                   intersectionPoints.end(),
                                                   Vector::Zero().eval());
@@ -1919,13 +2029,9 @@ auto overlap_area(const Sphere& sOrig, const Element& elementOrig)
     // Calculate the normal of the triangle defined by the intersection
     // points in relative coordinates to improve accuracy.
     // Also use double the normal precision to calculate this normal.
-    coneTria.normal = detail::triangle_normal(intersectionPointsRelative[0],
-                                              intersectionPointsRelative[1],
-                                              intersectionPointsRelative[2]);
-
-    // The area of this triangle is never needed, so it is set to an
-    // invalid value.
-    coneTria.area = std::numeric_limits<Scalar>::infinity();
+    coneTria.normal_ = detail::triangle_normal(intersectionPointsRelative[0],
+                                               intersectionPointsRelative[1],
+                                               intersectionPointsRelative[2]);
 
     std::array<std::pair<std::size_t, Scalar>, 3> distances;
     for (std::size_t i = 0; i < 3; ++i) {
@@ -1934,16 +2040,15 @@ auto overlap_area(const Sphere& sOrig, const Element& elementOrig)
     }
 
     std::sort(distances.begin(), distances.end(),
-              [](const std::pair<std::size_t, Scalar>& a,
-                 const std::pair<std::size_t, Scalar>& b) -> bool {
-                return a.second < b.second;
+              [](const auto& lhs, const auto& rhs) {
+                return lhs.second < rhs.second;
               });
 
     if (distances[1].second < distances[2].second * detail::large_epsilon) {
       // Use the general spherical wedge defined by the edge with the
       // non-degenerated intersection point and the normals of the
       // two faces forming it.
-      Scalar correction = general_wedge<2, Element>(
+      Scalar correction = general_wedge<2>(
           s, element, Element::vertex_mapping[n][0][distances[2].first],
           eIntersections);
 
@@ -1954,13 +2059,14 @@ auto overlap_area(const Sphere& sOrig, const Element& elementOrig)
 
     // Make sure the normal points in the right direction, i.e., away from
     // the center of the element.
-    if (coneTria.normal.dot(element.center - coneTria.center) > Scalar{0}) {
-      coneTria.normal = -coneTria.normal;
+    if (coneTria.normal().dot(element.center() - coneTria.center()) >
+        Scalar{0}) {
+      coneTria.normal_ = -coneTria.normal();
     }
 
-    Plane plane(coneTria.center, coneTria.normal);
+    Plane plane(coneTria.center(), coneTria.normal());
 
-    Scalar dist = coneTria.normal.dot(s.center - coneTria.center);
+    Scalar dist = coneTria.normal().dot(s.center - coneTria.center());
     Scalar capSurface = s.cap_surface_area(s.radius + dist);
 
     // If cap surface area is small, the corrections will be even smaller.
@@ -1975,20 +2081,19 @@ auto overlap_area(const Sphere& sOrig, const Element& elementOrig)
     // intersection points.
     Scalar segmentSurface = 0;
     for (std::size_t e = 0; e < 3; ++e) {
-      const auto& f = element.faces[Element::vertex_mapping[n][2][e]];
-      uint32_t e0 = Element::face_mapping[e][0];
-      uint32_t e1 = Element::face_mapping[e][1];
+      const auto e0 = Element::face_mapping[e][0];
+      const auto e1 = Element::face_mapping[e][1];
 
       Vector center(Scalar{0.5} *
                     (intersectionPoints[e0] + intersectionPoints[e1]));
 
-      segmentSurface += general_wedge<2>(s, plane, Plane(f.center, -f.normal),
-                                         center - s.center);
+      const auto& f = element.face(Element::vertex_mapping[n][2][e]);
+      segmentSurface += general_wedge<2>(
+          s, plane, Plane{f.center(), -f.normal()}, center - s.center);
     }
 
     // Calculate the surface area of the cone and clamp it to zero.
-    Scalar coneSurface = std::max(capSurface - segmentSurface, Scalar{0});
-
+    const auto coneSurface = std::max(capSurface - segmentSurface, Scalar{0});
     result[0] -= coneSurface;
 
     // Sanity checks: detect negative/excessively large intermediate
@@ -2001,7 +2106,7 @@ auto overlap_area(const Sphere& sOrig, const Element& elementOrig)
   }
 
   // Second, correct the intersection area of the facets.
-  for (std::size_t n = 0; n < nrVertices; ++n) {
+  for (std::size_t n = 0; n < Element::num_vertices(); ++n) {
     if (!vMarked[n]) {
       continue;
     }
@@ -2010,18 +2115,16 @@ auto overlap_area(const Sphere& sOrig, const Element& elementOrig)
     for (std::size_t f = 0; f < 3; ++f) {
       // Determine the two edges of this face intersecting at the
       // vertex.
-      uint32_t e0 = Element::face_mapping[f][0];
-      uint32_t e1 = Element::face_mapping[f][1];
-      std::array<uint32_t, 2> edgeIndices = {
-          {Element::vertex_mapping[n][0][e0],
-           Element::vertex_mapping[n][0][e1]}};
+      const auto e0 = Element::face_mapping[f][0];
+      const auto e1 = Element::face_mapping[f][1];
+      const auto edgeIndices = std::array{Element::vertex_mapping[n][0][e0],
+                                          Element::vertex_mapping[n][0][e1]};
 
       // Extract the (relative) intersection points of these edges with
       // the sphere furthest from the vertex.
-      std::array<Vector, 2> intersectionPoints = {
-          {eIntersections[edgeIndices[0]][Element::vertex_mapping[n][1][e0]],
-
-           eIntersections[edgeIndices[1]][Element::vertex_mapping[n][1][e1]]}};
+      const auto intersectionPoints = std::array{
+          eIntersections[edgeIndices[0]][Element::vertex_mapping[n][1][e0]],
+          eIntersections[edgeIndices[1]][Element::vertex_mapping[n][1][e1]]};
 
       // Together with the vertex, this determines the triangle
       // representing one part of the correction.
@@ -2054,18 +2157,18 @@ auto overlap_area(const Sphere& sOrig, const Element& elementOrig)
       const Vector d(Scalar{0.5} *
                      (intersectionPoints[0] + intersectionPoints[1]));
 
-      const auto& face = element.faces[faceIdx];
-      const Vector proj(s.center -
-                        face.normal.dot(s.center - face.center) * face.normal);
+      const auto& face = element.face(faceIdx);
+      const Vector proj(s.center - face.normal().dot(s.center - face.center()) *
+                                       face.normal());
 
-      if (d.dot((proj - element.vertices[n]) - d) > Scalar{0}) {
+      if (d.dot((proj - element.vertices()[n]) - d) > Scalar{0}) {
         segmentArea = intersectionRadiusSq[faceIdx] * pi - segmentArea;
       }
 
       result[faceIdx + 1] += triaArea + segmentArea;
 
       // Sanity checks: detect excessively large intermediate result.
-      overlap_assert(result[faceIdx + 1] < element.faces[faceIdx].area +
+      overlap_assert(result[faceIdx + 1] < element.face(faceIdx).area() +
                                                std::sqrt(detail::large_epsilon),
                      "invalid intermediate result in overlap_area()");
     }
@@ -2086,11 +2189,11 @@ auto overlap_area(const Sphere& sOrig, const Element& elementOrig)
 
   // Sanity checks: detect negative/excessively large results for the
   // surface area of the facets.
-  for (std::size_t n = 0; n < nrFaces; ++n) {
+  for (std::size_t n = 0; n < Element::num_faces(); ++n) {
     overlap_assert(result[n + 1] > -fLimit,
                    "negative overlap area for face in overlap_area()");
 
-    overlap_assert(result[n + 1] <= element.faces[n].area + fLimit,
+    overlap_assert(result[n + 1] <= element.face(n).area() + fLimit,
                    "invalid overlap area for face in overlap_area()");
   }
 
@@ -2099,9 +2202,9 @@ auto overlap_area(const Sphere& sOrig, const Element& elementOrig)
   result[0] *= (scaling * scaling);
 
   // Surface of the mesh element.
-  for (std::size_t f = 0; f < nrFaces; ++f) {
+  for (std::size_t f = 0; f < Element::num_faces(); ++f) {
     auto& value = result[f + 1];
-    value = detail::clamp(value, Scalar{0}, element.faces[f].area, fLimit);
+    value = detail::clamp(value, Scalar{0}, element.face(f).area(), fLimit);
 
     value = value * (scaling * scaling);
   }

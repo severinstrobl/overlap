@@ -21,21 +21,19 @@
 #ifndef OVERLAP_TEST_COMMON_HPP
 #define OVERLAP_TEST_COMMON_HPP
 
-#include <iostream>
 #include <string_view>
 
 #include <doctest/doctest.h>
 
 class AssertionError : public std::runtime_error {
  public:
-  static inline constexpr auto assertion_failed_msg =
-      "[overlap] assertion failed: ";
+  static constexpr auto assertion_failed_msg = "[overlap] assertion failed: ";
 
   explicit AssertionError(std::string_view msg) :
       std::runtime_error{assertion_failed_msg + std::string{msg}} {}
 };
 
-[[noreturn]] inline void throw_assertion_error(std::string_view msg) {
+[[noreturn]] void throw_assertion_error(std::string_view msg) {
   throw AssertionError{msg};
 }
 
@@ -102,12 +100,6 @@ inline void validate_overlap_volume(const Sphere& s, const Hexahedron& hex,
     overlapCalcWedges += overlap_volume(s, wedge);
   }
 
-  std::cout << "volume hex:    " << overlapCalcHex << std::endl;
-  std::cout << "volume wedges: " << overlapCalcWedges << std::endl;
-  std::cout << "volume tets5:  " << overlapCalcTets5 << std::endl;
-  std::cout << "volume tets6:  " << overlapCalcTets6 << std::endl;
-  std::cout << "volume tets24: " << overlapCalcTets24 << std::endl;
-
   CHECK(overlapCalcHex == Approx(overlapCalcWedges).epsilon(epsilon));
   CHECK(overlapCalcHex == Approx(overlapCalcTets5).epsilon(epsilon));
   CHECK(overlapCalcHex == Approx(overlapCalcTets6).epsilon(epsilon));
@@ -129,15 +121,13 @@ inline void validate_overlap_area(const Sphere& s, const Hexahedron& hex,
 
   const auto areaCalcHex = overlap_area(s, hex)[0];
 
-  auto areaCalcWedges = Scalar{0};
   auto areaCalcTets5 = Scalar{0};
-  auto areaCalcTets6 = Scalar{0};
-  auto areaCalcTets24 = Scalar{0};
-
   for (const auto& tet : tets5) {
     areaCalcTets5 += overlap_area(s, tet)[0];
   }
 
+  auto areaCalcTets6 = Scalar{0};
+  auto areaCalcTets24 = Scalar{0};
   for (const auto& tet : tets6) {
     std::array<Tetrahedron, 4> subTets;
     decompose(tet, subTets);
@@ -149,18 +139,10 @@ inline void validate_overlap_area(const Sphere& s, const Hexahedron& hex,
     areaCalcTets6 += overlap_area(s, tet)[0];
   }
 
+  auto areaCalcWedges = Scalar{0};
   for (const auto& wedge : wedges) {
     areaCalcWedges += overlap_area(s, wedge)[0];
   }
-
-  std::cout << "sphere center: [" << s.center.transpose()
-            << "], radius: " << s.radius << std::endl;
-
-  std::cout << "sphere surface hex:    " << areaCalcHex << std::endl;
-  std::cout << "sphere surface wedges: " << areaCalcWedges << std::endl;
-  std::cout << "sphere surface tets5:  " << areaCalcTets5 << std::endl;
-  std::cout << "sphere surface tets6:  " << areaCalcTets6 << std::endl;
-  std::cout << "sphere surface tets24: " << areaCalcTets24 << std::endl;
 
   CHECK(areaCalcHex == Approx(areaCalcWedges).epsilon(epsilon));
   CHECK(areaCalcHex == Approx(areaCalcTets5).epsilon(epsilon));

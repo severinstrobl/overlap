@@ -113,7 +113,7 @@ class TestOverlapArea:
 
         np.testing.assert_almost_equal(overlap.overlap_area(sphere, wedge), [
             sphere.surface_area / 2,
-            0., 0., 0., sphere.radius**2 * np.pi, 0.,
+            0., 0., sphere.radius**2 * np.pi, 0., 0.,
             sphere.radius**2 * np.pi
         ])
 
