@@ -1,19 +1,22 @@
-[build-system]
-requires = [
-  "cmake>=3.18",
-  "ninja; platform_system!='Windows'",
-  "scikit-build>=0.15.0",
-  "setuptools>=42",
-  "wheel",
-]
+[project]
+name = "overlap"
+version = "0.2.0-dev"
+requires-python = ">=3.7"
+dependencies = ["numpy"]
 
-build-backend = "setuptools.build_meta"
+[project.optional-dependencies]
+test = ["pytest >=6.0"]
+
+[build-system]
+requires = ["scikit-build-core"]
+
+build-backend = "scikit_build_core.build"
+
+[tool.scikit-build]
+cmake.version = ">=3.18"
 
 [tool.pytest.ini_options]
-minversion = "6.0"
-testpaths = [
-  "tests/python",
-]
+testpaths = ["tests/python"]
 
 [tool.cibuildwheel]
 test-requires = "pytest"

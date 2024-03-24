@@ -97,7 +97,7 @@ void createBindings(py::module& m) {
             .c_str());
 }
 
-PYBIND11_MODULE(_overlap, m) {
+PYBIND11_MODULE(overlap, m) {
   m.doc() = R"pbdoc(
         Pybind11 example plugin
         -----------------------
