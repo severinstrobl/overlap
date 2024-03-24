@@ -25,14 +25,12 @@ set(package_name "overlap")
 pybind11_add_module(${package_name}_python MODULE ${package_name}.cpp)
 
 set_target_properties(
-  ${package_name}_python PROPERTIES OUTPUT_NAME _${package_name}
+  ${package_name}_python PROPERTIES OUTPUT_NAME ${package_name}
 )
 
 target_link_libraries(
   ${package_name}_python PRIVATE ${package_name}::headers Eigen3::Eigen
 )
-
-file(COPY "__init__.py" DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 if(NOT SKBUILD)
   include(GNUInstallDirs)
@@ -44,10 +42,6 @@ if(NOT SKBUILD)
 
   install(TARGETS ${package_name}_python
           LIBRARY DESTINATION ${python_install_dir} COMPONENT python
-  )
-
-  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/__init__.py"
-          DESTINATION ${python_install_dir}
   )
 else()
   install(TARGETS ${package_name}_python LIBRARY DESTINATION .)
