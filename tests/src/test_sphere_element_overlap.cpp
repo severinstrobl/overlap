@@ -86,7 +86,7 @@ TEST_SUITE("SphereElementOverlap") {
     const auto sphere = Sphere{Vector::Zero(), 2.0};
     const auto hex = unit_hexahedron();
 
-    validate_overlap_volume(sphere, hex, epsilon, hex.volume);
+    validate_overlap_volume(sphere, hex, epsilon, hex.volume());
   }
 
   // Sphere contained in hexahedron.
@@ -98,7 +98,7 @@ TEST_SUITE("SphereElementOverlap") {
 
   // Ensure non-planar faces are detected.
   TEST_CASE("NonPlanarFaces") {
-    auto vertices = unit_hexahedron().vertices;
+    auto vertices = unit_hexahedron().vertices();
     vertices[0] += Vector{0, 0, -0.25};
 
     for (const auto& v : vertices) {

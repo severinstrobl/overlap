@@ -74,9 +74,9 @@ set(unit_tests
     clamp
     contains
     decompose_elements
-    elements
     normal_newell
     polygon
+    polyhedron
     regularized_wedge
     regularized_wedge_area
     sphere
@@ -107,11 +107,11 @@ if(_have_fenv_h)
 endif()
 cmake_reset_check_state()
 
-# activate additional compiler warnings
+# activate additional compiler warnings and keep frame pointers
 if(CMAKE_CXX_COMPILER_ID MATCHES "(GNU|Clang)" AND CMAKE_BUILD_TYPE MATCHES
                                                    "(Debug|RelWithDebInfo)"
 )
-  string(APPEND CMAKE_CXX_FLAGS " -Wall -Werror -Wextra")
+  string(APPEND CMAKE_CXX_FLAGS "-Wall -Werror -Wextra -fno-omit-frame-pointer")
 endif()
 
 # register the individual unit tests

@@ -35,7 +35,7 @@ TEST_SUITE("DecomposeElements") {
 
     auto tets5Volume = Scalar{0};
     for (const auto& tet : tets5) {
-      tets5Volume += tet.volume;
+      tets5Volume += tet.volume();
     }
 
     auto tets6Volume = Scalar{0};
@@ -43,20 +43,20 @@ TEST_SUITE("DecomposeElements") {
     for (const auto& tet : tets6) {
       std::array<Tetrahedron, 4> subTets;
       decompose(tet, subTets);
-      tets6Volume += tet.volume;
+      tets6Volume += tet.volume();
 
       for (const auto& subTet : subTets) {
-        tets24Volume += subTet.volume;
+        tets24Volume += subTet.volume();
       }
     }
 
     constexpr auto epsilon =
         Scalar{5e2} * std::numeric_limits<Scalar>::epsilon();
 
-    REQUIRE(hex.volume == Approx(tets5Volume).epsilon(epsilon));
-    REQUIRE(hex.volume == Approx(tets6Volume).epsilon(epsilon));
-    REQUIRE(hex.volume == Approx(tets24Volume).epsilon(epsilon));
-    REQUIRE(hex.volume ==
-            Approx(wedges[0].volume + wedges[1].volume).epsilon(epsilon));
+    REQUIRE(hex.volume() == Approx(tets5Volume).epsilon(epsilon));
+    REQUIRE(hex.volume() == Approx(tets6Volume).epsilon(epsilon));
+    REQUIRE(hex.volume() == Approx(tets24Volume).epsilon(epsilon));
+    REQUIRE(hex.volume() ==
+            Approx(wedges[0].volume() + wedges[1].volume()).epsilon(epsilon));
   }
 }

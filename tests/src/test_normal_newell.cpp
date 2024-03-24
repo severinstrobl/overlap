@@ -18,7 +18,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <array>
 #include "common.hpp"
+#include "overlap/overlap.hpp"
 
 TEST_SUITE("NormalNewell") {
   using Scalar = overlap::Scalar;
@@ -82,5 +84,26 @@ TEST_SUITE("NormalNewell") {
 
     REQUIRE_MESSAGE(normal.norm() < std::numeric_limits<Scalar>::epsilon(),
                     format_msg(normal, Vector::Zero()));
+  }
+
+  TEST_CASE("StarShapedPolygon") {
+    for (auto i = 1U; i < 5U; ++i) {
+      const auto k = static_cast<Scalar>(i);
+      const auto vertices = std::array<Vector, 8>{{
+          {1, 1, 1},
+          {6, 6 - k, 1},
+          {11, 1, 1},
+          {6 + k, 6, 1},
+          {11, 11, 1},
+          {6, 6 + k, 1},
+          {1, 11, 1},
+          {6 - k, 6, 1},
+      }};
+
+      REQUIRE_EQ(overlap::detail::normal_newell(
+                     std::begin(vertices), std::end(vertices),
+                     calc_center(std::begin(vertices), std::end(vertices))),
+                 Vector::UnitZ());
+    }
   }
 }

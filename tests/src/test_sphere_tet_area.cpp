@@ -57,10 +57,10 @@ TEST_SUITE("SphereTetAreaTest") {
 
     std::array<Scalar, 6> resultExact{};
     resultExact[0] = Scalar{0};
-    resultExact[1] = tet.faces[0].area;
-    resultExact[2] = tet.faces[1].area;
-    resultExact[3] = tet.faces[2].area;
-    resultExact[4] = tet.faces[3].area;
+    resultExact[1] = tet.face(0).area();
+    resultExact[2] = tet.face(1).area();
+    resultExact[3] = tet.face(2).area();
+    resultExact[4] = tet.face(3).area();
     resultExact.back() = std::accumulate(resultExact.begin() + 1,
                                          resultExact.end() - 1, Scalar{0});
 
