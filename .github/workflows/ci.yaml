@@ -22,6 +22,7 @@ jobs:
     name: Code coverage
     needs: [cpp]
     uses: ./.github/workflows/coverage.yaml
+    secrets: inherit
 
   static_analysis:
     name: Static analysis
