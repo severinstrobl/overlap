@@ -1,8 +1,8 @@
 # Exact calculation of the overlap volume and area of spheres and mesh elements
 
-![Build Status](https://img.shields.io/github/workflow/status/severinstrobl/overlap/CI%20build%20Linux)
-[![codecov](https://codecov.io/gh/severinstrobl/overlap/branch/master/graph/badge.svg?token=GQ2L62OXXK)](https://codecov.io/gh/severinstrobl/overlap)
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](./COPYING)
+![Build Status](https://img.shields.io/github/actions/workflow/status/severinstrobl/overlap/ci.yaml?branch=develop)
+[![codecov](https://codecov.io/gh/severinstrobl/overlap/branch/develop/graph/badge.svg?token=GQ2L62OXXK)](https://codecov.io/gh/severinstrobl/overlap)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 [![DOI](https://img.shields.io/badge/DOI-10.1016/j.jcp.2016.02.003-blue.svg)](https://dx.doi.org/10.1016/j.jcp.2016.02.003)
 
 Calculating the intersection or overlapping volume of a sphere and one of the
@@ -163,9 +163,8 @@ the function `overlap_area()` of the package.
 
 ## License
 
-The `overlap` library is distributed under the GNU General Public
-License v3, please refer to the [LICENSE](LICENSE) file for the full license
-text.
+The `overlap` library is distributed under the MIT license, please refer to the
+[LICENSE](LICENSE) file for the full license text.
 
 This distribution bundles external third-party software covered by separate
 license terms. For details please consult the corresponding license terms
