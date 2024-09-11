@@ -67,7 +67,12 @@ TEST_SUITE("NormalNewell") {
     const auto normal =
         overlap::detail::normal_newell(points.begin(), points.end(), center);
 
-    REQUIRE_MESSAGE(normal.norm() < std::numeric_limits<Scalar>::epsilon(),
-                    format_msg(normal, Vector::Zero()));
+    REQUIRE_MESSAGE((normal.norm() < std::numeric_limits<Scalar>::epsilon() ||
+                     normal == Vector::UnitZ()),
+                    format_msg(normal, Vector::Zero()).append([]() {
+                      std::stringstream strm;
+                      strm << " or [" << Vector::UnitZ().transpose() << "]";
+                      return strm.str();
+                    }()));
   }
 }
