@@ -57,4 +57,19 @@ TEST_SUITE("SphereTetOverlap") {
             Approx(overlapCalcTets4).epsilon(epsilon * spheres[idx].volume));
     }
   }
+
+  TEST_CASE("#96") {
+    const auto center = Vector{1.7553357e-06, 4.2232066e-06, 5.8329073e-07};
+    const auto sphere = Sphere{center, 20e-9};
+
+    const auto vertices = std::array<Vector, 4>{
+        {{1.7503302395906002e-06, 4.2330364312997e-06, 5.961778422123901e-07},
+         {1.7438173901207002e-06, 4.222375361573301e-06, 5.9263766042144e-07},
+         {1.7394539738699001e-06, 4.2382759184772e-06, 6.009593818316999e-07},
+         {1.7544257028301e-06, 4.2350646020068004e-06, 5.840237397166e-07}}};
+
+    const auto tet = Tetrahedron{vertices};
+
+    CHECK(overlap_volume(sphere, tet) >= 0.0);
+  }
 }
