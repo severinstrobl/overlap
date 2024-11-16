@@ -21,6 +21,12 @@ jobs:
       reference_results_available: ${{ steps.check_ref_results.outputs.available }}
       artifact_id: ${{ steps.check_ref_results.outputs.artifact_id }}
     steps:
+      - uses: actions/create-github-app-token@v1
+        id: benchmark_app_token
+        with:
+          app-id: ${{ vars.OVERLAP_BENCHMARK_APP_ID }}
+          private-key: ${{ secrets.OVERLAP_BENCHMARK_PRIVATE_KEY }}
+
       - name: Obtain SHA of reference version
         id: obtain_ref
         if: ${{ github.event_name == 'pull_request' }}
@@ -37,7 +43,7 @@ jobs:
         id:  check_ref_results
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ steps.benchmark_app_token.outputs.token }}
           script: |
             const ref = "${{ steps.obtain_ref.outputs.reference_sha }}";
             const artifact_name = "benchmarks-" + ref;
@@ -75,11 +81,17 @@ jobs:
         run: |
           python -m pip install pyperf
 
+      - uses: actions/create-github-app-token@v1
+        id: benchmark_app_token
+        with:
+          app-id: ${{ vars.OVERLAP_BENCHMARK_APP_ID }}
+          private-key: ${{ secrets.OVERLAP_BENCHMARK_PRIVATE_KEY }}
+
       - name: Obtain archived benchmark results for reference version
         if: ${{ fromJSON(needs.check_reference.outputs.reference_results_available) }}
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ steps.benchmark_app_token.outputs.token }}
           script: |
             const fs = require("fs");
             const child_process = require("child_process");
@@ -116,11 +128,11 @@ jobs:
           mv ${{ needs.check_reference.outputs.reference_sha }}/benchmarks.json Reference
           python -m pyperf compare_to --table --table-format md Reference Current > report.md
 
-      - name: Prepare PR comment
+      - name: Create PR comment
         if: ${{ github.event_name == 'pull_request' }}
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ steps.benchmark_app_token.outputs.token }}
           script: |
             const fs = require("fs");
             const report = fs.readFileSync("./report.md")
@@ -128,14 +140,18 @@ jobs:
               .replace(/Current/, "Current (${{ github.sha }})")
               .replace(/Reference/, "Reference (${{ needs.check_reference.outputs.reference_sha }})");
 
-            fs.writeFileSync("./report.md", `## C++ benchmark results\n${report}`);
-
-      - name: Upload PR comment as artifact
-        if: ${{ github.event_name == 'pull_request' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: benchmarks-report-${{ github.run_id }}
-          path: report.md
+            const msg = `## C++ benchmark results\n${report}`;
+            try {
+              const result = await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: msg,
+              })
+              return result.data;
+            } catch (err) {
+              core.setFailed(`Request failed with error ${err}`);
+            }
 
       - name: Report via annotation
         if: ${{ github.event_name != 'pull_request' }}

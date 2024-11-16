@@ -34,3 +34,4 @@ jobs:
       name: Benchmarks
       needs: [cpp, python]
       uses: ./.github/workflows/benchmarks.yaml
+      secrets: inherit
