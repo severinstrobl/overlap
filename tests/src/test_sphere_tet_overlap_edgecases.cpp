@@ -72,4 +72,18 @@ TEST_SUITE("SphereTetOverlap") {
 
     CHECK(overlap_volume(sphere, tet) >= 0.0);
   }
+
+  TEST_CASE("#104") {
+    const auto center = Vector{5.009999999999999e-07, 5.2e-07, 5e-7};
+    const auto sphere = Sphere{center, 20e-9};
+
+    const auto vertices = std::array<Vector, 4>{{{5e-7, 1e-6, 5e-7},
+                                                 {1e-6, 5e-7, 5e-7},
+                                                 {0, 5e-7, 5e-7},
+                                                 {5e-7, 5e-7, 0}}};
+
+    const auto tet = Tetrahedron{vertices};
+
+    CHECK(overlap_volume(sphere, tet) == Approx(0.5 * sphere.volume));
+  }
 }
