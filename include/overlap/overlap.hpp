@@ -1200,6 +1200,11 @@ inline auto general_wedge(const Sphere& s, const Plane& p0, const Plane& p1,
     return spherical_wedge<Dim>(s, pi - detail::angle(p0.normal, p1.normal));
   }
 
+  if (dist >= s.radius) {
+    // intersection of the two planes (numerically) on the surface of the sphere
+    return Scalar{0};
+  }
+
   const auto s0 = d.dot(p0.normal);
   const auto s1 = d.dot(p1.normal);
 
