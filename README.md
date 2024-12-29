@@ -2,6 +2,7 @@
 
 ![Build Status](https://img.shields.io/github/actions/workflow/status/severinstrobl/overlap/ci.yaml?branch=develop)
 [![codecov](https://codecov.io/gh/severinstrobl/overlap/branch/develop/graph/badge.svg?token=GQ2L62OXXK)](https://codecov.io/gh/severinstrobl/overlap)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 [![DOI](https://img.shields.io/badge/DOI-10.1016/j.jcp.2016.02.003-blue.svg)](https://dx.doi.org/10.1016/j.jcp.2016.02.003)
 

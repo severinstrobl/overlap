@@ -4,7 +4,6 @@
 #
 # Exact calculation of the overlap volume of spheres and mesh elements.
 # http://dx.doi.org/10.1016/j.jcp.2016.02.003
-
 import numpy as np
 import overlap
 

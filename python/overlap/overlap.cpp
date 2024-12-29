@@ -89,7 +89,7 @@ PYBIND11_MODULE(overlap, m) {
         Pybind11 example plugin
         -----------------------
 
-        This originates fom CPP
+        This originates from CPP
 
         .. currentmodule:: overlap
 

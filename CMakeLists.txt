@@ -16,7 +16,7 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
   set(CMAKE_CXX_STANDARD_REQUIRED on)
   set(CMAKE_CXX_EXTENSIONS off)
 
-  # prefer first detected Python verion to avoid issues with virtual envs
+  # prefer first detected Python version to avoid issues with virtual envs
   set(Python_FIND_STRATEGY LOCATION)
 endif()
 
