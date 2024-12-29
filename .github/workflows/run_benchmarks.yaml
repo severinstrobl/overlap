@@ -19,7 +19,7 @@ on:
 jobs:
   benchmark:
     name: C++ benchmarks
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       outcome: ${{ steps.benchmark_step.outcome }}
     steps:

@@ -12,7 +12,7 @@ TEST_SUITE("NormalNewell") {
   using Vector = overlap::Vector;
 
   inline auto format_msg(const Vector& normal, const Vector& expected)
-      ->std::string {
+      -> std::string {
     std::stringstream strm;
     strm << "invalid normal generated: [" << normal.transpose()
          << "], expected: [" << expected.transpose() << "]";

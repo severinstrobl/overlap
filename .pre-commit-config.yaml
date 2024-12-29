@@ -1,0 +1,56 @@
+minimum_pre_commit_version: 4.0.0
+default_install_hook_types: [pre-commit, commit-msg]
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: cef0300fd0fc4d2a87a85fa2093c6b283ea36f4b # frozen: v5.0.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-ast
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: check-toml
+      - id: check-yaml
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+      - id: name-tests-test
+        args: ["--pytest-test-first"]
+      - id: trailing-whitespace
+
+  # C++
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: cb4e971b802ef21263cdbf210e7d411123452a72 # frozen: v19.1.5
+    hooks:
+      - id: clang-format
+
+  # Python
+  - repo: https://github.com/asottile/reorder-python-imports
+    rev: fd0b4e1292716bcd12a396b86af1d1271aaaa62c # frozen: v3.14.0
+    hooks:
+      - id: reorder-python-imports
+
+  - repo: https://github.com/asottile/setup-cfg-fmt
+    rev: 139e728a3204c352e58e595552bacc9ab8f248ea # frozen: v2.7.0
+    hooks:
+      - id: setup-cfg-fmt
+
+  # CI
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: cb3c2be894b151dff143b1baf6acbd55f2b7faed # frozen: 0.30.0
+    hooks:
+      - id: check-github-workflows
+
+  # spell checking
+  - repo: https://github.com/codespell-project/codespell
+    rev: 193cd7d27cd571f79358af09a8fb8997e54f8fff # frozen: v2.3.0
+    hooks:
+      - id: codespell
+
+  # commits messages
+  - repo: https://github.com/espressif/conventional-precommit-linter
+    rev: 7bc85936608ba0ae03887bb6e110555535d1c3ac  # frozen: v1.10.0
+    hooks:
+      - id: conventional-precommit-linter
+        stages: [commit-msg]
+        args:
+          - --types=fix,feat,build,chore,ci,docs,perf,refactor,revert,style,test,improvement

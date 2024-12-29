@@ -4,6 +4,10 @@ on:
   workflow_dispatch:
 
 jobs:
+  pre-commit:
+    name: pre-commit
+    uses: ./.github/workflows/pre-commit.yaml
+
   linting:
     name: Linting
     uses: ./.github/workflows/style.yaml

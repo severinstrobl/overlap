@@ -15,7 +15,7 @@ jobs:
 
   check_reference:
     name: Check for reference benchmark results
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       reference_sha: ${{ steps.obtain_ref.outputs.reference_sha }}
       reference_results_available: ${{ steps.check_ref_results.outputs.available }}
@@ -75,7 +75,7 @@ jobs:
     name: Compare benchmark results
     needs: [benchmark, benchmark_reference, check_reference]
     if: ${{ always() && (fromJSON(needs.check_reference.outputs.reference_results_available) || needs.benchmark_reference.outputs.outcome == 'success') }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Dependencies
         run: |
