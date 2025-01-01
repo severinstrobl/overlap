@@ -73,18 +73,18 @@ auto normal_newell(Iterator first, Iterator last, const Vector& center)
   return normal;
 }
 
-// This implementation of software double-precision is based on:
-// - T.J. Dekker, A floating-point technique for extending the available
-//   precision, https://doi.org/10.1007/BF01397083
-//
-// - J.-M. Muller, Elementary Functions - Algorithms and Implementation,
-//   https://doi.org/10.1007/978-1-4899-7983-4
-//
-// - X.S. Li et al., Design, implementation and testing of extended and mixed
-//   precision BLAS, https://doi.org/10.1145/567806.567808
-
 template<typename T>
 class DoublePrecision {
+  // This implementation of software double-precision is based on:
+  // - T.J. Dekker, A floating-point technique for extending the available
+  //   precision, https://doi.org/10.1007/BF01397083
+  //
+  // - J.-M. Muller, Elementary Functions - Algorithms and Implementation,
+  //   https://doi.org/10.1007/978-1-4899-7983-4
+  //
+  // - X.S. Li et al., Design, implementation and testing of extended and mixed
+  //   precision BLAS, https://doi.org/10.1145/567806.567808
+
   static_assert(std::is_floating_point_v<T>, "floating-point type required");
 
  public:
