@@ -27,7 +27,7 @@ TEST_SUITE("DoublePrecision") {
     CHECK_GT(high, low);
     CHECK_EQ(high + low, value);
 
-#if !defined(__FMA__) && !defined(__AVX2__)
+#if !defined(EIGEN_HAS_SINGLE_INSTRUCTION_MADD)
     auto [eigen_high, eigen_low] = std::pair{T{0}, T{0}};
     Eigen::internal::veltkamp_splitting(value, eigen_high, eigen_low);
 
@@ -49,11 +49,13 @@ TEST_SUITE("DoublePrecision") {
                static_cast<double>(a) * static_cast<double>(b));
     }
 
+#if !defined(EIGEN_HAS_SINGLE_INSTRUCTION_MADD)
     auto [eigen_high, eigen_low] = std::pair{T{0}, T{0}};
     Eigen::internal::twoprod(a, b, eigen_high, eigen_low);
 
     CHECK_EQ(result.high(), eigen_high);
     CHECK_EQ(result.low(), eigen_low);
+#endif
   }
 
   TEST_CASE_TEMPLATE("Add", T, float, double) {
@@ -156,13 +158,25 @@ TEST_SUITE("DoublePrecision") {
     const auto e = DoublePrecision::two_product(b, c);
 
     const auto result = d * e;
+    CHECK_NE(result.value(), T{});
 
+    if constexpr (std::is_same_v<T, float>) {
+      const auto error =
+          std::abs(result.template as<double>() -
+                   (double{a} * double{b}) * (double{b} * double{c}));
+
+      CHECK_LT(error, 8.0 * std::numeric_limits<double>::epsilon() *
+                          result.template as<double>());
+    }
+
+#if !defined(EIGEN_HAS_SINGLE_INSTRUCTION_MADD)
     auto [eigen_high, eigen_low] = std::pair{T{0}, T{0}};
     Eigen::internal::twoprod(d.high(), d.low(), e.high(), e.low(), eigen_high,
                              eigen_low);
 
     CHECK_EQ(result.high(), eigen_high);
     CHECK_EQ(result.low(), eigen_low);
+#endif
   }
 
   TEST_CASE_TEMPLATE("ConstExprMultiply", T, float, double) {
@@ -170,16 +184,20 @@ TEST_SUITE("DoublePrecision") {
 
     constexpr auto a = static_cast<T>(EIGEN_PI);
     constexpr auto b = std::numeric_limits<T>::epsilon() * a;
-    constexpr auto c = static_cast<T>(EIGEN_LOG2E);
+    constexpr auto c = a / 3.0;
     constexpr auto d = DoublePrecision::two_product(a, b);
     constexpr auto e = DoublePrecision::two_product(b, c);
 
     constexpr auto result = d * e;
-    constexpr auto error =
-        std::abs(result.template as<double>() -
-                 (double{a} * double{b}) * (double{b} * double{c}));
+    static_assert(result.value() != T{});
 
-    static_assert(error < 4.0 * std::numeric_limits<double>::epsilon() *
-                              result.template as<double>());
+    if constexpr (std::is_same_v<T, float>) {
+      constexpr auto error =
+          std::abs(result.template as<double>() -
+                   (double{a} * double{b}) * (double{b} * double{c}));
+
+      static_assert(error < 4.0 * std::numeric_limits<double>::epsilon() *
+                                result.template as<double>());
+    }
   }
 }

@@ -136,7 +136,7 @@ class DoublePrecision {
 
   [[nodiscard]] static constexpr auto two_product(const T x, const T y)
       -> DoublePrecision {
-#if defined(__FMA__) || (!defined(__FMA__) && defined(__AVX2__))
+#if defined(__FMA__) || (defined(_MSC_VER) && defined(__AVX2__))
     const auto p = x * y;
     const auto e = x * y - p;
 #else  // FMA not supported
