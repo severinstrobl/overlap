@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2024 Severin Strobl <git@severin-strobl.de>
+// Copyright (C) 2015-2025 Severin Strobl <git@severin-strobl.de>
 //
 // SPDX-License-Identifier: MIT
 //
@@ -17,6 +17,7 @@
 #include <array>
 #include <bitset>
 #include <cmath>
+#include <cstdint>
 #include <iterator>
 #include <limits>
 #include <numeric>
@@ -72,186 +73,137 @@ auto normal_newell(Iterator first, Iterator last, const Vector& center)
   return normal;
 }
 
-// This implementation of double_prec is based on:
-// T.J. Dekker, A floating-point technique for extending the available
-// precision, http://dx.doi.org/10.1007/BF01397083
-
 template<typename T>
-struct double_prec_constant;
+class DoublePrecision {
+  // This implementation of software double-precision is based on:
+  // - T.J. Dekker, A floating-point technique for extending the available
+  //   precision, https://doi.org/10.1007/BF01397083
+  //
+  // - J.-M. Muller, Elementary Functions - Algorithms and Implementation,
+  //   https://doi.org/10.1007/978-1-4899-7983-4
+  //
+  // - X.S. Li et al., Design, implementation and testing of extended and mixed
+  //   precision BLAS, https://doi.org/10.1145/567806.567808
 
-template<>
-struct double_prec_constant<float> {
-  // Constant used to split double precision values:
-  // 2^(24 - 24/2) + 1 = 2^12 + 1 = 4097
-  static const uint32_t value = 4097;
-};
-
-template<>
-struct double_prec_constant<double> {
-  // Constant used to split double precision values:
-  // 2^(53 - int(53/2)) + 1 = 2^27 + 1 = 134217729
-  static const uint32_t value = 134217729;
-};
-
-// For GCC and Clang an attribute can be used to control the FP precision...
-#if defined(__GNUC__) && !defined(__clang__) && !defined(__ICC) && \
-    !defined(__INTEL_COMPILER)
-#define ENFORCE_EXACT_FPMATH_ATTR __attribute__((__target__("ieee-fp")))
-#else
-#define ENFORCE_EXACT_FPMATH_ATTR
-#endif
-
-// ... whereas ICC requires a pragma.
-#if defined(__ICC) || defined(__INTEL_COMPILER)
-#define ENFORCE_EXACT_FPMATH_ATTR
-#define USE_EXACT_FPMATH_PRAGMA 1
-#endif
-
-template<typename T>
-class double_prec;
-
-template<typename T>
-inline double_prec<T> operator+(const double_prec<T>& lhs,
-                                const double_prec<T>& rhs)
-    ENFORCE_EXACT_FPMATH_ATTR;
-
-template<typename T>
-inline double_prec<T> operator-(const double_prec<T>& lhs,
-                                const double_prec<T>& rhs)
-    ENFORCE_EXACT_FPMATH_ATTR;
-
-template<typename T>
-inline double_prec<T> operator*(const double_prec<T>& lhs,
-                                const double_prec<T>& rhs)
-    ENFORCE_EXACT_FPMATH_ATTR;
-
-template<typename T>
-class double_prec {
- private:
-  static const uint32_t c = detail::double_prec_constant<T>::value;
-
-  template<typename TF>
-  friend double_prec<TF> operator+(const double_prec<TF>&,
-                                   const double_prec<TF>&);
-
-  template<typename TF>
-  friend double_prec<TF> operator-(const double_prec<TF>&,
-                                   const double_prec<TF>&);
-
-  template<typename TF>
-  friend double_prec<TF> operator*(const double_prec<TF>&,
-                                   const double_prec<TF>&);
+  static_assert(std::is_floating_point_v<T>, "floating-point type required");
 
  public:
-  inline double_prec() : h_(0), l_(0) {}
+  constexpr DoublePrecision() = default;
 
-  // This constructor requires floating point operations in accordance
-  // with IEEE754 to perform the proper splitting. To allow full
-  // optimization of all other parts of the code, precise floating point
-  // ops are only requested here. Unfortunately the way to do this is
-  // extremely compiler dependent.
-  inline double_prec(const T& val) ENFORCE_EXACT_FPMATH_ATTR : h_(0),
-                                                               l_(0) {
-#ifdef USE_EXACT_FPMATH_PRAGMA
-#pragma float_control(precise, on)
-#endif
-
-    T p = val * T(c);
-    h_ = (val - p) + p;
-    l_ = val - h_;
+  constexpr explicit DoublePrecision(const T value) {
+    // std::tuple<Types...>::operator= not constexpr in C++17 -> no std::tie
+    const auto [h, l] = split(value);
+    high_ = h;
+    low_ = l;
   }
 
+  constexpr explicit DoublePrecision(const std::pair<T, T>& parts) :
+      high_{parts.first}, low_{parts.second} {}
+
  private:
-  inline explicit double_prec(const T& h, const T& l) : h_(h), l_(l) {}
+  constexpr DoublePrecision(const T h, const T l) : high_{h}, low_{l} {}
 
  public:
-  inline const T& high() const { return h_; }
+  // constant according to Veltkamp & Dekker: 2^(p - floor(p / 2)) + 1
+  [[nodiscard]] static constexpr auto constant() -> T {
+    constexpr auto digits =
+        static_cast<std::uint32_t>(std::numeric_limits<T>::digits);
 
-  inline const T& low() const { return l_; }
+    return static_cast<T>((2u << (digits - digits / 2u - 1u)) + 1u);
+  }
 
-  inline T value() const { return h_ + l_; }
+  [[nodiscard]] static constexpr auto split(const T value) -> std::pair<T, T> {
+    const auto t = constant() * value;
+    const auto h = t - (t - value);
+
+    return std::make_pair(h, value - h);
+  }
+
+  [[nodiscard]] static constexpr auto fast_two_sum(const T x, const T y) {
+    const auto s = x + y;
+    const auto e = y - (s - x);
+
+    return DoublePrecision{s, e};
+  }
+
+  [[nodiscard]] static constexpr auto two_sum(const T x, const T y) {
+    const auto s = x + y;
+    const auto v = s - x;
+    const auto e = (x - (s - v)) + (y - v);
+
+    return DoublePrecision{s, e};
+  }
+
+  [[nodiscard]] static constexpr auto two_product(const T x, const T y)
+      -> DoublePrecision {
+#if defined(__FMA__) || (defined(_MSC_VER) && defined(__AVX2__))
+    const auto p = x * y;
+    const auto e = x * y - p;
+#else  // FMA not supported
+    const auto p = x * y;
+    const auto [x_h, x_l] = split(x);
+    const auto [y_h, y_l] = split(y);
+    const auto e = ((x_h * y_h - p) + x_h * y_l + x_l * y_h) + x_l * y_l;
+#endif
+
+    return DoublePrecision{p, e};
+  }
+
+  friend constexpr auto operator+(const DoublePrecision& lhs,
+                                  const DoublePrecision& rhs)
+      -> DoublePrecision {
+    const auto s = two_sum(lhs.high(), rhs.high());
+    const auto t = two_sum(lhs.low(), rhs.low());
+    const auto v = fast_two_sum(s.high(), s.low() + t.high());
+
+    return fast_two_sum(v.high(), v.low() + t.low());
+  }
+
+  friend constexpr auto operator-(const DoublePrecision& lhs,
+                                  const DoublePrecision& rhs)
+      -> DoublePrecision {
+    return lhs + DoublePrecision{-rhs.high(), -rhs.low()};
+  }
+
+  friend constexpr auto operator*(const DoublePrecision& lhs,
+                                  const DoublePrecision& rhs)
+      -> DoublePrecision {
+    const auto c = two_product(lhs.high(), rhs.high());
+    const auto cc = (lhs.high() * rhs.low() + lhs.low() * rhs.high()) + c.low();
+
+    return fast_two_sum(c.high(), cc);
+  }
+
+  [[nodiscard]] constexpr auto high() const -> T { return high_; }
+  [[nodiscard]] constexpr auto low() const -> T { return low_; }
+  [[nodiscard]] constexpr auto value() const -> T { return high_ + low_; }
 
   template<typename TOther>
-  inline TOther convert() const {
-    return TOther(h_) + TOther(l_);
+  [[nodiscard]] constexpr auto as() const -> TOther {
+    return TOther{high_} + TOther{low_};
   }
 
  private:
-  T h_;
-  T l_;
+  T high_{0};  // Dekker: head/tail
+  T low_{0};   // Dekker: tail
 };
-
-template<typename T>
-inline double_prec<T> operator+(const double_prec<T>& lhs,
-                                const double_prec<T>& rhs) {
-#ifdef USE_EXACT_FPMATH_PRAGMA
-#pragma float_control(precise, on)
-#endif
-
-  T h = lhs.h_ + rhs.h_;
-  T l = std::abs(lhs.h_) >= std::abs(rhs.h_)
-            ? ((((lhs.h_ - h) + rhs.h_) + lhs.l_) + rhs.l_)
-            : ((((rhs.h_ - h) + lhs.h_) + rhs.l_) + lhs.l_);
-
-  T c = h + l;
-
-  return double_prec<T>(c, (h - c) + l);
-}
-
-template<typename T>
-inline double_prec<T> operator-(const double_prec<T>& lhs,
-                                const double_prec<T>& rhs) {
-#ifdef USE_EXACT_FPMATH_PRAGMA
-#pragma float_control(precise, on)
-#endif
-
-  T h = lhs.h_ - rhs.h_;
-  T l = std::abs(lhs.h_) >= std::abs(rhs.h_)
-            ? ((((lhs.h_ - h) - rhs.h_) - rhs.l_) + lhs.l_)
-            : ((((-rhs.h_ - h) + lhs.h_) + lhs.l_) - rhs.l_);
-
-  T c = h + l;
-
-  return double_prec<T>(c, (h - c) + l);
-}
-
-template<typename T>
-inline double_prec<T> operator*(const double_prec<T>& lhs,
-                                const double_prec<T>& rhs) {
-#ifdef USE_EXACT_FPMATH_PRAGMA
-#pragma float_control(precise, on)
-#endif
-
-  double_prec<T> l(lhs.h_);
-  double_prec<T> r(rhs.h_);
-
-  T p = l.h_ * r.h_;
-  T q = l.h_ * r.l_ + l.l_ * r.h_;
-  T v = p + q;
-
-  double_prec<T> c(v, ((p - v) + q) + l.l_ * r.l_);
-  c.l_ = ((lhs.h_ + lhs.l_) * rhs.l_ + lhs.l_ * rhs.h_) + c.l_;
-  T z = c.value();
-
-  return double_prec<T>(z, (c.h_ - z) + c.l_);
-}
 
 // Ref: J.R. Shewchuk - Lecture Notes on Geometric Robustness
 //      http://www.cs.berkeley.edu/~jrs/meshpapers/robnotes.pdf
 inline auto orient2d(const Vector2& a, const Vector2& b, const Vector2& c)
     -> Scalar {
-  using DoublePrecScalar = double_prec<Vector2::Scalar>;
+  using DoublePrecScalar = DoublePrecision<Vector2::Scalar>;
 
-  const auto a0 = DoublePrecScalar{a[0]};
-  const auto a1 = DoublePrecScalar{a[1]};
-  const auto b0 = DoublePrecScalar{b[0]};
-  const auto b1 = DoublePrecScalar{b[1]};
-  const auto c0 = DoublePrecScalar{c[0]};
-  const auto c1 = DoublePrecScalar{c[1]};
+  const auto ax = DoublePrecScalar{a.x()};
+  const auto ay = DoublePrecScalar{a.y()};
+  const auto bx = DoublePrecScalar{b.x()};
+  const auto by = DoublePrecScalar{b.y()};
+  const auto cx = DoublePrecScalar{c.x()};
+  const auto cy = DoublePrecScalar{c.y()};
 
-  const auto result = (a0 - c0) * (b1 - c1) - (a1 - c1) * (b0 - c0);
+  const auto result = (ax - cx) * (by - cy) - (ay - cy) * (bx - cx);
 
-  return result.template convert<Vector2::Scalar>();
+  return result.template as<Vector2::Scalar>();
 }
 
 // Numerically robust calculation of the normal of the triangle defined by
@@ -260,9 +212,9 @@ inline auto orient2d(const Vector2& a, const Vector2& b, const Vector2& c)
 //      http://www.cs.berkeley.edu/~jrs/meshpapers/robnotes.pdf
 inline auto triangle_normal(const Vector& a, const Vector& b, const Vector& c)
     -> Vector {
-  const auto xy = orient2d({a[0], a[1]}, {b[0], b[1]}, {c[0], c[1]});
-  const auto yz = orient2d({a[1], a[2]}, {b[1], b[2]}, {c[1], c[2]});
-  const auto zx = orient2d({a[2], a[0]}, {b[2], b[0]}, {c[2], c[0]});
+  const auto xy = orient2d({a.x(), a.y()}, {b.x(), b.y()}, {c.x(), c.y()});
+  const auto yz = orient2d({a.y(), a.z()}, {b.y(), b.z()}, {c.y(), c.z()});
+  const auto zx = orient2d({a.z(), a.x()}, {b.z(), b.x()}, {c.z(), c.x()});
 
   return Vector{yz, zx, xy}.normalized();
 }

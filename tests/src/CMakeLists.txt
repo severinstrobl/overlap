@@ -74,6 +74,7 @@ set(unit_tests
     clamp
     contains
     decompose_elements
+    double_precision
     elements
     normal_newell
     polygon

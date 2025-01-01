@@ -25,9 +25,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 
 # set up the dependency on Eigen3
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/third_party/eigen/cmake")
-find_package(Eigen3 3.3.0 NO_MODULE QUIET)
+find_package(Eigen3 3.4.0 NO_MODULE QUIET)
 if(NOT TARGET Eigen3::Eigen)
-  message(STATUS "Failed to find Eigen3 >= 3.3.0, using internal version")
+  message(STATUS "Failed to find Eigen3 >= 3.4.0, using internal version")
 
   add_library(Eigen3::Eigen IMPORTED INTERFACE)
   set_property(
