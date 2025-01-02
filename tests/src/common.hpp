@@ -15,8 +15,7 @@
 
 class AssertionError : public std::runtime_error {
  public:
-  static inline constexpr auto assertion_failed_msg =
-      "[overlap] assertion failed: ";
+  static constexpr auto assertion_failed_msg = "[overlap] assertion failed: ";
 
   explicit AssertionError(std::string_view msg) :
       std::runtime_error{assertion_failed_msg + std::string{msg}} {}
@@ -66,28 +65,23 @@ inline void validate_overlap_volume(const Sphere& s, const Hexahedron& hex,
     CHECK(overlapCalcHex == Approx(exactResult).epsilon(epsilon));
   }
 
-  auto overlapCalcTets5 = Scalar{0};
-  for (const auto& tet : tets5) {
-    overlapCalcTets5 += overlap_volume(s, tet);
-  }
+  const auto overlapCalcTets5 =
+      overlap_volume(s, std::begin(tets5), std::end(tets5));
 
-  auto overlapCalcTets6 = Scalar{0};
+  const auto overlapCalcTets6 =
+      overlap_volume(s, std::begin(tets6), std::end(tets6));
+
   auto overlapCalcTets24 = Scalar{0};
   for (const auto& tet : tets6) {
     std::array<Tetrahedron, 4> subTets;
     decompose(tet, subTets);
 
-    for (const auto& subTet : subTets) {
-      overlapCalcTets24 += overlap_volume(s, subTet);
-    }
-
-    overlapCalcTets6 += overlap_volume(s, tet);
+    overlapCalcTets24 +=
+        overlap_volume(s, std::begin(subTets), std::end(subTets));
   }
 
-  auto overlapCalcWedges = Scalar{0};
-  for (const auto& wedge : wedges) {
-    overlapCalcWedges += overlap_volume(s, wedge);
-  }
+  const auto overlapCalcWedges =
+      overlap_volume(s, std::begin(wedges), std::end(wedges));
 
   std::cout << "volume hex:    " << overlapCalcHex << std::endl;
   std::cout << "volume wedges: " << overlapCalcWedges << std::endl;

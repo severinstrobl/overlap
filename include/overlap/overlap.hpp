@@ -1301,6 +1301,212 @@ inline auto correct_marked_vertices(
   return corrected_marked_vertices;
 }
 
+template<typename Element>
+struct EntityIntersections {
+  std::bitset<num_vertices<Element>()> vertices;
+  std::bitset<num_edges<Element>()> edges;
+  std::bitset<num_faces<Element>()> faces;
+};
+
+template<typename Element>
+using EdgeIntersections =
+    std::array<std::array<Vector, 2>, num_edges<Element>()>;
+
+template<typename Element>
+auto unit_sphere_intersections(const Element& element)
+    -> std::tuple<EntityIntersections<Element>, EdgeIntersections<Element>> {
+  const auto unit_sphere = Sphere{};
+
+  auto entity_intersections = EntityIntersections<Element>{};
+
+  // The intersection points between the single edges and the sphere, this
+  // is needed later on.
+  auto edge_intersections = EdgeIntersections<Element>{};
+
+  // Process all edges of the element.
+  for (std::size_t edge_idx = 0; edge_idx < num_edges<Element>(); ++edge_idx) {
+    const auto base = element.vertices[Element::edge_mapping[edge_idx][0][0]];
+    const auto direction =
+        (element.vertices[Element::edge_mapping[edge_idx][0][1]] - base).eval();
+
+    const auto [intersections, num_intersections] =
+        line_sphere_intersection(base, direction, unit_sphere);
+
+    // No intersection between the edge and the sphere, where intersection
+    // points close to the surface of the sphere are ignored.
+    // Or:
+    // The sphere cuts the edge twice, no vertex is inside of the
+    // sphere, but the case of the edge only touching the sphere has to
+    // be avoided.
+    if (num_intersections != 2u ||
+        (intersections[0] >= Scalar{1} - detail::medium_epsilon) ||
+        intersections[1] <= detail::medium_epsilon ||
+        (intersections[0] > Scalar{0} && intersections[1] < Scalar{1} &&
+         (intersections[1] - intersections[0] < detail::large_epsilon))) {
+      continue;
+    }
+
+    entity_intersections.vertices[Element::edge_mapping[edge_idx][0][0]] =
+        intersections[0] < Scalar{0};
+    entity_intersections.vertices[Element::edge_mapping[edge_idx][0][1]] =
+        intersections[1] > Scalar{1};
+
+    // Store the two intersection points of the edge with the sphere for
+    // later usage.
+    edge_intersections[edge_idx][0] = intersections[0] * direction;
+    edge_intersections[edge_idx][1] =
+        (intersections[1] - Scalar{1}) * direction;
+    entity_intersections.edges[edge_idx] = true;
+
+    // If the edge is marked as having an overlap, the two faces forming it
+    // have to be marked as well.
+    entity_intersections.faces[Element::edge_mapping[edge_idx][1][0]] = true;
+    entity_intersections.faces[Element::edge_mapping[edge_idx][1][1]] = true;
+  }
+
+  // Check whether the dependencies for a vertex intersection are fulfilled.
+  entity_intersections.vertices = correct_marked_vertices<Element>(
+      entity_intersections.vertices, entity_intersections.edges);
+
+  // Process all faces of the element, ignoring the edges as those where
+  // already checked above.
+  for (std::size_t face_idx = 0; face_idx < num_faces<Element>(); ++face_idx) {
+    if (intersects(unit_sphere, element.faces[face_idx])) {
+      entity_intersections.faces[face_idx] = true;
+    }
+  }
+
+  return std::make_tuple(entity_intersections, edge_intersections);
+}
+
+template<typename Element>
+auto vertex_cone_volume(const Element& element,
+                        const EdgeIntersections<Element>& edge_intersections,
+                        const std::size_t vertex_idx) -> Scalar {
+  // Collect the points where the three edges intersecting at this
+  // vertex intersect the sphere.
+  // Both the relative and the absolute positions are required.
+  auto relative_intersection_points = std::array<Vector, 3>{};
+  auto intersection_points = std::array<Vector, 3>{};
+  for (auto local_edge_idx = 0u; local_edge_idx < 3; ++local_edge_idx) {
+    const auto edge_idx =
+        Element::vertex_mapping[vertex_idx][0][local_edge_idx];
+
+    relative_intersection_points[local_edge_idx] =
+        edge_intersections[edge_idx][Element::vertex_mapping[vertex_idx][1]
+                                                            [local_edge_idx]];
+
+    intersection_points[local_edge_idx] =
+        relative_intersection_points[local_edge_idx] +
+        element.vertices[vertex_idx];
+  }
+
+  // This triangle is constructed by hand to have more freedom of how
+  // the normal vector is calculated.
+  auto cone_triangle = Triangle{};
+  cone_triangle.vertices = {
+      {intersection_points[0], intersection_points[1], intersection_points[2]}};
+
+  cone_triangle.center =
+      (Scalar{1} / Scalar{3}) * std::accumulate(intersection_points.begin(),
+                                                intersection_points.end(),
+                                                Vector::Zero().eval());
+
+  // Calculate the normal of the triangle defined by the intersection
+  // points in relative coordinates to improve accuracy.
+  // Also use double the normal precision to calculate this normal.
+  cone_triangle.normal = triangle_normal(relative_intersection_points[0],
+                                         relative_intersection_points[1],
+                                         relative_intersection_points[2]);
+
+  // The area of this triangle is never needed, so it is set to an
+  // invalid value.
+  cone_triangle.area = std::numeric_limits<Scalar>::infinity();
+
+  auto distances = std::array<std::pair<std::size_t, Scalar>, 3>{};
+  for (auto i = 0u; i < 3; ++i) {
+    distances[i] =
+        std::make_pair(i, relative_intersection_points[i].squaredNorm());
+  }
+
+  std::sort(distances.begin(), distances.end(),
+            [](const std::pair<std::size_t, Scalar>& a,
+               const std::pair<std::size_t, Scalar>& b) {
+              return a.second < b.second;
+            });
+
+  const auto unit_sphere = Sphere{};
+
+  if (distances[1].second < distances[2].second * detail::large_epsilon) {
+    // Use the general spherical wedge defined by the edge with the
+    // non-degenerated intersection point and the normals of the
+    // two faces forming it.
+    const auto correction = general_wedge<3, Element>(
+        unit_sphere, element,
+        Element::vertex_mapping[vertex_idx][0][distances[2].first],
+        edge_intersections);
+
+    return correction;
+  }
+
+  const auto tip_tet_volume =
+      (Scalar{1} / Scalar{6}) *
+      std::abs(-relative_intersection_points[2].dot(
+          (relative_intersection_points[0] - relative_intersection_points[2])
+              .cross(relative_intersection_points[1] -
+                     relative_intersection_points[2])));
+
+  // Make sure the normal points in the right direction i.e. away from
+  // the center of the element.
+  if (cone_triangle.normal.dot(element.center - cone_triangle.center) >
+      Scalar{0}) {
+    cone_triangle.normal = -cone_triangle.normal;
+  }
+
+  const auto dist = cone_triangle.normal.dot(-cone_triangle.center);
+  const auto cap_volume = unit_sphere.cap_volume(unit_sphere.radius + dist);
+
+  // The cap volume is tiny, so the corrections will be even smaller.
+  // There is no way to actually calculate them with reasonable
+  // precision, so just the volume of the tetrahedron at the tip is
+  // used.
+  if (cap_volume < detail::tiny_epsilon) {
+    return tip_tet_volume;
+  }
+
+  // Calculate the volume of the three spherical segments between
+  // the faces joining at the vertex and the plane through the
+  // intersection points.
+  const auto plane = Plane{cone_triangle.center, cone_triangle.normal};
+  auto segment_volume = Scalar{0};
+
+  for (auto local_edge_idx = 0u; local_edge_idx < 3u; ++local_edge_idx) {
+    const auto& face =
+        element.faces[Element::vertex_mapping[vertex_idx][2][local_edge_idx]];
+
+    const auto center =
+        ((Scalar{1} / Scalar{2}) *
+         (intersection_points[Element::face_mapping[local_edge_idx][0]] +
+          intersection_points[Element::face_mapping[local_edge_idx][1]]))
+            .eval();
+
+    const auto wedge_volume = general_wedge<3>(
+        unit_sphere, plane, Plane(face.center, -face.normal), center);
+
+    segment_volume += wedge_volume;
+  }
+
+  // Calculate the volume of the cone and clamp it to zero.
+  const auto cone_volume =
+      std::max(tip_tet_volume + cap_volume - segment_volume, Scalar{0});
+
+  // Sanity check: detect negative cone volume.
+  overlap_assert(cone_volume > -std::sqrt(detail::tiny_epsilon),
+                 "negative cone volume in overlap_volume()");
+
+  return cone_volume;
+}
+
 }  // namespace detail
 
 // expose types required for public API
@@ -1313,254 +1519,92 @@ using Wedge = detail::Wedge;
 using Hexahedron = detail::Hexahedron;
 
 template<typename Element>
-auto overlap_volume(const Sphere& sOrig, const Element& elementOrig) -> Scalar {
+auto overlap_volume(const Sphere& sphere, const Element& element) -> Scalar {
   using namespace detail;
 
   static_assert(is_element_v<Element>, "invalid element type detected");
 
-  if (!intersects_coarse(sOrig, elementOrig)) {
+  if (!intersects_coarse(sphere, element)) {
     return Scalar{0};
   }
 
   // Check for trivial case: element fully contained in sphere.
-  if (contains(sOrig, elementOrig)) {
-    return elementOrig.volume;
+  if (contains(sphere, element)) {
+    return element.volume;
   }
 
   // Sanity check: All faces of the mesh element have to be planar.
-  for (const auto& face : elementOrig.faces) {
+  for (const auto& face : element.faces) {
     if (!face.is_planar()) {
       throw std::invalid_argument{"non-planer face detected in element"};
     }
   }
 
-  // Use scaled and shifted versions of the sphere and the element.
-  Transformation transformation{-sOrig.center, Scalar{1} / sOrig.radius};
+  // Use unit sphere and transformed (scaled and shifted) version of the
+  // element.
+  const auto transformation =
+      Transformation{-sphere.center, Scalar{1} / sphere.radius};
 
-  const auto s = Sphere{};
-  auto element = Element{elementOrig};
-  element.apply(transformation);
+  const auto unit_sphere = Sphere{};
+  auto transformed_element = Element{element};
+  transformed_element.apply(transformation);
 
-  // Constants: Number of vertices and faces.
-  constexpr auto nrVertices = num_vertices<Element>();
-  constexpr auto nrFaces = num_faces<Element>();
-
-  // Sets of overlapping primitives.
-  std::bitset<nrVertices> vMarked;
-  std::bitset<num_edges<Element>()> eMarked;
-  std::bitset<nrFaces> fMarked;
-
-  // Initial value: Volume of the full sphere.
-  auto result = s.volume;
-
-  // The intersection points between the single edges and the sphere, this
-  // is needed later on.
-  std::array<std::array<Vector, 2>, num_edges<Element>()> eIntersections;
-
-  // Process all edges of the element.
-  for (std::size_t n = 0; n < num_edges<Element>(); ++n) {
-    Vector start(element.vertices[Element::edge_mapping[n][0][0]]);
-    Vector direction(element.vertices[Element::edge_mapping[n][0][1]] - start);
-
-    auto solutions = line_sphere_intersection(start, direction, s);
-
-    // No intersection between the edge and the sphere, where intersection
-    // points close to the surface of the sphere are ignored.
-    // Or:
-    // The sphere cuts the edge twice, no vertex is inside of the
-    // sphere, but the case of the edge only touching the sphere has to
-    // be avoided.
-    if (!solutions.second ||
-        (solutions.first[0] >= Scalar{1} - detail::medium_epsilon) ||
-        solutions.first[1] <= detail::medium_epsilon ||
-        (solutions.first[0] > Scalar{0} && solutions.first[1] < Scalar{1} &&
-         (solutions.first[1] - solutions.first[0] < detail::large_epsilon))) {
-      continue;
-    }
-
-    vMarked[Element::edge_mapping[n][0][0]] = solutions.first[0] < Scalar{0};
-    vMarked[Element::edge_mapping[n][0][1]] = solutions.first[1] > Scalar{1};
-
-    // Store the two intersection points of the edge with the sphere for
-    // later usage.
-    eIntersections[n][0] = solutions.first[0] * direction;
-    eIntersections[n][1] = (solutions.first[1] - Scalar{1}) * direction;
-    eMarked[n] = true;
-
-    // If the edge is marked as having an overlap, the two faces forming it
-    // have to be marked as well.
-    fMarked[Element::edge_mapping[n][1][0]] = true;
-    fMarked[Element::edge_mapping[n][1][1]] = true;
-  }
-
-  // Check whether the dependencies for a vertex intersection are fulfilled.
-  vMarked = correct_marked_vertices<Element>(vMarked, eMarked);
-
-  // Process all faces of the element, ignoring the edges as those where
-  // already checked above.
-  for (std::size_t n = 0; n < nrFaces; ++n) {
-    if (intersects(s, element.faces[n])) {
-      fMarked[n] = true;
-    }
-  }
+  const auto&& [entity_intersections, edge_intersections] =
+      unit_sphere_intersections(transformed_element);
 
   // Trivial case: The center of the sphere overlaps the element, but the
   // sphere does not intersect any of the faces of the element, meaning the
   // sphere is completely contained within the element.
-  if (!fMarked.count() && contains(element, s.center)) {
-    return sOrig.volume;
+  if (!entity_intersections.faces.count() &&
+      contains(transformed_element, unit_sphere.center)) {
+    return sphere.volume;
   }
 
   // Spurious intersection: The initial intersection test was positive, but
   // the detailed checks revealed no overlap.
-  if (!vMarked.count() && !eMarked.count() && !fMarked.count()) {
+  if (!entity_intersections.vertices.count() &&
+      !entity_intersections.edges.count() &&
+      !entity_intersections.faces.count()) {
     return Scalar{0};
   }
 
+  // Initial value: volume of the full sphere.
+  auto result = unit_sphere.volume;
+
   // Iterate over all the marked faces and subtract the volume of the cap cut
   // off by the plane.
-  for (std::size_t n = 0; n < nrFaces; ++n) {
-    if (!fMarked[n]) {
+  for (auto face_idx = 0u; face_idx < num_faces<Element>(); ++face_idx) {
+    if (!entity_intersections.faces[face_idx]) {
       continue;
     }
 
-    const auto& f = element.faces[n];
-    const auto dist = f.normal.dot(s.center - f.center);
+    const auto& face = transformed_element.faces[face_idx];
+    const auto dist = face.normal.dot(-face.center);
 
-    result -= s.cap_volume(s.radius + dist);
+    result -= unit_sphere.cap_volume(unit_sphere.radius + dist);
   }
 
   // Handle the edges and add back the volume subtracted twice above in the
   // processing of the faces.
-  for (std::size_t n = 0; n < num_edges<Element>(); ++n) {
-    if (!eMarked[n]) {
+  for (auto edge_idx = 0u; edge_idx < num_edges<Element>(); ++edge_idx) {
+    if (!entity_intersections.edges[edge_idx]) {
       continue;
     }
 
-    result += general_wedge<3, Element>(s, element, n, eIntersections);
+    result += general_wedge<3, Element>(unit_sphere, transformed_element,
+                                        edge_idx, edge_intersections);
   }
 
   // Handle the vertices and subtract the volume added twice above in the
   // processing of the edges.
-  for (std::size_t n = 0; n < nrVertices; ++n) {
-    if (!vMarked[n]) {
+  for (auto vertex_idx = 0u; vertex_idx < num_vertices<Element>();
+       ++vertex_idx) {
+    if (!entity_intersections.vertices[vertex_idx]) {
       continue;
     }
 
-    // Collect the points where the three edges intersecting at this
-    // vertex intersect the sphere.
-    // Both the relative and the absolute positions are required.
-    std::array<Vector, 3> intersectionPointsRelative;
-    std::array<Vector, 3> intersectionPoints;
-    for (std::size_t e = 0; e < 3; ++e) {
-      const auto edgeIdx = Element::vertex_mapping[n][0][e];
-      intersectionPointsRelative[e] =
-          eIntersections[edgeIdx][Element::vertex_mapping[n][1][e]];
-
-      intersectionPoints[e] =
-          intersectionPointsRelative[e] + element.vertices[n];
-    }
-
-    // This triangle is constructed by hand to have more freedom of how
-    // the normal vector is calculated.
-    Triangle coneTria;
-    coneTria.vertices = {
-        {intersectionPoints[0], intersectionPoints[1], intersectionPoints[2]}};
-
-    coneTria.center =
-        (Scalar{1} / Scalar{3}) * std::accumulate(intersectionPoints.begin(),
-                                                  intersectionPoints.end(),
-                                                  Vector::Zero().eval());
-
-    // Calculate the normal of the triangle defined by the intersection
-    // points in relative coordinates to improve accuracy.
-    // Also use double the normal precision to calculate this normal.
-    coneTria.normal = detail::triangle_normal(intersectionPointsRelative[0],
-                                              intersectionPointsRelative[1],
-                                              intersectionPointsRelative[2]);
-
-    // The area of this triangle is never needed, so it is set to an
-    // invalid value.
-    coneTria.area = std::numeric_limits<Scalar>::infinity();
-
-    std::array<std::pair<std::size_t, Scalar>, 3> distances;
-    for (std::size_t i = 0; i < 3; ++i) {
-      distances[i] =
-          std::make_pair(i, intersectionPointsRelative[i].squaredNorm());
-    }
-
-    std::sort(distances.begin(), distances.end(),
-              [](const std::pair<std::size_t, Scalar>& a,
-                 const std::pair<std::size_t, Scalar>& b) -> bool {
-                return a.second < b.second;
-              });
-
-    if (distances[1].second < distances[2].second * detail::large_epsilon) {
-      // Use the general spherical wedge defined by the edge with the
-      // non-degenerated intersection point and the normals of the
-      // two faces forming it.
-      const auto correction = general_wedge<3, Element>(
-          s, element, Element::vertex_mapping[n][0][distances[2].first],
-          eIntersections);
-
-      result -= correction;
-
-      continue;
-    }
-
-    const auto tipTetVolume =
-        (Scalar{1} / Scalar{6}) *
-        std::abs(-intersectionPointsRelative[2].dot(
-            (intersectionPointsRelative[0] - intersectionPointsRelative[2])
-                .cross(intersectionPointsRelative[1] -
-                       intersectionPointsRelative[2])));
-
-    // Make sure the normal points in the right direction i.e. away from
-    // the center of the element.
-    if (coneTria.normal.dot(element.center - coneTria.center) > Scalar{0}) {
-      coneTria.normal = -coneTria.normal;
-    }
-
-    const auto dist = coneTria.normal.dot(s.center - coneTria.center);
-    const auto cap_volume = s.cap_volume(s.radius + dist);
-
-    // The cap volume is tiny, so the corrections will be even smaller.
-    // There is no way to actually calculate them with reasonable
-    // precision, so just the volume of the tetrahedron at the tip is
-    // used.
-    if (cap_volume < detail::tiny_epsilon) {
-      result -= tipTetVolume;
-      continue;
-    }
-
-    // Calculate the volume of the three spherical segments between
-    // the faces joining at the vertex and the plane through the
-    // intersection points.
-    const auto plane = Plane{coneTria.center, coneTria.normal};
-    auto segmentVolume = Scalar{0};
-
-    for (std::size_t e = 0; e < 3; ++e) {
-      const auto& f = element.faces[Element::vertex_mapping[n][2][e]];
-      const auto e0 = Element::face_mapping[e][0];
-      const auto e1 = Element::face_mapping[e][1];
-      const Vector center = (Scalar{1} / Scalar{2}) *
-                            (intersectionPoints[e0] + intersectionPoints[e1]);
-
-      const auto wedgeVolume = general_wedge<3>(
-          s, plane, Plane(f.center, -f.normal), center - s.center);
-
-      segmentVolume += wedgeVolume;
-    }
-
-    // Calculate the volume of the cone and clamp it to zero.
-    const auto coneVolume =
-        std::max(tipTetVolume + cap_volume - segmentVolume, Scalar{0});
-
-    // Sanity check: detect negative cone volume.
-    overlap_assert(coneVolume > -std::sqrt(detail::tiny_epsilon),
-                   "negative cone volume in overlap_volume()");
-
-    result -= coneVolume;
+    result -=
+        vertex_cone_volume(transformed_element, edge_intersections, vertex_idx);
 
     // Sanity check: detect negative intermediate result.
     overlap_assert(result > -std::sqrt(detail::tiny_epsilon),
@@ -1569,9 +1613,11 @@ auto overlap_volume(const Sphere& sOrig, const Element& elementOrig) -> Scalar {
 
   // In case of different sized objects the error can become quite large,
   // so a relative limit is used.
-  const auto maxOverlap = std::min(s.volume, element.volume);
+  const auto max_overlap_volume =
+      std::min(unit_sphere.volume, transformed_element.volume);
+
   const auto limit =
-      std::sqrt(std::numeric_limits<Scalar>::epsilon()) * maxOverlap;
+      std::sqrt(std::numeric_limits<Scalar>::epsilon()) * max_overlap_volume;
 
   // Clamp tiny negative volumes to zero.
   if (result < Scalar{0} && result > -limit) {
@@ -1579,28 +1625,30 @@ auto overlap_volume(const Sphere& sOrig, const Element& elementOrig) -> Scalar {
   }
 
   // Clamp results slightly too large.
-  if (result > maxOverlap && result - maxOverlap < limit) {
-    return std::min(sOrig.volume, elementOrig.volume);
+  if (result > max_overlap_volume && result - max_overlap_volume < limit) {
+    return std::min(sphere.volume, element.volume);
   }
 
   // Perform a sanity check on the final result (debug version only).
-  overlap_assert(result >= Scalar{0} && result <= maxOverlap,
+  overlap_assert(result >= Scalar{0} && result <= max_overlap_volume,
                  "negative volume detected in overlap_volume()");
 
   // Scale the overlap volume back for the original objects.
-  result = (result / s.volume) * sOrig.volume;
+  result = (result / unit_sphere.volume) * sphere.volume;
 
   return result;
 }
 
 template<typename Iterator>
-auto overlap_volume(const Sphere& s, Iterator eBegin, Iterator eEnd) -> Scalar {
-  auto sum = Scalar{0};
-  for (auto it = eBegin; it != eEnd; ++it) {
-    sum += overlap_volume(s, *it);
-  }
+auto overlap_volume(const Sphere& s, Iterator first, Iterator last) -> Scalar {
+  static_assert(
+      detail::is_element_v<typename std::iterator_traits<Iterator>::value_type>,
+      "invalid element type detected");
 
-  return sum;
+  return std::accumulate(first, last, Scalar{0},
+                         [&s](const Scalar partial, const auto& element) {
+                           return partial + overlap_volume(s, element);
+                         });
 }
 
 // Calculate the surface area of the sphere and the element that are contained
@@ -1623,8 +1671,8 @@ auto overlap_area(const Sphere& sOrig, const Element& elementOrig)
   constexpr auto nrVertices = num_vertices<Element>();
   constexpr auto nrFaces = num_faces<Element>();
 
-  // Initial value: Zero overlap.
-  std::array<Scalar, nrFaces + 2> result{};
+  // Initial value: zero overlap.
+  auto result = std::array<Scalar, nrFaces + 2>{};
 
   if (!intersects_coarse(sOrig, elementOrig)) {
     return result;
@@ -1674,7 +1722,8 @@ auto overlap_area(const Sphere& sOrig, const Element& elementOrig)
     Vector start(element.vertices[Element::edge_mapping[n][0][0]]);
     Vector direction(element.vertices[Element::edge_mapping[n][0][1]] - start);
 
-    auto solutions = line_sphere_intersection(start, direction, s);
+    const auto [intersections, num_intersections] =
+        line_sphere_intersection(start, direction, s);
 
     // No intersection between the edge and the sphere, where intersection
     // points close to the surface of the sphere are ignored.
@@ -1682,22 +1731,22 @@ auto overlap_area(const Sphere& sOrig, const Element& elementOrig)
     // The sphere cuts the edge twice, no vertex is inside of the
     // sphere, but the case of the edge only touching the sphere has to
     // be avoided.
-    if (!solutions.second ||
-        solutions.first[0] >= Scalar(1) - detail::medium_epsilon ||
-        solutions.first[1] <= detail::medium_epsilon ||
-        (solutions.first[0] > Scalar(0) && solutions.first[1] < Scalar(1) &&
-         solutions.first[1] - solutions.first[0] < detail::large_epsilon)) {
+    if (num_intersections != 2u ||
+        intersections[0] >= Scalar(1) - detail::medium_epsilon ||
+        intersections[1] <= detail::medium_epsilon ||
+        (intersections[0] > Scalar(0) && intersections[1] < Scalar(1) &&
+         intersections[1] - intersections[0] < detail::large_epsilon)) {
       continue;
     }
 
-    vMarked[Element::edge_mapping[n][0][0]] = solutions.first[0] < Scalar(0);
+    vMarked[Element::edge_mapping[n][0][0]] = intersections[0] < Scalar(0);
 
-    vMarked[Element::edge_mapping[n][0][1]] = solutions.first[1] > Scalar(1);
+    vMarked[Element::edge_mapping[n][0][1]] = intersections[1] > Scalar(1);
 
     // Store the two intersection points of the edge with the sphere for
     // later usage.
-    eIntersections[n][0] = solutions.first[0] * direction;
-    eIntersections[n][1] = (solutions.first[1] - Scalar(1)) * direction;
+    eIntersections[n][0] = intersections[0] * direction;
+    eIntersections[n][1] = (intersections[1] - Scalar(1)) * direction;
 
     eMarked[n] = true;
 
