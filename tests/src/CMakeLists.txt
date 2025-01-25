@@ -75,9 +75,11 @@ set(unit_tests
     clamp
     contains
     decompose_elements
+    detect_non_planar_faces
     double_precision
     elements
     normal_newell
+    normalize_element
     polygon
     regularized_wedge
     regularized_wedge_area

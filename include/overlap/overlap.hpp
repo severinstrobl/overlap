@@ -1506,6 +1506,28 @@ auto vertex_cone_correction(
   return Scalar{};
 }
 
+template<typename Element>
+inline auto detect_non_planar_faces(const Element& element) -> void {
+  for (const auto& face : element.faces) {
+    if (!face.is_planar()) {
+      throw std::invalid_argument{"non-planer face detected in element"};
+    }
+  }
+}
+
+// normalize the element w.r.t the unit sphere
+template<typename Element>
+inline auto normalize_element(const Sphere& sphere, const Element& element)
+    -> Element {
+  const auto transformation =
+      Transformation{-sphere.center, Scalar{1} / sphere.radius};
+
+  auto transformed_element = Element{element};
+  transformed_element.apply(transformation);
+
+  return transformed_element;
+}
+
 }  // namespace detail
 
 // expose types required for public API
@@ -1532,20 +1554,12 @@ auto overlap_volume(const Sphere& sphere, const Element& element) -> Scalar {
     return element.volume;
   }
 
-  // sanity check: All faces of the mesh element have to be planar
-  for (const auto& face : element.faces) {
-    if (!face.is_planar()) {
-      throw std::invalid_argument{"non-planer face detected in element"};
-    }
-  }
+  // sanity check: all faces of the mesh element have to be planar
+  detect_non_planar_faces(element);
 
   // use unit sphere and transformed (scaled and shifted) version of the element
-  const auto transformation =
-      Transformation{-sphere.center, Scalar{1} / sphere.radius};
-
   const auto unit_sphere = Sphere{};
-  auto transformed_element = Element{element};
-  transformed_element.apply(transformation);
+  auto transformed_element = normalize_element(sphere, element);
 
   const auto&& [entity_intersections, edge_intersections] =
       unit_sphere_intersections(transformed_element);
@@ -1682,19 +1696,11 @@ auto overlap_area(const Sphere& sphere, const Element& element)
   }
 
   // sanity check: all faces of the mesh element have to be planar
-  for (const auto& face : element.faces) {
-    if (!face.is_planar()) {
-      throw std::invalid_argument{"non-planer face detected in element"};
-    }
-  }
+  detect_non_planar_faces(element);
 
   // use unit sphere and transformed (scaled and shifted) version of the element
-  const auto transformation =
-      Transformation{-sphere.center, Scalar{1} / sphere.radius};
-
   const auto unit_sphere = Sphere{};
-  auto transformed_element = Element{element};
-  transformed_element.apply(transformation);
+  auto transformed_element = normalize_element(sphere, element);
 
   const auto&& [entity_intersections, edge_intersections] =
       unit_sphere_intersections(transformed_element);
