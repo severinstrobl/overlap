@@ -66,6 +66,7 @@ function(overlap_add_test test_name test_source)
     doctest_testing_
     OUTPUT_SUFFIX
     .xml
+    ADD_LABELS 1
   )
 endfunction()
 

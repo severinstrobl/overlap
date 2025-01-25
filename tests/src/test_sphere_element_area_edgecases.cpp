@@ -11,15 +11,15 @@
 #include <cfenv>
 #endif
 
-TEST_SUITE("RegularizedWedgeArea") {
+TEST_SUITE("SphereElementOverlapArea") {
   TEST_CASE("EdgeCases") {
 #ifdef OVERLAP_HAVE_FEENABLEEXCEPT
     feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW | FE_UNDERFLOW);
 #endif
-
     using namespace overlap;
 
-    const std::vector<Sphere> spheres = {
+    const auto epsilon = std::sqrt(std::numeric_limits<Scalar>::epsilon());
+    const auto spheres = std::vector<Sphere>{
         {{0, 0, 0}, 0.5},
         {{-1, 3, 9}, 10},
         {{0.5, 0.5, 0.5}, 0.50001 * std::sqrt(2)},
@@ -45,8 +45,8 @@ TEST_SUITE("RegularizedWedgeArea") {
         {{7.730555059112917, -4.2876080903382061, 7.2439905871817235},
          10.98560543306116}};
 
-    const auto epsilon = std::sqrt(std::numeric_limits<Scalar>::epsilon());
     for (const Sphere& sphere : spheres) {
+      INFO("sphere.center: ", sphere.center.transpose());
       validate_overlap_area(sphere, unit_hexahedron(), epsilon * sphere.volume);
     }
   }
