@@ -1827,8 +1827,11 @@ auto overlap_area(const Sphere& sphere, const Element& element)
 
       // if the projected sphere center and the face center fall on opposite
       // sides of the edge, the area has to be inverted
-      if (chord.cross(proj - chord_center)
-              .dot(chord.cross(face.center - chord_center)) < Scalar{0}) {
+      const auto invert_segment_area =
+          chord.cross(proj - chord_center)
+              .dot(chord.cross(face.center - chord_center)) < Scalar{0};
+
+      if (invert_segment_area) {
         segment_area = intersection_radius_sq[face_idx] * pi - segment_area;
       }
 
@@ -1906,9 +1909,11 @@ auto overlap_area(const Sphere& sphere, const Element& element)
 
       const auto& face = transformed_element.faces[face_idx];
       const auto proj = (-face.normal.dot(-face.center) * face.normal).eval();
+      const auto invert_segment_area =
+          chord_center.dot((proj - transformed_element.vertices[vertex_idx]) -
+                           chord_center) > Scalar{0};
 
-      if (chord_center.dot((proj - transformed_element.vertices[vertex_idx]) -
-                           chord_center) > Scalar{0}) {
+      if (invert_segment_area) {
         segment_area = intersection_radius_sq[face_idx] * pi - segment_area;
       }
 
