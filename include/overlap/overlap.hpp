@@ -1164,7 +1164,7 @@ inline auto general_wedge(const Sphere& s, const Plane& p0, const Plane& p1,
   if (std::abs(s0) < tiny_epsilon || std::abs(s1) < tiny_epsilon) {
     const auto alpha = pi - angle(p0.normal, p1.normal);
 
-    if (Dim == 2) {
+    if constexpr (Dim == 2) {
       return regularized_wedge_area(
           s.radius, std::abs(s0) > std::abs(s1) ? s0 : s1, alpha);
     }
@@ -1198,7 +1198,7 @@ inline auto general_wedge(const Sphere& s, const Plane& p0, const Plane& p1,
     alpha0 = pi_half - std::copysign(alpha0, dir0);
     alpha1 = pi_half - std::copysign(alpha1, dir1);
 
-    if (Dim == 2) {
+    if constexpr (Dim == 2) {
       return regularized_wedge_area(s.radius, s0, alpha0) +
              regularized_wedge_area(s.radius, s1, alpha1);
     }
@@ -1211,7 +1211,7 @@ inline auto general_wedge(const Sphere& s, const Plane& p0, const Plane& p1,
     alpha0 = pi_half + std::copysign(Scalar{1}, dir0) * (alpha0 - pi);
     alpha1 = pi_half + std::copysign(Scalar{1}, dir1) * (alpha1 - pi);
 
-    if (Dim == 2) {
+    if constexpr (Dim == 2) {
       return s.surface_area() - (regularized_wedge_area(s.radius, -s0, alpha0) +
                                  regularized_wedge_area(s.radius, -s1, alpha1));
     }

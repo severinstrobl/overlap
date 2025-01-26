@@ -78,6 +78,7 @@ set(unit_tests
     detect_non_planar_faces
     double_precision
     elements
+    general_wedge
     line_sphere_intersection
     normal_newell
     normalize_element
