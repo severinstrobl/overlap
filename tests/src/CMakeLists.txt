@@ -92,6 +92,7 @@ set(unit_tests
     sphere_hex_area
     sphere_tet_area
     sphere_tet_overlap_edgecases
+    unit_sphere_intersections
 )
 
 list(TRANSFORM unit_tests PREPEND "test_")
