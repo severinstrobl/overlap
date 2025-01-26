@@ -1239,22 +1239,28 @@ inline auto general_wedge(const Sphere& s, const Plane& p0, const Plane& p1,
   return std::max(volume0, volume1) - std::min(volume0, volume1);
 }
 
+template<typename Element>
+using EdgeIntersections =
+    std::array<std::optional<std::array<Vector, 2>>, num_edges<Element>()>;
+
 // Depending on the dimensionality, either the volume or external surface area
 // of the general wedge is computed.
 template<std::size_t Dim, typename Element>
 auto general_wedge(const Sphere& sphere, const Element& element,
                    std::size_t edge,
-                   const std::array<std::array<Vector, 2>,
-                                    num_edges<Element>()>& intersections) {
+                   const EdgeIntersections<Element>& intersections) {
   static_assert(Dim == 2 || Dim == 3, "invalid dimensionality, must be 2 or 3");
 
   const auto& f0 = element.faces[Element::edge_mapping[edge][1][0]];
   const auto& f1 = element.faces[Element::edge_mapping[edge][1][1]];
 
+  overlap_assert(intersections[edge].has_value(),
+                 "inconsistent intersection detection for edge");
+
   const auto edge_midpoint = Vector{
-      Scalar{0.5} * ((intersections[edge][0] +
+      Scalar{0.5} * (((*intersections[edge])[0] +
                       element.vertices[Element::edge_mapping[edge][0][0]]) +
-                     (intersections[edge][1] +
+                     ((*intersections[edge])[1] +
                       element.vertices[Element::edge_mapping[edge][0][1]]))};
 
   const auto p0 = Plane{f0.center, f0.normal};
@@ -1299,10 +1305,6 @@ struct EntityIntersections {
 };
 
 template<typename Element>
-using EdgeIntersections =
-    std::array<std::array<Vector, 2>, num_edges<Element>()>;
-
-template<typename Element>
 auto unit_sphere_intersections(const Element& element)
     -> std::tuple<EntityIntersections<Element>, EdgeIntersections<Element>> {
   const auto unit_sphere = Sphere{};
@@ -1336,9 +1338,9 @@ auto unit_sphere_intersections(const Element& element)
         *intersections[1] > Scalar{1};
 
     // note: the intersection points are relative to the vertices
-    edge_intersections[edge_idx][0] = *intersections[0] * direction;
-    edge_intersections[edge_idx][1] =
-        (*intersections[1] - Scalar{1}) * direction;
+    edge_intersections[edge_idx] =
+        std::array<Vector, 2>{*intersections[0] * direction,
+                              (*intersections[1] - Scalar{1}) * direction};
 
     entity_intersections.edges[edge_idx] = true;
 
@@ -1379,9 +1381,12 @@ auto vertex_cone_correction(
     const auto edge_idx =
         Element::vertex_mapping[vertex_idx][0][local_edge_idx];
 
+    overlap_assert(edge_intersections[edge_idx].has_value(),
+                   "inconsistent intersection detection for edge");
+
     relative_intersection_points[local_edge_idx] =
-        edge_intersections[edge_idx][Element::vertex_mapping[vertex_idx][1]
-                                                            [local_edge_idx]];
+        (*edge_intersections[edge_idx])
+            [Element::vertex_mapping[vertex_idx][1][local_edge_idx]];
 
     intersection_points[local_edge_idx] =
         relative_intersection_points[local_edge_idx] +
@@ -1773,13 +1778,17 @@ auto overlap_area(const Sphere& sphere, const Element& element)
     // intersection areas of the all faces: for each of the two faces forming
     // the edge, remove the part of the disk area beyond the edge
     //
+
+    overlap_assert(edge_intersections[edge_idx].has_value(),
+                   "inconsistent intersection detection for edge");
+
     // the chord length is given by the distance of the intersection points of
     // the sphere and the edge
     const auto chord =
         ((transformed_element.vertices[Element::edge_mapping[edge_idx][0][0]] +
-          edge_intersections[edge_idx][0]) -
+          (*edge_intersections[edge_idx])[0]) -
          (transformed_element.vertices[Element::edge_mapping[edge_idx][0][1]] +
-          edge_intersections[edge_idx][1]))
+          (*edge_intersections[edge_idx])[1]))
             .eval();
 
     const auto chord_length = chord.stableNorm();
@@ -1804,10 +1813,10 @@ auto overlap_area(const Sphere& sphere, const Element& element)
           (Scalar{0.5} *
            ((transformed_element
                  .vertices[Element::edge_mapping[edge_idx][0][0]] +
-             edge_intersections[edge_idx][0]) +
+             (*edge_intersections[edge_idx])[0]) +
             (transformed_element
                  .vertices[Element::edge_mapping[edge_idx][0][1]] +
-             edge_intersections[edge_idx][1])))
+             (*edge_intersections[edge_idx])[1])))
               .eval();
 
       // projection of the center of the sphere onto the face
@@ -1861,12 +1870,16 @@ auto overlap_area(const Sphere& sphere, const Element& element)
 
       // extract the (relative) intersection points of these edges with the
       // sphere furthest from the vertex
-      const auto intersection_points = std::array{
-          edge_intersections[edge_indices[0]]
-                            [Element::vertex_mapping[vertex_idx][1][edge0]],
+      overlap_assert(edge_intersections[edge_indices[0]].has_value() &&
+                         edge_intersections[edge_indices[1]].has_value(),
+                     "inconsistent intersection detection for edge");
 
-          edge_intersections[edge_indices[1]]
-                            [Element::vertex_mapping[vertex_idx][1][edge1]]};
+      const auto intersection_points =
+          std::array{(*edge_intersections[edge_indices[0]])
+                         [Element::vertex_mapping[vertex_idx][1][edge0]],
+
+                     (*edge_intersections[edge_indices[1]])
+                         [Element::vertex_mapping[vertex_idx][1][edge1]]};
 
       // together with the vertex, this determines the triangle representing one
       // part of the correction

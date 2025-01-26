@@ -23,7 +23,9 @@ TEST_SUITE("unit_sphere_intersections") {
     CHECK_FALSE(entity_intersections.edges.any());
     CHECK_FALSE(entity_intersections.faces.any());
 
-    std::ignore = edge_intersections;
+    for (const auto& intersection : edge_intersections) {
+      CHECK_FALSE(intersection.has_value());
+    }
   }
 
   TEST_CASE("FaceIntersection") {
@@ -48,7 +50,9 @@ TEST_SUITE("unit_sphere_intersections") {
       CHECK_EQ(entity_intersections.faces.count(), 1u);
       CHECK(entity_intersections.faces[face_idx]);
 
-      std::ignore = edge_intersections;
+      for (const auto& intersection : edge_intersections) {
+        CHECK_FALSE(intersection.has_value());
+      }
     }
   }
 
