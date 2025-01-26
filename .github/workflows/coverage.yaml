@@ -6,7 +6,7 @@ on:
 jobs:
   build:
     name: Codecov
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout
@@ -24,8 +24,8 @@ jobs:
           cmake \
             -Bbuild \
             -DCMAKE_BUILD_TYPE=Debug \
-            -DCMAKE_C_COMPILER=clang-10 \
-            -DCMAKE_CXX_COMPILER=clang++-10 \
+            -DCMAKE_C_COMPILER=clang-14 \
+            -DCMAKE_CXX_COMPILER=clang++-14 \
             -DOVERLAP_WITH_COVERAGE=ON
 
       - name: Build
@@ -36,7 +36,8 @@ jobs:
           cd build
           ctest --output-on-failure
           ~/.local/bin/gcovr \
-            --gcov-executable 'llvm-cov-10 gcov' \
+            --gcov-executable 'llvm-cov-14 gcov' \
+            --exclude-lines-by-pattern '.*overlap_assert.*' \
             -r ../ \
             --xml -o coverage.xml \
             -e ../third_party/ -e ../tests/src
