@@ -151,7 +151,7 @@ jobs:
 
             const msg = `## C++ benchmark results\n${report}`;
             try {
-              if (${{steps.find_existing_comment.outputs.comment-id}} == '') {
+              if ("${{steps.find_existing_comment.outputs.comment-id}}" == "") {
                 const result = await github.rest.issues.createComment({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
@@ -164,7 +164,7 @@ jobs:
               const result = await github.rest.issues.updateComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                comment_id: ${{steps.find_existing_comment.outputs.comment-id}},
+                comment_id: "${{steps.find_existing_comment.outputs.comment-id}}",
                 body: msg,
               })
               return result.data;
