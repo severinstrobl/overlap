@@ -40,7 +40,7 @@ jobs:
           echo "reference_sha=${reference_sha}" >> $GITHUB_OUTPUT
 
       - name: Check if benchmark results for reference version exist
-        id:  check_ref_results
+        id: check_ref_results
         uses: actions/github-script@v7
         with:
           github-token: ${{ steps.benchmark_app_token.outputs.token }}
@@ -128,8 +128,17 @@ jobs:
           mv ${{ needs.check_reference.outputs.reference_sha }}/benchmarks.json Reference
           python -m pyperf compare_to --table --table-format md Reference Current > report.md
 
-      - name: Create PR comment
+      - name: Check for existing PR comment
         if: ${{ github.event_name == 'pull_request' }}
+        uses: peter-evans/find-comment@v3
+        id: find_existing_comment
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: "overlap-benchmarks[bot]"
+          body-includes: "C++ benchmark results"
+
+      - name: Create/update PR comment
+        if: ${{ github.event_name == 'pull_request'}}
         uses: actions/github-script@v7
         with:
           github-token: ${{ steps.benchmark_app_token.outputs.token }}
@@ -142,10 +151,20 @@ jobs:
 
             const msg = `## C++ benchmark results\n${report}`;
             try {
-              const result = await github.rest.issues.createComment({
+              if (${{steps.find_existing_comment.outputs.comment-id}} == '') {
+                const result = await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  body: msg,
+                })
+                return result.data;
+              }
+
+              const result = await github.rest.issues.updateComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: context.issue.number,
+                comment_id: ${{steps.find_existing_comment.outputs.comment-id}},
                 body: msg,
               })
               return result.data;
