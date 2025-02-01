@@ -7,7 +7,7 @@
 
 #include "common.hpp"
 
-TEST_SUITE("SphereElementOverlapTest") {
+TEST_SUITE("SphereElementOverlap") {
   using namespace overlap;
 
   TEST_CASE("EdgeCases") {

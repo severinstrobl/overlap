@@ -19,12 +19,42 @@ TEST_SUITE("SphereElementOverlap") {
     validate_overlap_volume(sphere, unit_hexahedron(), epsilon, Scalar{0});
   }
 
+  // Sphere outside of hexahedron, intersecting one face, touching 4 edges
+  TEST_CASE("FaceMaxOverlap") {
+    const auto sphere = Sphere{{1, 0, 0}, 1};
+
+    validate_overlap_volume(sphere, unit_hexahedron(), epsilon,
+                            0.5 * sphere.volume);
+  }
+
   // Sphere intersects one edge (and thus 2 faces).
   TEST_CASE("Edge") {
     const auto sphere = Sphere{Vector{0, -1, 1}, 1};
 
     validate_overlap_volume(sphere, unit_hexahedron(), epsilon,
                             0.25 * sphere.volume);
+  }
+
+  // Sphere outside of hexahedron, touching one edge.
+  TEST_CASE("EdgeTouching") {
+    const auto offset = 1.0 + 0.5 * std::sqrt(2.0) - detail::medium_epsilon;
+    const auto sphere = Sphere{Vector{offset, offset, 0}, 1};
+
+    validate_overlap_volume(sphere, unit_hexahedron(), epsilon, Scalar{0});
+  }
+
+  // Sphere outside of hexahedron, touching one edge, with the sphere centered
+  // above the edge and shifted along the edge.
+  TEST_CASE("EdgeTouchingCentered") {
+    const auto radius = 0.05;
+    const auto offsets = {0.0, 1e-6, 0.005, 0.01};
+
+    for (const auto offset : offsets) {
+      CAPTURE(offset);
+
+      const auto sphere = Sphere{Vector{1.0, 1.0 + radius, offset}, radius};
+      validate_overlap_volume(sphere, unit_hexahedron(), epsilon, Scalar{0});
+    }
   }
 
   // Sphere intersects one edge (and thus 2 faces), edge passing through
@@ -68,6 +98,14 @@ TEST_SUITE("SphereElementOverlap") {
     validate_overlap_volume(sphere, unit_hexahedron(), epsilon, Scalar{0});
   }
 
+  // Sphere outside of hexahedron, slightly overlapping one vertex.
+  TEST_CASE("VertexTinyOverlap") {
+    const auto offset = 1.0 + 0.5 * std::sqrt(2.0) - detail::medium_epsilon;
+    const auto sphere = Sphere{Vector{offset, offset, 1}, 1};
+
+    validate_overlap_volume(sphere, unit_hexahedron(), epsilon, Scalar{0});
+  }
+
   // Sphere contains hexahedron.
   TEST_CASE("HexInSphere") {
     const auto sphere = Sphere{Vector::Zero(), 2.0};
@@ -87,10 +125,6 @@ TEST_SUITE("SphereElementOverlap") {
   TEST_CASE("NonPlanarFaces") {
     auto vertices = unit_hexahedron().vertices;
     vertices[0] += Vector{0, 0, -0.25};
-
-    for (const auto& v : vertices) {
-      std::cout << v.transpose() << std::endl;
-    }
 
     REQUIRE_THROWS_AS(overlap_volume(Sphere{}, Hexahedron{vertices}),
                       std::invalid_argument);

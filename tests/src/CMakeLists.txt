@@ -66,6 +66,7 @@ function(overlap_add_test test_name test_source)
     doctest_testing_
     OUTPUT_SUFFIX
     .xml
+    ADD_LABELS 1
   )
 endfunction()
 
@@ -74,9 +75,13 @@ set(unit_tests
     clamp
     contains
     decompose_elements
+    detect_non_planar_faces
     double_precision
     elements
+    general_wedge
+    line_sphere_intersection
     normal_newell
+    normalize_element
     polygon
     regularized_wedge
     regularized_wedge_area
@@ -87,6 +92,7 @@ set(unit_tests
     sphere_hex_area
     sphere_tet_area
     sphere_tet_overlap_edgecases
+    unit_sphere_intersections
 )
 
 list(TRANSFORM unit_tests PREPEND "test_")
