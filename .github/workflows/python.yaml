@@ -5,11 +5,12 @@ on:
 
 jobs:
   build:
-    name: "🐍 Ubuntu 24.04 - Python ${{ matrix.python-version }}"
-    runs-on: ubuntu-24.04
+    name: "🐍 Ubuntu 24.04 ${{ endsWith(matrix.os, 'arm') && 'AArch64' || 'x86-64' }} - Python ${{ matrix.python-version }}"
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
+        os: ["ubuntu-20.04", "ubuntu-24.04-arm"]
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
 
     steps:
