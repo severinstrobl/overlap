@@ -42,6 +42,8 @@ TEST_SUITE("SphereHexAreaTest") {
     result_exact[7] = 2 * result_exact[3];
 
     for (auto i = 0u; i < result_exact.size(); ++i) {
+      INFO("result: ", result[i], ", expected: ", result_exact[i],
+           ", delta:", result[i] - result_exact[i]);
       CHECK(result[i] == Approx(result_exact[i])
                              .epsilon(std::numeric_limits<Scalar>::epsilon() *
                                       sphere.surface_area()));
