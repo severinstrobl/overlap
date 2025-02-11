@@ -1754,7 +1754,10 @@ auto overlap_area(const Sphere& sphere, const Element& element)
     const auto theta =
         Scalar{2} * std::atan2(chord_length, Scalar{2} * apothem);
 
-    return Scalar{0.5} * radius_sq * (theta - std::sin(theta));
+    const auto sector_area = Scalar{0.5} * radius_sq * theta;
+    const auto triangle_area = Scalar{0.5} * chord_length * apothem;
+
+    return sector_area - triangle_area;
   };
 
   // cache the squared radius of the disk formed by the intersection between the
