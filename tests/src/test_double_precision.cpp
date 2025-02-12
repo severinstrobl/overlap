@@ -160,7 +160,8 @@ TEST_SUITE("DoublePrecision") {
     const auto result = d * e;
     CHECK_NE(result.value(), T{});
 
-    if constexpr (std::is_same_v<T, float>) {
+    if constexpr (std::is_same_v<T, float> &&
+                  is_constexpr(std::abs<double>, 0.0)) {
       const auto error =
           std::abs(result.template as<double>() -
                    (double{a} * double{b}) * (double{b} * double{c}));
