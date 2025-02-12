@@ -71,11 +71,11 @@ jobs:
           python-version: "3.10"
 
       - name: Dependencies
-        run: python -m pip install scikit-build twine
+        run: python -m pip install build twine
 
       - name: Build sdist
         id: build-sdist
-        run: python -m build
+        run: python -m build --sdist
 
       - name: Check metadata
         id: check-metadata
