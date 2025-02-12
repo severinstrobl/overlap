@@ -35,6 +35,12 @@ using Approx = doctest::Approx;
 
 namespace overlap {
 
+template<typename F, typename... Args>
+constexpr bool is_constexpr(F&& f, Args&&... args) {
+  return noexcept(f(std::forward<Args>(args)...)) &&
+         (f(std::forward<Args>(args)...) == f(std::forward<Args>(args)...));
+}
+
 inline auto unit_hexahedron(const Scalar scaling = Scalar{1}) -> Hexahedron {
   const auto v0 = Vector{-1, -1, -1};
   const auto v1 = Vector{1, -1, -1};
