@@ -75,7 +75,7 @@ jobs:
 
       - name: Build sdist
         id: build-sdist
-        run: python setup.py sdist
+        run: python -m build
 
       - name: Check metadata
         id: check-metadata
@@ -184,10 +184,6 @@ jobs:
         id: build-wheels
         uses: pypa/cibuildwheel@v2.22.0
         env:
-          CIBW_BEFORE_BUILD_MACOS: >
-            brew install openblas &&
-            export OPENBLAS="$(brew --prefix openblas)" &&
-            python -m pip install numpy
           CIBW_BUILD_VERBOSITY: 1
         with:
           output-dir: wheelhouse
