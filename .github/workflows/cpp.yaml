@@ -11,7 +11,7 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          # GCC
+          # GCC on x86-64
           - { name: "GCC 7.5.0", os: "ubuntu-20.04", cc: "gcc-7", cxx: "g++-7" }
           - { name: "GCC 8.4.0", os: "ubuntu-20.04", cc: "gcc-8", cxx: "g++-8" }
           - { name: "GCC 9.5.0", os: "ubuntu-22.04", cc: "gcc-9", cxx: "g++-9" }
@@ -45,7 +45,20 @@ jobs:
               cc: "gcc-14",
               cxx: "g++-14",
             }
-          # LLVM/Clang
+          # GCC on arm64
+          - {
+              name: "GCC 12.3.0 (AArch64)",
+              os: "ubuntu-22.04-arm",
+              cc: "gcc-12",
+              cxx: "g++-12",
+            }
+          - {
+              name: "GCC 14.0.1 (AArch64)",
+              os: "ubuntu-24.04-arm",
+              cc: "gcc-14",
+              cxx: "g++-14",
+            }
+          # LLVM/Clang on x86-64
           - {
               name: "Clang 8.0.1",
               os: "ubuntu-20.04",
@@ -112,6 +125,27 @@ jobs:
               cc: "clang-18",
               cxx: "clang++-18",
             }
+          # LLVM/Clang on arm64
+          - {
+              name: "Clang 15.0.7 (AArch64)",
+              os: "ubuntu-22.04-arm",
+              cc: "clang-15",
+              cxx: "clang++-15",
+            }
+          - {
+              name: "Clang 18.1.3 (AArch64)",
+              os: "ubuntu-24.04-arm",
+              cc: "clang-18",
+              cxx: "clang++-18",
+            }
+          # LLVM/Clang on macOS/arm64 using libc++
+          - {
+              name: "Clang 15.0.0 (macOS, AArch64)",
+              os: "macos-14",
+              cc: "clang",
+              cxx: "clang++",
+            }
+
         build_type: ["Debug", "Release"]
     steps:
       - name: Checkout
@@ -120,6 +154,7 @@ jobs:
           submodules: true
 
       - name: Dependencies
+        if: ${{ startsWith(matrix.config.os, 'ubuntu') }}
         run: |
           sudo apt update
           sudo apt install ${{ matrix.config.cxx }} || sudo apt install ${{ matrix.config.cc }}
