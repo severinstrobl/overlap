@@ -138,6 +138,13 @@ jobs:
               cc: "clang-18",
               cxx: "clang++-18",
             }
+          # LLVM/Clang on macOS/arm64 using libc++
+          - {
+              name: "Clang 15.0.0 (macOS, AArch64)",
+              os: "macos-14",
+              cc: "clang",
+              cxx: "clang++",
+            }
 
         build_type: ["Debug", "Release"]
     steps:
@@ -147,6 +154,7 @@ jobs:
           submodules: true
 
       - name: Dependencies
+        if: ${{ startsWith(matrix.config.os, 'ubuntu') }}
         run: |
           sudo apt update
           sudo apt install ${{ matrix.config.cxx }} || sudo apt install ${{ matrix.config.cc }}
