@@ -114,6 +114,7 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
+          name: ${{ github.repository }}-sdist
           path: dist/*.tar.gz
           retention-days: 2
 
@@ -221,5 +222,6 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
+          name: ${{ github.repository }}-wheels-${{ matrix.os }}
           path: ./wheelhouse/*.whl
           retention-days: 2
