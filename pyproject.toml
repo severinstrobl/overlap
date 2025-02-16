@@ -3,6 +3,26 @@ name = "overlap"
 version = "0.2.0-dev"
 requires-python = ">=3.7"
 dependencies = ["numpy"]
+description = "Exact calculation of the overlap volume and area of spheres and mesh elements"
+authors = [{ name = "Severin Strobl", email = "git@severin-strobl.de" }]
+readme = "README.md"
+license = { text = "MIT" }
+keywords = [
+  "computational-geometry",
+  "numerical-simulations",
+  "mesh-processing",
+]
+classifiers = [
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Topic :: Scientific/Engineering",
+]
+
+[project.urls]
+source = "https://github.com/severinstrobl/overlap.git"
+github = "https://github.com/severinstrobl/overlap"
+issues = "https://github.com/severinstrobl/overlap/issues"
 
 [project.optional-dependencies]
 test = ["pytest >=6.0"]
@@ -21,3 +41,15 @@ testpaths = ["tests/python"]
 [tool.cibuildwheel]
 test-requires = "pytest"
 test-command = "python -m pytest -vs {project}/tests/python"
+build-verbosity = 1
+skip = "cp36-* cp37-* cp38-* pp37-* pp38-* pp3*-manylinux_i686"
+
+[[tool.cibuildwheel.overrides]]
+select = "*-macosx_x86_64"
+inherit.environment = "append"
+environment.MACOSX_DEPLOYMENT_TARGET = "10.15"
+
+[[tool.cibuildwheel.overrides]]
+select = "*-macosx_arm64"
+inherit.environment = "append"
+environment.MACOSX_DEPLOYMENT_TARGET = "11.0"

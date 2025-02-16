@@ -10,7 +10,7 @@ jobs:
   build_sdist:
     name: Build 🐍 sdist
     if: ${{(startsWith(github.event.comment.body, '/build_wheels') && github.event.issue.pull_request) || github.event_name == 'workflow_dispatch'}}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
 
     steps:
       # ref: https://github.com/actions/checkout/issues/331#issuecomment-707103442
@@ -53,7 +53,7 @@ jobs:
         id: trigger-response
         with:
           script: |
-            const msg = 'Triggered [building of 🐍 sdist](https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}) via action...'
+            const msg = 'Triggered [building of 🐍 sdist](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) via action...'
             try {
               const result = await github.rest.issues.createComment({
                 owner: context.repo.owner,
@@ -65,16 +65,17 @@ jobs:
             } catch (err) {
               core.setFailed(`Request failed with error ${err}`)
             }
-
       - name: Setup Python
         uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
 
       - name: Dependencies
-        run: python -m pip install scikit-build twine
+        run: python -m pip install build twine
 
       - name: Build sdist
         id: build-sdist
-        run: python setup.py sdist
+        run: python -m build --sdist
 
       - name: Check metadata
         id: check-metadata
@@ -91,10 +92,10 @@ jobs:
               const result = await github.rest.issues.getComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                comment_id: ${{fromJSON(steps.trigger-response.outputs.result).id}},
+                comment_id: ${{ fromJSON(steps.trigger-response.outputs.result).id }},
               })
 
-              var msg = result.data.body + ' <strong class="text-emphasized mr-2">${{steps.test-step.name}}</strong> '
+              var msg = result.data.body + ' <strong class="text-emphasized mr-2">${{ steps.test-step.name }}</strong> '
               if(process.env.STEP_STATUS == 'success')
                 msg += 'successful :heavy_check_mark:'
               else
@@ -103,7 +104,7 @@ jobs:
               github.rest.issues.updateComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                comment_id: ${{fromJSON(steps.trigger-response.outputs.result).id}},
+                comment_id: ${{ fromJSON(steps.trigger-response.outputs.result).id }},
                 body: msg,
               })
             } catch (err) {
@@ -113,17 +114,18 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
+          name: ${{ github.event.repository.name }}-sdist
           path: dist/*.tar.gz
           retention-days: 2
 
   build_wheels:
     name: Build 🐍 wheels on ${{ matrix.os }}
-    if: ${{(startsWith(github.event.comment.body, '/build_wheels') && github.event.issue.pull_request) || github.event_name == 'workflow_dispatch'}}
+    if: ${{ (startsWith(github.event.comment.body, '/build_wheels') && github.event.issue.pull_request) || github.event_name == 'workflow_dispatch' }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04, macos-11, windows-2019]
+        os: [ubuntu-24.04, macos-13, macos-14, windows-2022]
 
     steps:
       # ref: https://github.com/actions/checkout/issues/331#issuecomment-707103442
@@ -166,7 +168,7 @@ jobs:
         id: trigger-response
         with:
           script: |
-            const msg = 'Triggered [building of 🐍 wheels on ${{matrix.os}}](https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}) via action...'
+            const msg = 'Triggered [building of 🐍 wheels on ${{ matrix.os }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) via action...'
             try {
               const result = await github.rest.issues.createComment({
                 owner: context.repo.owner,
@@ -179,40 +181,27 @@ jobs:
               core.setFailed(`Request failed with error ${err}`)
             }
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-
-      - name: Dependencies
-        run: |
-          python -m pip install cibuildwheel
-
       - name: Build wheels
         id: build-wheels
-        env:
-          CIBW_SKIP: "cp36-*"
-          CIBW_BEFORE_BUILD_MACOS: >
-            brew install openblas &&
-            export OPENBLAS="$(brew --prefix openblas)" &&
-            python -m pip install numpy
-          CIBW_BUILD_VERBOSITY: 1
-        run: |
-          python -m cibuildwheel --output-dir wheelhouse
+        uses: pypa/cibuildwheel@v2.22.0
+        with:
+          output-dir: dist
 
       - name: Notify via comment
         if: ${{ github.event.issue.pull_request }}
         uses: actions/github-script@v7
         env:
-          STEP_STATUS: ${{steps.build-wheels.outcome}}
+          STEP_STATUS: ${{ steps.build-wheels.outcome }}
         with:
           script: |
             try {
               const result = await github.rest.issues.getComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                comment_id: ${{fromJSON(steps.trigger-response.outputs.result).id}},
+                comment_id: ${{ fromJSON(steps.trigger-response.outputs.result).id }},
               })
 
-              var msg = result.data.body + ' <strong class="text-emphasized mr-2">${{steps.test-step.name}}</strong> '
+              var msg = result.data.body + ' <strong class="text-emphasized mr-2">${{ steps.test-step.name }}</strong> '
               if(process.env.STEP_STATUS == 'success')
                 msg += 'successful :heavy_check_mark:'
               else
@@ -221,7 +210,7 @@ jobs:
               github.rest.issues.updateComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                comment_id: ${{fromJSON(steps.trigger-response.outputs.result).id}},
+                comment_id: ${{ fromJSON(steps.trigger-response.outputs.result).id }},
                 body: msg,
               })
             } catch (err) {
@@ -231,5 +220,6 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          path: ./wheelhouse/*.whl
+          name: ${{ github.event.repository.name }}-wheels-${{ matrix.os }}
+          path: ./dist/*.whl
           retention-days: 2

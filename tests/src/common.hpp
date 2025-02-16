@@ -35,10 +35,10 @@ using Approx = doctest::Approx;
 
 namespace overlap {
 
-template<typename F, typename... Args>
-constexpr bool is_constexpr(F&& f, Args&&... args) {
-  return noexcept(f(std::forward<Args>(args)...)) &&
-         (f(std::forward<Args>(args)...) == f(std::forward<Args>(args)...));
+// constexpr version of abs, constexpr in <cmath> only with C++23
+template<typename T, std::enable_if_t<std::is_floating_point_v<T>, bool> = true>
+constexpr auto abs(const T value) -> T {
+  return value < T{0} ? -value : value;
 }
 
 inline auto unit_hexahedron(const Scalar scaling = Scalar{1}) -> Hexahedron {
