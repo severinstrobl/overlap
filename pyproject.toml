@@ -41,4 +41,4 @@ testpaths = ["tests/python"]
 [tool.cibuildwheel]
 test-requires = "pytest"
 test-command = "python -m pytest -vs {project}/tests/python"
-skip = "cp36-* cp37-* cp38-*"
+skip = "cp36-* cp37-* cp38-* pp37-* pp38-* pp3*-manylinux_i686"
