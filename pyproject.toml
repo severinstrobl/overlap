@@ -6,7 +6,7 @@ dependencies = ["numpy"]
 description = "Exact calculation of the overlap volume and area of spheres and mesh elements"
 authors = [{ name = "Severin Strobl", email = "git@severin-strobl.de" }]
 readme = "README.md"
-license = {text = "MIT"}
+license = { text = "MIT" }
 keywords = [
   "computational-geometry",
   "numerical-simulations",
@@ -41,4 +41,15 @@ testpaths = ["tests/python"]
 [tool.cibuildwheel]
 test-requires = "pytest"
 test-command = "python -m pytest -vs {project}/tests/python"
+build-verbosity = 1
 skip = "cp36-* cp37-* cp38-* pp37-* pp38-* pp3*-manylinux_i686"
+
+[[tool.cibuildwheel.overrides]]
+select = "*-macosx_x86_64"
+inherit.environment = "append"
+environment.MACOSX_DEPLOYMENT_TARGET = "10.15"
+
+[[tool.cibuildwheel.overrides]]
+select = "*-macosx_arm64"
+inherit.environment = "append"
+environment.MACOSX_DEPLOYMENT_TARGET = "11.0"
