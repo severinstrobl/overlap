@@ -39,6 +39,19 @@ repos:
         name: format C++ files with clang-format
         stages: [pre-commit]
 
+  # CMake
+  - repo: https://github.com/cheshirekow/cmake-format-precommit
+    rev: e2c2116d86a80e72e7146a06e68b7c228afc6319  # frozen: v0.6.13
+    hooks:
+    - id: cmake-format
+      name: check formatting of CMake files
+      stages: [pre-commit]
+      additional_dependencies: [pyyaml>=5.1]
+    - id: cmake-lint
+      name: lint CMake files
+      stages: [pre-commit]
+      additional_dependencies: [pyyaml>=5.1]
+
   # Python
   - repo: https://github.com/asottile/setup-cfg-fmt
     rev: 139e728a3204c352e58e595552bacc9ab8f248ea  # frozen: v2.7.0

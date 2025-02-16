@@ -66,12 +66,13 @@ function(overlap_add_test test_name test_source)
     doctest_testing_
     OUTPUT_SUFFIX
     .xml
-    ADD_LABELS 1
+    ADD_LABELS
+    1
   )
 endfunction()
 
 # list of unit tests
-set(unit_tests
+set(_unit_tests
     clamp
     contains
     decompose_elements
@@ -95,7 +96,7 @@ set(unit_tests
     unit_sphere_intersections
 )
 
-list(TRANSFORM unit_tests PREPEND "test_")
+list(TRANSFORM _unit_tests PREPEND "test_")
 
 # check for feenableexcept
 include(CheckIncludeFile)
@@ -122,7 +123,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "(GNU|Clang)" AND CMAKE_BUILD_TYPE MATCHES
 endif()
 
 # register the individual unit tests
-foreach(unit_test ${unit_tests})
+foreach(unit_test ${_unit_tests})
   overlap_add_test(${unit_test} "${unit_test}.cpp")
   target_link_libraries(${unit_test} PRIVATE overlap::headers Eigen3::Eigen)
 

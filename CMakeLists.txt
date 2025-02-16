@@ -8,6 +8,7 @@ option(OVERLAP_WITH_TESTS "Build the tests" on)
 option(OVERLAP_WITH_BENCHMARKS "Build the benchmarks" off)
 option(OVERLAP_WITH_COVERAGE "Build with coverage support for tests" off)
 
+# cmake-lint: disable=C0103
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
   if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE RelWithDebInfo)
@@ -60,7 +61,6 @@ if(OVERLAP_WITH_BENCHMARKS)
   enable_testing()
   add_subdirectory(benchmarks)
 endif()
-
 
 # optional: build the Python bindings using pybind11
 if(OVERLAP_WITH_PYTHON)
