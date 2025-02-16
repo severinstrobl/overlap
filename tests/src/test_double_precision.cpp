@@ -160,11 +160,10 @@ TEST_SUITE("DoublePrecision") {
     const auto result = d * e;
     CHECK_NE(result.value(), T{});
 
-    if constexpr (std::is_same_v<T, float> &&
-                  is_constexpr(std::abs<double>, 0.0)) {
+    if constexpr (std::is_same_v<T, float>) {
       const auto error =
-          std::abs(result.template as<double>() -
-                   (double{a} * double{b}) * (double{b} * double{c}));
+          overlap::abs(result.template as<double>() -
+                       (double{a} * double{b}) * (double{b} * double{c}));
 
       CHECK_LT(error, 8.0 * std::numeric_limits<double>::epsilon() *
                           result.template as<double>());
@@ -192,11 +191,10 @@ TEST_SUITE("DoublePrecision") {
     constexpr auto result = d * e;
     static_assert(result.value() != T{});
 
-    if constexpr (std::is_same_v<T, float> &&
-                  is_constexpr(std::abs<double>, 0.0)) {
+    if constexpr (std::is_same_v<T, float>) {
       constexpr auto error =
-          std::abs(result.template as<double>() -
-                   (double{a} * double{b}) * (double{b} * double{c}));
+          overlap::abs(result.template as<double>() -
+                       (double{a} * double{b}) * (double{b} * double{c}));
 
       static_assert(error < 4.0 * std::numeric_limits<double>::epsilon() *
                                 result.template as<double>());
