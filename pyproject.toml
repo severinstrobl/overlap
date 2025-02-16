@@ -3,6 +3,26 @@ name = "overlap"
 version = "0.2.0-dev"
 requires-python = ">=3.7"
 dependencies = ["numpy"]
+description = "Exact calculation of the overlap volume and area of spheres and mesh elements"
+authors = [{ name = "Severin Strobl", email = "git@severin-strobl.de" }]
+readme = "README.md"
+license = {text = "MIT"}
+keywords = [
+  "computational-geometry",
+  "numerical-simulations",
+  "mesh-processing",
+]
+classifiers = [
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Topic :: Scientific/Engineering",
+]
+
+[project.urls]
+source = "https://github.com/severinstrobl/overlap.git"
+github = "https://github.com/severinstrobl/overlap"
+issues = "https://github.com/severinstrobl/overlap/issues"
 
 [project.optional-dependencies]
 test = ["pytest >=6.0"]
