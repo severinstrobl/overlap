@@ -20,16 +20,16 @@ add_subdirectory(
   EXCLUDE_FROM_ALL
 )
 
-set(package_name "overlap")
+set(_package_name "overlap")
 
-pybind11_add_module(${package_name}_python MODULE ${package_name}.cpp)
+pybind11_add_module(${_package_name}_python MODULE ${_package_name}.cpp)
 
 set_target_properties(
-  ${package_name}_python PROPERTIES OUTPUT_NAME ${package_name}
+  ${_package_name}_python PROPERTIES OUTPUT_NAME ${_package_name}
 )
 
 target_link_libraries(
-  ${package_name}_python PRIVATE ${package_name}::headers Eigen3::Eigen
+  ${_package_name}_python PRIVATE ${_package_name}::headers Eigen3::Eigen
 )
 
 if(NOT SKBUILD)
@@ -37,12 +37,12 @@ if(NOT SKBUILD)
 
   string(CONCAT python_install_dir "${CMAKE_INSTALL_LIBDIR}"
                 "/python${Python_VERSION_MAJOR}.${Python_VERSION_MINOR}"
-                "/site-packages/${package_name}"
+                "/site-packages/${_package_name}"
   )
 
-  install(TARGETS ${package_name}_python
+  install(TARGETS ${_package_name}_python
           LIBRARY DESTINATION ${python_install_dir} COMPONENT python
   )
 else()
-  install(TARGETS ${package_name}_python LIBRARY DESTINATION .)
+  install(TARGETS ${_package_name}_python LIBRARY DESTINATION .)
 endif()

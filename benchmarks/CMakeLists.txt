@@ -15,10 +15,10 @@ add_subdirectory(
 )
 
 # list of benchmarks
-set(benchmarks details hex_overlap tet_overlap)
+set(_benchmarks details hex_overlap tet_overlap)
 
 # register the individual benchmarks
-foreach(benchmark ${benchmarks})
+foreach(benchmark ${_benchmarks})
   add_executable(${benchmark} ${benchmark}.cpp)
   target_link_libraries(
     ${benchmark} PRIVATE overlap::headers Eigen3::Eigen nanobench

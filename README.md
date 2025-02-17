@@ -99,7 +99,7 @@ Sphere s{Vector::Constant(1), 1};
 const Scalar result = overlap_volume(s, hex);
 ```
 
-This code snippet calculates the correct result (&pi;/6) for this simple
+This code snippet calculates the correct result (π/6) for this simple
 configuration.
 
 To obtain the overlap area of a sphere and the facets of a tetrahedron, the

@@ -2,55 +2,113 @@ minimum_pre_commit_version: 4.0.0
 default_install_hook_types: [pre-commit, commit-msg]
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: cef0300fd0fc4d2a87a85fa2093c6b283ea36f4b # frozen: v5.0.0
+    rev: cef0300fd0fc4d2a87a85fa2093c6b283ea36f4b  # frozen: v5.0.0
     hooks:
       - id: check-added-large-files
+        stages: [pre-commit]
       - id: check-ast
+        stages: [pre-commit]
       - id: check-merge-conflict
+        stages: [pre-commit]
       - id: check-symlinks
+        stages: [pre-commit]
       - id: check-toml
+        stages: [pre-commit]
       - id: check-yaml
+        stages: [pre-commit]
       - id: detect-private-key
+        stages: [pre-commit]
       - id: end-of-file-fixer
+        name: check for missing newline at the end of files
+        stages: [pre-commit]
       - id: mixed-line-ending
+        name: check for mixed line endings
+        stages: [pre-commit]
       - id: name-tests-test
+        name: check for correct naming of Python tests
+        stages: [pre-commit]
         args: ["--pytest-test-first"]
       - id: trailing-whitespace
+        stages: [pre-commit]
 
   # C++
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: cb4e971b802ef21263cdbf210e7d411123452a72 # frozen: v19.1.5
+    rev: f9a52e87b6cdcb01b0a62b8611d9ba9f2dad0067  # frozen: v19.1.7
     hooks:
       - id: clang-format
+        name: format C++ files with clang-format
+        stages: [pre-commit]
+
+  # CMake
+  - repo: https://github.com/cheshirekow/cmake-format-precommit
+    rev: e2c2116d86a80e72e7146a06e68b7c228afc6319  # frozen: v0.6.13
+    hooks:
+    - id: cmake-format
+      name: check formatting of CMake files
+      stages: [pre-commit]
+      additional_dependencies: [pyyaml>=5.1]
+    - id: cmake-lint
+      name: lint CMake files
+      stages: [pre-commit]
+      additional_dependencies: [pyyaml>=5.1]
 
   # Python
-  - repo: https://github.com/asottile/reorder-python-imports
-    rev: fd0b4e1292716bcd12a396b86af1d1271aaaa62c # frozen: v3.14.0
-    hooks:
-      - id: reorder-python-imports
-
   - repo: https://github.com/asottile/setup-cfg-fmt
-    rev: 139e728a3204c352e58e595552bacc9ab8f248ea # frozen: v2.7.0
+    rev: 139e728a3204c352e58e595552bacc9ab8f248ea  # frozen: v2.7.0
     hooks:
       - id: setup-cfg-fmt
+        name: check formatting of setup.cfg
+        stages: [pre-commit]
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: 895ebb389825c29bd4e0addcf7579d6c69d199cc  # frozen: v0.9.6
+    hooks:
+      - id: ruff
+        name: check Python files with ruff
+        stages: [pre-commit]
+      - id: ruff-format
+        name: format Python files with ruff
+        stages: [pre-commit]
+
+  - repo: https://github.com/tox-dev/pyproject-fmt
+    rev: 6b2f3b33754de7a442043dc312fc5a0e473086d2  # frozen: v2.5.0
+    hooks:
+      - id: pyproject-fmt
+        name: check formatting of pyproject.toml
+        stages: [pre-commit]
 
   # CI
-  - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: cb3c2be894b151dff143b1baf6acbd55f2b7faed # frozen: 0.30.0
+  - repo: https://github.com/rhysd/actionlint
+    rev: 03d0035246f3e81f36aed592ffb4bebf33a03106  # frozen: v1.7.7
     hooks:
-      - id: check-github-workflows
+      - id: actionlint
+        name: check GitHub workflow files
+        stages: [pre-commit]
+
+  # docs
+  - repo: https://github.com/executablebooks/mdformat
+    rev: ff29be1a1ba8029d9375882aa2c812b62112a593  # frozen: 0.7.22
+    hooks:
+      - id: mdformat
+        name: check formatting of Markdown files
+        stages: [pre-commit]
+        additional_dependencies:
+          - mdformat-tables
 
   # spell checking
   - repo: https://github.com/codespell-project/codespell
-    rev: 193cd7d27cd571f79358af09a8fb8997e54f8fff # frozen: v2.3.0
+    rev: 63c8f8312b7559622c0d82815639671ae42132ac  # frozen: v2.4.1
     hooks:
       - id: codespell
+        name: check for common spelling errors
+        stages: [pre-commit]
 
-  # commits messages
+  # commit messages
   - repo: https://github.com/espressif/conventional-precommit-linter
     rev: 7bc85936608ba0ae03887bb6e110555535d1c3ac  # frozen: v1.10.0
     hooks:
       - id: conventional-precommit-linter
+        name: check commit messages for conventional format
         stages: [commit-msg]
         args:
           - --types=fix,feat,build,chore,ci,docs,perf,refactor,revert,style,test,improvement

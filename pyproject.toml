@@ -1,48 +1,50 @@
+# Copyright (C) 2025 Severin Strobl <git@severin-strobl.de>
+#
+# SPDX-License-Identifier: MIT
+#
+# Exact calculation of the overlap volume of spheres and mesh elements.
+# http://dx.doi.org/10.1016/j.jcp.2016.02.003
+
+[build-system]
+build-backend = "scikit_build_core.build"
+requires = [ "scikit-build-core" ]
+
 [project]
 name = "overlap"
 version = "0.2.0-dev"
-requires-python = ">=3.7"
-dependencies = ["numpy"]
 description = "Exact calculation of the overlap volume and area of spheres and mesh elements"
-authors = [{ name = "Severin Strobl", email = "git@severin-strobl.de" }]
 readme = "README.md"
-license = { text = "MIT" }
 keywords = [
   "computational-geometry",
-  "numerical-simulations",
   "mesh-processing",
+  "numerical-simulations",
 ]
+license = { text = "MIT" }
+authors = [ { name = "Severin Strobl", email = "git@severin-strobl.de" } ]
+requires-python = ">=3.9"
 classifiers = [
   "License :: OSI Approved :: MIT License",
-  "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "Topic :: Scientific/Engineering",
 ]
 
-[project.urls]
-source = "https://github.com/severinstrobl/overlap.git"
-github = "https://github.com/severinstrobl/overlap"
-issues = "https://github.com/severinstrobl/overlap/issues"
-
-[project.optional-dependencies]
-test = ["pytest >=6.0"]
-
-[build-system]
-requires = ["scikit-build-core"]
-
-build-backend = "scikit_build_core.build"
+dependencies = [ "numpy" ]
+optional-dependencies.test = [ "pytest>=6" ]
+urls.github = "https://github.com/severinstrobl/overlap"
+urls.issues = "https://github.com/severinstrobl/overlap/issues"
+urls.source = "https://github.com/severinstrobl/overlap.git"
 
 [tool.scikit-build]
 cmake.version = ">=3.18"
 
-[tool.pytest.ini_options]
-testpaths = ["tests/python"]
-
 [tool.cibuildwheel]
 test-requires = "pytest"
 test-command = "python -m pytest -vs {project}/tests/python"
-build-verbosity = 1
-skip = "cp36-* cp37-* cp38-* pp37-* pp38-* pp3*-manylinux_i686"
 
 [[tool.cibuildwheel.overrides]]
 select = "*-macosx_x86_64"
@@ -53,3 +55,48 @@ environment.MACOSX_DEPLOYMENT_TARGET = "10.15"
 select = "*-macosx_arm64"
 inherit.environment = "append"
 environment.MACOSX_DEPLOYMENT_TARGET = "11.0"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+indent-width = 4
+fix = true
+output-format = "github"
+
+format.indent-style = "space"
+format.quote-style = "double"
+
+# ref: https://docs.astral.sh/ruff/rules/
+lint.select = [
+  "A",   # flake8-builtins
+  "ANN", # flake8-annotations
+  "B",   # flake8-bugbear
+  "D",   # pycodestyle
+  "E",   # pycodestyle errors
+  "F",   # Pyflakes
+  "FBT", # flake8-boolean-trap
+  "I",   # isort
+  "N",   # pep8-naming
+  "PL",  # Pylint
+  "PT",  # flake8-pytest-style
+  "PTH", # flake8-use-pathlib
+  "PYI", # flake8-pyi
+  "RUF", # Ruff-specific rules
+  "SIM", # flake8-simplify
+  "SLF", # flake8-self
+  "UP",  # pyupgrade
+  "W",   # pycodestyle warnings
+]
+
+# disable some rules for tests
+lint.per-file-ignores."tests/*" = [
+  "ANN201", # missing-return-type-undocumented-public-function
+  "D",      # pycodestyle
+]
+
+lint.pydocstyle.convention = "google"
+
+[tool.pytest.ini_options]
+testpaths = [ "tests/python" ]
+build-verbosity = 1
+skip = "cp36-* cp37-* cp38-* pp37-* pp38-* pp3*-manylinux_i686"
