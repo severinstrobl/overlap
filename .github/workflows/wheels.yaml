@@ -24,13 +24,13 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: context.issue.number,
-            }
-            core.info(`Getting PR #${request.pull_number} from ${request.owner}/${request.repo}`)
+            };
+            core.info(`Getting PR #${request.pull_number} from ${request.owner}/${request.repo}`);
             try {
-              const result = await github.rest.pulls.get(request)
-              return result.data
+              const result = await github.rest.pulls.get(request);
+              return result.data;
             } catch (err) {
-              core.setFailed(`Request failed with error ${err}`)
+              core.setFailed(`Request failed with error ${err}`);
             }
 
       - name: Checkout MR
@@ -53,17 +53,17 @@ jobs:
         id: trigger-response
         with:
           script: |
-            const msg = 'Triggered [building of 🐍 sdist](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) via action...'
+            const msg = 'Triggered [building of 🐍 sdist](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) via action...';
             try {
               const result = await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.issue.number,
                 body: msg,
-              })
-              return result.data
+              });
+              return result.data;
             } catch (err) {
-              core.setFailed(`Request failed with error ${err}`)
+              core.setFailed(`Request failed with error ${err}`);
             }
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -93,22 +93,23 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 comment_id: ${{ fromJSON(steps.trigger-response.outputs.result).id }},
-              })
+              });
 
-              var msg = result.data.body + ' <strong class="text-emphasized mr-2">${{ steps.test-step.name }}</strong> '
-              if(process.env.STEP_STATUS == 'success')
-                msg += 'successful :heavy_check_mark:'
-              else
-                msg += 'failed :x:'
+              let msg = result.data.body;
+              if(process.env.STEP_STATUS == 'success') {
+                msg += 'successful :heavy_check_mark:';
+              } else {
+                msg += 'failed :x:';
+              }
 
               github.rest.issues.updateComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 comment_id: ${{ fromJSON(steps.trigger-response.outputs.result).id }},
                 body: msg,
-              })
+              });
             } catch (err) {
-              core.setFailed(`Request failed with error ${err}`)
+              core.setFailed(`Request failed with error ${err}`);
             }
 
       - name: Upload Artifacts
@@ -139,13 +140,13 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: context.issue.number,
-            }
-            core.info(`Getting PR #${request.pull_number} from ${request.owner}/${request.repo}`)
+            };
+            core.info(`Getting PR #${request.pull_number} from ${request.owner}/${request.repo}`);
             try {
-              const result = await github.rest.pulls.get(request)
-              return result.data
+              const result = await github.rest.pulls.get(request);
+              return result.data;
             } catch (err) {
-              core.setFailed(`Request failed with error ${err}`)
+              core.setFailed(`Request failed with error ${err}`);
             }
 
       - name: Checkout MR
@@ -168,17 +169,17 @@ jobs:
         id: trigger-response
         with:
           script: |
-            const msg = 'Triggered [building of 🐍 wheels on ${{ matrix.os }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) via action...'
+            const msg = 'Triggered [building of 🐍 wheels on ${{ matrix.os }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) via action...';
             try {
               const result = await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.issue.number,
                 body: msg,
-              })
-              return result.data
+              });
+              return result.data;
             } catch (err) {
-              core.setFailed(`Request failed with error ${err}`)
+              core.setFailed(`Request failed with error ${err}`);
             }
 
       - name: Build wheels
@@ -199,22 +200,23 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 comment_id: ${{ fromJSON(steps.trigger-response.outputs.result).id }},
-              })
+              });
 
-              var msg = result.data.body + ' <strong class="text-emphasized mr-2">${{ steps.test-step.name }}</strong> '
-              if(process.env.STEP_STATUS == 'success')
-                msg += 'successful :heavy_check_mark:'
-              else
-                msg += 'failed :x:'
+              let msg = result.data.body;
+              if(process.env.STEP_STATUS == 'success') {
+                msg += 'successful :heavy_check_mark:';
+              } else {
+                msg += 'failed :x:';
+              }
 
               github.rest.issues.updateComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 comment_id: ${{ fromJSON(steps.trigger-response.outputs.result).id }},
                 body: msg,
-              })
+              });
             } catch (err) {
-              core.setFailed(`Request failed with error ${err}`)
+              core.setFailed(`Request failed with error ${err}`);
             }
 
       - name: Upload Artifacts

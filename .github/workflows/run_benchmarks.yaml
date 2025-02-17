@@ -47,15 +47,15 @@ jobs:
 
           ctest --test-dir build -L benchmark
 
-          results=(`ls build/benchmarks/*.json`)
+          mapfile -t results < <(ls build/benchmarks/*.json)
           cp "${results[0]}" benchmarks.json
 
           for f in "${results[@]:1}"; do
-            python -m pyperf convert --stdout --add=$f benchmarks.json | jq > combined.json
+            python -m pyperf convert --stdout --add="$f" benchmarks.json | jq > combined.json
             mv combined.json benchmarks.json
           done
 
-          echo "ref_sha=$(git rev-parse ${{ inputs.ref }})" >> $GITHUB_OUTPUT
+          echo "ref_sha=$(git rev-parse ${{ inputs.ref }})" >> "$GITHUB_OUTPUT"
 
       - name: Store benchmark results for selected revision
         if: ${{ steps.benchmark_step.outcome == 'success' }}

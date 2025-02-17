@@ -34,10 +34,10 @@ jobs:
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
             reference_sha="${{ github.event.pull_request.base.sha }}"
           else
-            reference_sha=$(git rev-parse origin/$DEFAULT_REFERENCE_VERSION)
+            reference_sha=$(git rev-parse origin/"$DEFAULT_REFERENCE_VERSION")
           fi
 
-          echo "reference_sha=${reference_sha}" >> $GITHUB_OUTPUT
+          echo "reference_sha=${reference_sha}" >> "$GITHUB_OUTPUT"
 
       - name: Check if benchmark results for reference version exist
         id: check_ref_results
@@ -55,12 +55,12 @@ jobs:
 
             if (request.data.total_count) {
               console.log(`Benchmark results for revision '${ref}' exist.`);
-              core.setOutput("artifact_id", request.data.artifacts[0].id)
+              core.setOutput("artifact_id", request.data.artifacts[0].id);
             } else {
               console.log(`Benchmark results for revision '${ref}' do not exist, requesting run.`);
             }
 
-            core.setOutput("available", request.data.total_count != 0)
+            core.setOutput("available", request.data.total_count != 0);
 
   benchmark_reference:
     name: Benchmark reference version
@@ -157,7 +157,7 @@ jobs:
                   repo: context.repo.repo,
                   issue_number: context.issue.number,
                   body: msg,
-                })
+                });
                 return result.data;
               }
 
@@ -166,7 +166,7 @@ jobs:
                 repo: context.repo.repo,
                 comment_id: "${{steps.find_existing_comment.outputs.comment-id}}",
                 body: msg,
-              })
+              });
               return result.data;
             } catch (err) {
               core.setFailed(`Request failed with error ${err}`);
