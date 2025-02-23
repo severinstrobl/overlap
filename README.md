@@ -171,8 +171,9 @@ This distribution bundles external third-party software covered by separate
 license terms. For details please consult the corresponding license terms
 included with each package in the respective subdirectory.
 
-| Package                                        | License      |
-| ---------------------------------------------- | ------------ |
-| [Eigen](http://eigen.tuxfamily.org)            | MPL2         |
-| [pybind11](https://github.com/pybind/pybind11) | 3-clause BSD |
-| [doctest](https://github.com/doctest/doctest)  | MIT          |
+| Package                                            | License      |
+| -------------------------------------------------- | ------------ |
+| [Eigen](http://eigen.tuxfamily.org)                | MPL2         |
+| [pybind11](https://github.com/pybind/pybind11)     | 3-clause BSD |
+| [doctest](https://github.com/doctest/doctest)      | MIT          |
+| [nanobench](https://github.com/martinus/nanobench) | MIT          |

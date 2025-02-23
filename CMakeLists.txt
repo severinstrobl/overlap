@@ -25,15 +25,29 @@ endif()
 set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 
 # set up the dependency on Eigen3
-list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/third_party/eigen/cmake")
-find_package(Eigen3 3.4.0 NO_MODULE QUIET)
-if(NOT TARGET Eigen3::Eigen)
-  message(STATUS "Failed to find Eigen3 >= 3.4.0, using internal version")
+include(FetchContent)
 
-  add_library(Eigen3::Eigen IMPORTED INTERFACE)
-  set_property(
-    TARGET Eigen3::Eigen PROPERTY INTERFACE_INCLUDE_DIRECTORIES
-                                  "${PROJECT_SOURCE_DIR}/third_party/eigen"
+fetchcontent_declare(
+  eigen3
+  GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
+  GIT_TAG 3.4.0
+  GIT_SHALLOW TRUE
+  SOURCE_SUBDIR
+  cmake # set to invalid path to avoid building and registering tests
+  EXCLUDE_FROM_ALL
+  FIND_PACKAGE_ARGS
+  3.4.0
+  NO_MODULE
+  NAMES
+  Eigen3
+)
+
+fetchcontent_makeavailable(eigen3)
+
+if(NOT TARGET Eigen3::Eigen)
+  add_library(Eigen3::Eigen INTERFACE IMPORTED)
+  set_target_properties(
+    Eigen3::Eigen PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${eigen3_SOURCE_DIR}
   )
 endif()
 

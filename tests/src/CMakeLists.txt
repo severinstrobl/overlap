@@ -31,14 +31,18 @@ if(OVERLAP_WITH_COVERAGE)
 endif()
 
 if(NOT TARGET doctest::doctest)
-  add_subdirectory(
-    "${PROJECT_SOURCE_DIR}/third_party/doctest" "third_party/doctest"
+  include(FetchContent)
+
+  fetchcontent_declare(
+    doctest
+    GIT_REPOSITORY https://github.com/doctest/doctest.git
+    GIT_TAG v2.4.11
+    GIT_SHALLOW TRUE
     EXCLUDE_FROM_ALL
   )
 
-  list(APPEND CMAKE_MODULE_PATH
-       "${PROJECT_SOURCE_DIR}/third_party/doctest/scripts/cmake"
-  )
+  fetchcontent_makeavailable(doctest)
+  list(APPEND CMAKE_MODULE_PATH ${doctest_SOURCE_DIR}/scripts/cmake)
 endif()
 
 include(CTest)

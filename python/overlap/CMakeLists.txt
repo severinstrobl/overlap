@@ -14,11 +14,19 @@ if(NOT SKBUILD)
   )
 endif()
 
-# add pybind11 shipped as a third-party dependency
-add_subdirectory(
-  "${PROJECT_SOURCE_DIR}/third_party/pybind11" "third_party/pybind11"
-  EXCLUDE_FROM_ALL
-)
+if(NOT TARGET pybind11::headers)
+  include(FetchContent)
+
+  fetchcontent_declare(
+    pybind11
+    GIT_REPOSITORY https://github.com/pybind/pybind11.git
+    GIT_TAG v2.13.6
+    GIT_SHALLOW TRUE
+    EXCLUDE_FROM_ALL
+  )
+
+  fetchcontent_makeavailable(pybind11)
+endif()
 
 set(_package_name "overlap")
 
