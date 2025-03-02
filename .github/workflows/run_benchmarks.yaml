@@ -14,10 +14,10 @@ on:
     outputs:
       outcome:
         description: "Outcome of the actual benchmarking job"
-        value: ${{ jobs.benchmark.outputs.outcome }}
+        value: ${{ jobs.benchmark_cpp.outputs.outcome }}
 
 jobs:
-  benchmark:
+  benchmark_cpp:
     name: C++ benchmarks
     runs-on: ubuntu-24.04
     outputs:
@@ -47,12 +47,12 @@ jobs:
 
           ctest --test-dir build -L benchmark
 
-          mapfile -t results < <(ls build/benchmarks/*.json)
-          cp "${results[0]}" benchmarks.json
+          mapfile -t results < <(shopt -s globstar; ls build/benchmarks/**/*.json)
+          cp "${results[0]}" benchmarks-cpp.json
 
           for f in "${results[@]:1}"; do
-            python -m pyperf convert --stdout --add="$f" benchmarks.json | jq > combined.json
-            mv combined.json benchmarks.json
+            python -m pyperf convert --stdout --add="$f" benchmarks-cpp.json | jq > combined.json
+            mv combined.json benchmarks-cpp.json
           done
 
           echo "ref_sha=$(git rev-parse ${{ inputs.ref }})" >> "$GITHUB_OUTPUT"
@@ -61,5 +61,37 @@ jobs:
         if: ${{ steps.benchmark_step.outcome == 'success' }}
         uses: actions/upload-artifact@v4
         with:
-          name: benchmarks-${{ steps.benchmark_step.outputs.ref_sha }}
-          path: benchmarks.json
+          name: benchmarks-cpp-${{ steps.benchmark_step.outputs.ref_sha }}
+          path: benchmarks-cpp.json
+  benchmark_python:
+    name: Python benchmarks
+    runs-on: ubuntu-24.04
+    outputs:
+      outcome: ${{ steps.benchmark_step.outcome }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+          submodules: true
+
+      - name: Dependencies
+        run: |
+          python -m pip install pyperf
+
+      - name: Build and run benchmark for selected revision
+        id: benchmark_step
+        continue-on-error: ${{ inputs.allow_failure }}
+        run: |
+          python -m pip install .
+          python benchmarks/python/run_benchmarks.py
+          cp benchmarks/python/overlap_python.json benchmarks-python.json
+
+          echo "ref_sha=$(git rev-parse ${{ inputs.ref }})" >> "$GITHUB_OUTPUT"
+
+      - name: Store benchmark results for selected revision
+        if: ${{ steps.benchmark_step.outcome == 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmarks-python-${{ steps.benchmark_step.outputs.ref_sha }}
+          path: benchmarks-python.json
