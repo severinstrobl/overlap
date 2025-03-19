@@ -113,20 +113,36 @@ jobs:
         if: ${{ !fromJSON(needs.check_reference.outputs.reference_results_available) }}
         uses: actions/download-artifact@v4
         with:
-          name: benchmarks-${{ needs.check_reference.outputs.reference_sha }}
+          pattern: benchmarks-*-${{ needs.check_reference.outputs.reference_sha }}
           path: ${{ needs.check_reference.outputs.reference_sha }}
+          merge-multiple: true
 
       - name: Obtain benchmark results for current version
         uses: actions/download-artifact@v4
         with:
-          name: benchmarks-${{ github.sha }}
+          pattern: benchmarks-*-${{ github.sha }}
           path: ${{ github.sha }}
+          merge-multiple: true
 
       - name: Compare benchmark results
         run: |
-          mv ${{ github.sha }}/benchmarks.json Current
-          mv ${{ needs.check_reference.outputs.reference_sha }}/benchmarks.json Reference
-          python -m pyperf compare_to --table --table-format md Reference Current > report.md
+          touch report.md
+          declare -A languages=(["cpp"]="C++" ["python"]="Python")
+          for key in "${!languages[@]}"
+          do
+            echo "Processing benchmark results for $key..."
+            echo "## ${languages[$key]} benchmark results" >> report.md
+
+            mv "${{ github.sha }}/benchmarks-$key.json" Current
+            if [[ -f "${{ needs.check_reference.outputs.reference_sha }}/benchmarks-$key.json" ]]; then
+              mv "${{ needs.check_reference.outputs.reference_sha }}/benchmarks-$key.json" Reference
+            else
+              cp Current Reference
+            fi
+
+            python -m pyperf compare_to --table --table-format md Reference Current >> report.md
+          done
+
 
       - name: Check for existing PR comment
         if: ${{ github.event_name == 'pull_request' }}
@@ -149,14 +165,13 @@ jobs:
               .replace(/Current/, "Current (${{ github.sha }})")
               .replace(/Reference/, "Reference (${{ needs.check_reference.outputs.reference_sha }})");
 
-            const msg = `## C++ benchmark results\n${report}`;
             try {
               if ("${{steps.find_existing_comment.outputs.comment-id}}" == "") {
                 const result = await github.rest.issues.createComment({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   issue_number: context.issue.number,
-                  body: msg,
+                  body: report,
                 });
                 return result.data;
               }
@@ -165,7 +180,7 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 comment_id: "${{steps.find_existing_comment.outputs.comment-id}}",
-                body: msg,
+                body: report,
               });
               return result.data;
             } catch (err) {
@@ -178,4 +193,4 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            core.notice('## C++ benchmark results\n# + fs.readFileSync('./report.md'));
+            core.notice(fs.readFileSync('./report.md'));

@@ -88,7 +88,10 @@ lint.select = [
   "W",   # pycodestyle warnings
 ]
 
-# disable some rules for tests
+# disable some rules for benchmarks/tests
+lint.per-file-ignores."benchmarks/*" = [
+  "D", # pycodestyle
+]
 lint.per-file-ignores."tests/*" = [
   "ANN201", # missing-return-type-undocumented-public-function
   "D",      # pycodestyle

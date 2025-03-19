@@ -73,7 +73,7 @@ endif()
 # optional: C++ benchmarks
 if(OVERLAP_WITH_BENCHMARKS)
   enable_testing()
-  add_subdirectory(benchmarks)
+  add_subdirectory(benchmarks/cpp)
 endif()
 
 # optional: build the Python bindings using pybind11
