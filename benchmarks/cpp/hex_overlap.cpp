@@ -22,9 +22,18 @@ TEST_SUITE("HexOverlap") {
   // clang-format on
 
   TEST_CASE("HexOverlapVolume") {
-    const auto sphere = Sphere{Vector::Zero(), 1.5};
+    const auto sphere = Sphere{Vector::Zero(), 1.0};
 
-    create_benchmark("hex_overlap_volume", [&]() {
+    create_benchmark("hex_overlap_volume[sphere-in-hex]", [&]() {
+      const auto result = overlap_volume(sphere, hex);
+      ankerl::nanobench::doNotOptimizeAway(result);
+    });
+  }
+
+  TEST_CASE("HexOverlapVolume") {
+    const auto sphere = Sphere{Vector::Zero(), 5.0};
+
+    create_benchmark("hex_overlap_volume[hex-in-sphere]", [&]() {
       const auto result = overlap_volume(sphere, hex);
       ankerl::nanobench::doNotOptimizeAway(result);
     });
@@ -33,7 +42,7 @@ TEST_SUITE("HexOverlap") {
   TEST_CASE("HexOverlapVolumeAABB") {
     const auto sphere = Sphere{Vector{5, 0, 0}, 1};
 
-    create_benchmark("hex_overlap_volume_aabb", [&]() {
+    create_benchmark("hex_overlap_volume[AABB]", [&]() {
       const auto result = overlap_volume(sphere, hex);
       ankerl::nanobench::doNotOptimizeAway(result);
     });

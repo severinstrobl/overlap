@@ -26,7 +26,16 @@ TEST_SUITE("TetOverlap") {
   TEST_CASE("TetOverlapVolume") {
     const auto sphere = Sphere{Vector::Zero(), 0.5};
 
-    create_benchmark("tet_overlap_volume", [&]() {
+    create_benchmark("tet_overlap_volume[sphere-in-hex]", [&]() {
+      const auto result = overlap_volume(sphere, tet);
+      ankerl::nanobench::doNotOptimizeAway(result);
+    });
+  }
+
+  TEST_CASE("TetOverlapVolume") {
+    const auto sphere = Sphere{Vector::Zero(), 5.0};
+
+    create_benchmark("tet_overlap_volume[hex-in-sphere]", [&]() {
       const auto result = overlap_volume(sphere, tet);
       ankerl::nanobench::doNotOptimizeAway(result);
     });
@@ -35,7 +44,7 @@ TEST_SUITE("TetOverlap") {
   TEST_CASE("TetOverlapVolumeAABB") {
     const auto sphere = Sphere{Vector{2, 0, 0}, 0.5};
 
-    create_benchmark("tet_overlap_volume_aabb", [&]() {
+    create_benchmark("tet_overlap_volume[AABB]", [&]() {
       const auto result = overlap_volume(sphere, tet);
       ankerl::nanobench::doNotOptimizeAway(result);
     });
