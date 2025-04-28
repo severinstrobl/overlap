@@ -56,10 +56,10 @@ The compile-time dependencies of this code are:
 The software is currently continuously compiled and tested with the following
 compilers:
 
-| Compiler   | Versions                                                                             |
-| ---------- | ------------------------------------------------------------------------------------ |
-| GNU G++    | 14.0.1, 13.2.0, 12.3.0, 11.4.0, 10.5.0, 9.5.0, 8.4.0, 7.5.0                          |
-| Clang/LLVM | 18.1.3, 17.0.6, 16.0.6, 15.0.7, 14.0.0, 13.0.1, 12.0.0, 11.0.0, 10.0.0, 9.0.1, 8.0.1 |
+| Compiler   | Versions                                                       |
+| ---------- | -------------------------------------------------------------- |
+| GNU G++    | 14.0.1, 13.2.0, 12.3.0, 11.4.0, 10.5.0, 9.5.0                  |
+| Clang/LLVM | 18.1.3, 17.0.6, 16.0.6, 15.0.7, 14.0.0, 13.0.1, 12.0.1, 11.1.0 |
 
 Additionally, the Intel C++ compiler starting with version 19.0 should work,
 albeit this configuration is not part of the CI process. All the newer
