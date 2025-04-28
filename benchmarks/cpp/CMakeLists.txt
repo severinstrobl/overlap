@@ -1,12 +1,22 @@
 if(NOT TARGET doctest::doctest)
   include(FetchContent)
 
+  set(_doctest_patch "${CMAKE_CURRENT_BINARY_DIR}/doctest_include.patch")
+  file(
+    DOWNLOAD
+    https://github.com/severinstrobl/doctest/compare/master...patchset.patch
+    ${_doctest_patch}
+    EXPECTED_HASH
+      SHA256=31b3e5004a6420db0799d39c3fa8199d3cd23b388d94d21c324dfbd01ccce93b
+  )
+
   fetchcontent_declare(
     doctest
     GIT_REPOSITORY https://github.com/doctest/doctest.git
-    GIT_TAG v2.4.11
+    GIT_TAG 1da23a3e8119ec5cce4f9388e91b065e20bf06f5 # v2.4.12
     GIT_SHALLOW TRUE
     EXCLUDE_FROM_ALL
+    PATCH_COMMAND patch -p1 --forward < ${_doctest_patch} || true
   )
 
   fetchcontent_makeavailable(doctest)
