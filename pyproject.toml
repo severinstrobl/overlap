@@ -7,10 +7,11 @@
 
 [build-system]
 build-backend = "scikit_build_core.build"
-requires = [ "scikit-build-core" ]
+requires = ["scikit-build-core"]
 
 [project]
 name = "overlap"
+# dynamic = ["version"]
 version = "0.2.0-dev"
 description = "Exact calculation of the overlap volume and area of spheres and mesh elements"
 readme = "README.md"
@@ -20,10 +21,9 @@ keywords = [
   "numerical-simulations",
 ]
 license = { text = "MIT" }
-authors = [ { name = "Severin Strobl", email = "git@severin-strobl.de" } ]
+authors = [{ name = "Severin Strobl", email = "git@severin-strobl.de" }]
 requires-python = ">=3.9"
 classifiers = [
-  "License :: OSI Approved :: MIT License",
   "Programming Language :: Python :: 3 :: Only",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
@@ -33,18 +33,23 @@ classifiers = [
   "Topic :: Scientific/Engineering",
 ]
 
-dependencies = [ "numpy" ]
-optional-dependencies.test = [ "pytest>=6" ]
+dependencies = ["numpy"]
+optional-dependencies.test = ["pytest>=6"]
 urls.github = "https://github.com/severinstrobl/overlap"
 urls.issues = "https://github.com/severinstrobl/overlap/issues"
 urls.source = "https://github.com/severinstrobl/overlap.git"
 
 [tool.scikit-build]
 cmake.version = ">=3.18"
+metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
+sdist.include = ["src/package/_version.py"]
 
 [tool.cibuildwheel]
 test-requires = "pytest"
 test-command = "python -m pytest -vs {project}/tests/python"
+build-verbosity = 1
+skip = "cp36-* cp37-* cp38-* pp37-* pp38-* pp3*-manylinux_i686"
+
 
 [[tool.cibuildwheel.overrides]]
 select = "*-macosx_x86_64"
@@ -57,7 +62,6 @@ inherit.environment = "append"
 environment.MACOSX_DEPLOYMENT_TARGET = "11.0"
 
 [tool.ruff]
-target-version = "py312"
 line-length = 100
 indent-width = 4
 fix = true
@@ -100,6 +104,9 @@ lint.per-file-ignores."tests/*" = [
 lint.pydocstyle.convention = "google"
 
 [tool.pytest.ini_options]
-testpaths = [ "tests/python" ]
-build-verbosity = 1
-skip = "cp36-* cp37-* cp38-* pp37-* pp38-* pp3*-manylinux_i686"
+minversion = "6"
+testpaths = ["tests/python"]
+addopts = ["-ra", "--strict-config", "--strict-markers"]
+filterwarnings = ["error"]
+log_cli_level = "INFO"
+xfail_strict = true

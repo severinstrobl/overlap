@@ -1,14 +1,17 @@
 name: Python wheels
 
 on:
+  release:
+    types:
+      - published
+  workflow_dispatch:
   issue_comment:
     types:
       - created
-  workflow_dispatch:
 
 jobs:
-  build_sdist:
-    name: Build 🐍 sdist
+  create_sdist:
+    name: Create 🐍 sdist
     if: ${{(startsWith(github.event.comment.body, '/build_wheels') && github.event.issue.pull_request) || github.event_name == 'workflow_dispatch'}}
     runs-on: ubuntu-24.04
 
@@ -73,7 +76,7 @@ jobs:
       - name: Dependencies
         run: python -m pip install build twine
 
-      - name: Build sdist
+      - name: Create sdist
         id: build-sdist
         run: python -m build --sdist
 
@@ -225,3 +228,35 @@ jobs:
           name: ${{ github.event.repository.name }}-wheels-${{ matrix.os }}
           path: ./dist/*.whl
           retention-days: 2
+
+  publish:
+    name: Upload release to PyPI
+    needs: [create_sdist, build_wheels]
+    runs-on: ubuntu-24.04
+    environment: testpypi
+    permissions:
+      id-token: write
+      attestations: write
+      contents: read
+
+    # if: github.event_name == 'release' && github.event.action == 'published'
+    steps:
+      - name: Download sdist/wheels
+        uses: actions/download-artifact@v4
+        with:
+          pattern: ${{ github.event.repository.name }}-*
+          path: dist
+          merge-multiple: true
+
+      - name: Generate artifact attestations
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: "dist/*"
+
+      - name: Publish package to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+
+      # - name: Publish package to PyPI
+      #   uses: pypa/gh-action-pypi-publish@release/v1
