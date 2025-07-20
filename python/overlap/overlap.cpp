@@ -1,62 +1,68 @@
-// Copyright (C) 2021-2022 Severin Strobl <git@severin-strobl.de>
+// Copyright (C) 2021-2025 Severin Strobl <git@severin-strobl.de>
 //
 // SPDX-License-Identifier: MIT
 //
 // Exact calculation of the overlap volume of spheres and mesh elements.
 // http://dx.doi.org/10.1016/j.jcp.2016.02.003
 
+#include <array>
 #include <cctype>
 #include <locale>
 #include <map>
+#include <stdexcept>
+#include <string>
+#include <type_traits>
 #include <typeindex>
-#include <typeinfo>
 
-#include "pybind11/eigen.h"
-#include "pybind11/numpy.h"
-#include "pybind11/pybind11.h"
-#include "pybind11/stl.h"
+#include <pybind11/cast.h>
+#include <pybind11/eigen.h>
+#include <pybind11/numpy.h>
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 
 #include "overlap/overlap.hpp"
 
 namespace py = pybind11;
+
+using namespace overlap;
+
+namespace {
 
 template<typename... Args>
 using overload_cast_ = py::detail::overload_cast_impl<Args...>;
 
 using namespace py::literals;
 
-using namespace overlap;
-
 template<typename Element,
          typename = std::enable_if_t<detail::is_element_v<Element>>>
-void createBindings(py::module& m) {
+void create_bindings(py::module& m) {
   static const auto element_names = std::map<std::type_index, std::string>{
       {std::type_index(typeid(Tetrahedron)), "Tetrahedron"},
       {std::type_index(typeid(Wedge)), "Wedge"},
       {std::type_index(typeid(Hexahedron)), "Hexahedron"}};
 
   const auto& name = element_names.at(std::type_index(typeid(Element)));
-  const auto nameLower =
+  const auto name_lower =
       std::tolower(name.front(), std::locale{}) + name.substr(1);
 
-  static constexpr auto nrVertices = detail::num_vertices<Element>();
+  static constexpr auto num_vertices = detail::num_vertices<Element>();
 
   py::class_<Element>(m, name.c_str())
-      .def(py::init<std::array<Vector, nrVertices>>(), py::arg("vertices"))
-      .def(py::init([](py::array_t<double> vertices) {
-             auto proxy = vertices.unchecked<2>();
-             if (proxy.shape(0) != nrVertices || proxy.shape(1) != 3) {
+      .def(py::init<std::array<Vector, num_vertices>>(), py::arg("vertices"))
+      .def(py::init([](const py::array_t<double>& array) {
+             const auto proxy = array.unchecked<2>();
+             if (proxy.shape(0) != num_vertices || proxy.shape(1) != 3) {
                throw std::invalid_argument{
                    "invalid shape for vertex list, must be (" +
-                   std::to_string(nrVertices) + ", 3)"};
+                   std::to_string(num_vertices) + ", 3)"};
              }
 
-             std::array<Vector, nrVertices> tmp{};
-             for (py::ssize_t v = 0; v < proxy.shape(0); ++v) {
-               tmp[v] = Vector{proxy(v, 0), proxy(v, 1), proxy(v, 2)};
+             auto vertices = std::array<Vector, num_vertices>{};
+             for (auto v = 0U; v < proxy.shape(0); ++v) {
+               vertices[v] = Vector{proxy(v, 0), proxy(v, 1), proxy(v, 2)};
              }
 
-             return Element{std::move(tmp)};
+             return Element{std::move(vertices)};
            }),
            py::arg("vertices"))
       .def_readonly("vertices", &Element::vertices,
@@ -73,28 +79,36 @@ void createBindings(py::module& m) {
   m.def(
       "overlap_volume",
       overload_cast_<const Sphere&, const Element&>()(&overlap_volume<Element>),
-      "sphere"_a, py::arg{nameLower.c_str()},
-      ("Calculate the overlap volume of a sphere and a " + nameLower + ".")
+      "sphere"_a, py::arg{name_lower.c_str()},
+      ("Calculate the overlap volume of a sphere and a " + name_lower + ".")
           .c_str());
 
   m.def("overlap_area",
         overload_cast_<const Sphere&, const Element&>()(&overlap_area<Element>),
-        "sphere"_a, py::arg{nameLower.c_str()},
-        ("Calculate the overlap area of a sphere and a " + nameLower + ".")
+        "sphere"_a, py::arg{name_lower.c_str()},
+        ("Calculate the overlap area of a sphere and a " + name_lower + ".")
             .c_str());
 }
 
+}  // namespace
+
 PYBIND11_MODULE(overlap, m) {
   m.doc() = R"pbdoc(
-        Pybind11 example plugin
-        -----------------------
+        Exact calculation of the overlap volume and area of spheres and mesh elements
+        =============================================================================
 
-        This originates from CPP
+        Supported primitives
+        --------------------
+        - tetrahedron (4 nodes/vertices, `overlap.Tetrahedron`)
+        - pentahedron/wedge (6 nodes/vertices, `overlap.Wedge`)
+        - hexahedron (8 nodes/vertices, `overlap.Hexahedron`)
 
-        .. currentmodule:: overlap
-
-        .. autosummary::
-            :toctree: _generate
+        Main functions
+        --------------
+        - `overlap.overlap_volume(sphere, element)`: Calculate the overlap volume of
+          a sphere and a mesh element.
+        - `overlap.overlap_area(sphere, element)`: Calculate the overlap area of
+          a sphere and a mesh element.
     )pbdoc";
 
 #ifdef VERSION_INFO
@@ -115,7 +129,7 @@ PYBIND11_MODULE(overlap, m) {
           "surface_area", [](const Sphere& s) { return s.surface_area(); },
           "Return the surface area of the sphere.");
 
-  createBindings<Tetrahedron>(m);
-  createBindings<Wedge>(m);
-  createBindings<Hexahedron>(m);
+  create_bindings<Tetrahedron>(m);
+  create_bindings<Wedge>(m);
+  create_bindings<Hexahedron>(m);
 }
