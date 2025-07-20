@@ -1,5 +1,7 @@
 minimum_pre_commit_version: 4.0.0
 default_install_hook_types: [pre-commit, commit-msg]
+ci:
+  autoupdate_commit_msg: 'chore: update pre-commit hooks'
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: cef0300fd0fc4d2a87a85fa2093c6b283ea36f4b  # frozen: v5.0.0
@@ -76,6 +78,13 @@ repos:
       - id: pyproject-fmt
         name: check formatting of pyproject.toml
         stages: [pre-commit]
+
+  - repo: https://github.com/adamchainz/blacken-docs
+    rev: "78a9dcbecf4f755f65d1f3dec556bc249d723600"  # frozen: 1.19.1
+    hooks:
+    -   id: blacken-docs
+        additional_dependencies:
+        - black==25.1.0
 
   # CI
   - repo: https://github.com/rhysd/actionlint
