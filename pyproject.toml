@@ -11,8 +11,7 @@ requires = [ "scikit-build-core" ]
 
 [project]
 name = "overlap"
-# dynamic = ["version"]
-version = "0.2.0-dev"
+# version = "0.2.0-dev"
 description = "Exact calculation of the overlap volume and area of spheres and mesh elements"
 readme = "README.md"
 keywords = [
@@ -33,16 +32,20 @@ classifiers = [
   "Topic :: Scientific/Engineering",
 ]
 
+dynamic = [ "version" ]
 dependencies = [ "numpy" ]
 optional-dependencies.test = [ "pytest>=6" ]
 urls.github = "https://github.com/severinstrobl/overlap"
 urls.issues = "https://github.com/severinstrobl/overlap/issues"
 urls.source = "https://github.com/severinstrobl/overlap.git"
 
+[tool.setuptools_scm]
+write_to = "python/overlap/_version.py"
+
 [tool.scikit-build]
 cmake.version = ">=3.18"
 metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
-sdist.include = [ "src/package/_version.py" ]
+sdist.include = [ "python/overlap/_version.py" ]
 
 [tool.cibuildwheel]
 test-requires = "pytest"

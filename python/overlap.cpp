@@ -92,31 +92,7 @@ void create_bindings(py::module& m) {
 
 }  // namespace
 
-PYBIND11_MODULE(overlap, m) {
-  m.doc() = R"pbdoc(
-        Exact calculation of the overlap volume and area of spheres and mesh elements
-        =============================================================================
-
-        Supported primitives
-        --------------------
-        - tetrahedron (4 nodes/vertices, `overlap.Tetrahedron`)
-        - pentahedron/wedge (6 nodes/vertices, `overlap.Wedge`)
-        - hexahedron (8 nodes/vertices, `overlap.Hexahedron`)
-
-        Main functions
-        --------------
-        - `overlap.overlap_volume(sphere, element)`: Calculate the overlap volume of
-          a sphere and a mesh element.
-        - `overlap.overlap_area(sphere, element)`: Calculate the overlap area of
-          a sphere and a mesh element.
-    )pbdoc";
-
-#ifdef VERSION_INFO
-  m.attr("__version__") = VERSION_INFO;
-#else
-  m.attr("__version__") = "dev";
-#endif
-
+PYBIND11_MODULE(_overlap, m) {
   py::class_<Sphere>(m, "Sphere")
       .def(py::init<Vector, Scalar>(), py::arg("center"), py::arg("radius"))
       .def_readonly("center", &Sphere::center,

@@ -33,7 +33,7 @@ set(_package_name "overlap")
 pybind11_add_module(${_package_name}_python MODULE ${_package_name}.cpp)
 
 set_target_properties(
-  ${_package_name}_python PROPERTIES OUTPUT_NAME ${_package_name}
+  ${_package_name}_python PROPERTIES OUTPUT_NAME "_${_package_name}"
 )
 
 target_link_libraries(
@@ -52,5 +52,5 @@ if(NOT SKBUILD)
           LIBRARY DESTINATION ${python_install_dir} COMPONENT python
   )
 else()
-  install(TARGETS ${_package_name}_python LIBRARY DESTINATION .)
+  install(TARGETS ${_package_name}_python LIBRARY DESTINATION ${_package_name})
 endif()
