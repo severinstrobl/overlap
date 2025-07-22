@@ -41,6 +41,7 @@ urls.source = "https://github.com/severinstrobl/overlap.git"
 
 [tool.setuptools_scm]
 write_to = "python/overlap/_version.py"
+local_scheme = "no-local-version"
 
 [tool.scikit-build]
 cmake.version = ">=3.18"
