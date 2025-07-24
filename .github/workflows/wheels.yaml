@@ -184,7 +184,7 @@ jobs:
 
       - name: Build wheels
         id: build-wheels
-        uses: pypa/cibuildwheel@v3.0.1
+        uses: pypa/cibuildwheel@v3.1.0
         with:
           output-dir: dist
 
