@@ -78,5 +78,5 @@ endif()
 
 # optional: build the Python bindings using pybind11
 if(OVERLAP_WITH_PYTHON)
-  add_subdirectory(python/overlap)
+  add_subdirectory(python)
 endif()

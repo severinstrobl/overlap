@@ -146,16 +146,17 @@ The interface of Python version closely resembles the interface of the C++ versi
 import numpy as np
 import overlap
 
-vertices = np.array((
-    (-1, -np.sqrt(1./3.), -np.sqrt(1./6.)),
-    (1, -np.sqrt(1./3.), -np.sqrt(1./6.)),
-    (0, np.sqrt(4./3.), -np.sqrt(1./6.)),
-    (0, 0, np.sqrt(3./2.))
-))
+vertices = np.array(
+    (
+        (-1, -np.sqrt(1.0 / 3.0), -np.sqrt(1.0 / 6.0)),
+        (1, -np.sqrt(1.0 / 3.0), -np.sqrt(1.0 / 6.0)),
+        (0, np.sqrt(4.0 / 3.0), -np.sqrt(1.0 / 6.0)),
+        (0, 0, np.sqrt(3.0 / 2.0)),
+    )
+)
 
 tet = overlap.Tetrahedron(vertices)
 sphere = overlap.Sphere((0, 0, 0.5), 1)
-
 result = overlap.overlap_volume(sphere, tet)
 ```
 
@@ -167,9 +168,9 @@ the function `overlap_area()` of the package.
 The `overlap` library is distributed under the MIT license, please refer to the
 [LICENSE](LICENSE) file for the full license text.
 
-This distribution bundles external third-party software covered by separate
-license terms. For details please consult the corresponding license terms
-included with each package in the respective subdirectory.
+This distribution uses external third-party software covered by separate
+license terms. For details, please consult the corresponding license terms
+of the respective package.
 
 | Package                                            | License      |
 | -------------------------------------------------- | ------------ |
