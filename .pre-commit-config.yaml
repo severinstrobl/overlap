@@ -35,7 +35,7 @@ repos:
 
   # C++
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: f9a52e87b6cdcb01b0a62b8611d9ba9f2dad0067  # frozen: v19.1.7
+    rev: 182152eb8c5ce1cf5299b956b04392c86bd8a126  # frozen: v20.1.8
     hooks:
       - id: clang-format
         name: format C++ files with clang-format
@@ -56,14 +56,14 @@ repos:
 
   # Python
   - repo: https://github.com/asottile/setup-cfg-fmt
-    rev: 139e728a3204c352e58e595552bacc9ab8f248ea  # frozen: v2.7.0
+    rev: 79cc0ae5abfa1ba092b5938cd811a6069710ad77  # frozen: v2.8.0
     hooks:
       - id: setup-cfg-fmt
         name: check formatting of setup.cfg
         stages: [pre-commit]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 895ebb389825c29bd4e0addcf7579d6c69d199cc  # frozen: v0.9.6
+    rev: 73b0f6d59bbfcb75e17a4653d581c9dfaca13969  # frozen: v0.12.5
     hooks:
       - id: ruff
         name: check Python files with ruff
@@ -73,7 +73,7 @@ repos:
         stages: [pre-commit]
 
   - repo: https://github.com/tox-dev/pyproject-fmt
-    rev: 6b2f3b33754de7a442043dc312fc5a0e473086d2  # frozen: v2.5.0
+    rev: 8184a5b72f4a8fcd003b041ecb04c41a9f34fd2b  # frozen: v2.6.0
     hooks:
       - id: pyproject-fmt
         name: check formatting of pyproject.toml
