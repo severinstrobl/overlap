@@ -11,7 +11,6 @@ requires = [ "scikit-build-core" ]
 
 [project]
 name = "overlap"
-# version = "0.2.0-dev"
 description = "Exact calculation of the overlap volume and area of spheres and mesh elements"
 readme = "README.md"
 keywords = [
@@ -53,7 +52,7 @@ test-command = "python -m pytest -vs {project}/tests/python"
 build-verbosity = 1
 environment-pass = [ "SETUPTOOLS_SCM_OVERRIDES_FOR_OVERLAP" ]
 enable = "pypy"
-skip = "pp310-manylinux_i686 pp311-manylinux_i686"
+skip = "pp310-manylinux_i686 pp311-manylinux_i686 cp314t-*"
 
 [tool.cibuildwheel.linux]
 archs = [ "auto64", "auto32" ]
