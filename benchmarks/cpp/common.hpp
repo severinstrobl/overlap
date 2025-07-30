@@ -18,7 +18,7 @@ inline auto create_benchmark(const std::string& name, F&& func)
   auto log = std::ofstream{name + ".json"};
   return ankerl::nanobench::Bench()
       .title(name)
-      .minEpochIterations(25000)
+      .minEpochIterations(25'000)
       .run(name, std::forward<F>(func))
       .render(ankerl::nanobench::templates::pyperf(), log);
 }

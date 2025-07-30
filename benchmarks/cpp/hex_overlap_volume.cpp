@@ -47,4 +47,20 @@ TEST_SUITE("HexOverlap") {
       ankerl::nanobench::doNotOptimizeAway(result);
     });
   }
+
+  TEST_CASE("HexOverlapVolumeRandomized") {
+    constexpr auto seed = 79'866'982'766'580U;
+    auto rng = ankerl::nanobench::Rng{seed};
+
+    create_benchmark("hex_overlap_volume[random]", [&rng]() {
+      const auto radius = (2.4 * rng.uniform01()) + 0.1;
+      const auto center =
+          4.0 * Vector{rng.uniform01(), rng.uniform01(), rng.uniform01()} -
+          Vector::Constant(2.0);
+
+      const auto sphere = overlap::Sphere{center, radius};
+      const auto result = overlap_volume(sphere, hex);
+      ankerl::nanobench::doNotOptimizeAway(result);
+    }).epochIterations(25'000);
+  }
 }
