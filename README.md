@@ -1,7 +1,7 @@
 # Exact calculation of the overlap volume and area of spheres and mesh elements
 
-![Build Status](https://img.shields.io/github/actions/workflow/status/severinstrobl/overlap/ci.yaml?branch=develop)
-[![codecov](https://codecov.io/gh/severinstrobl/overlap/branch/develop/graph/badge.svg?token=GQ2L62OXXK)](https://codecov.io/gh/severinstrobl/overlap)
+![Build Status](https://img.shields.io/github/actions/workflow/status/severinstrobl/overlap/ci.yaml?branch=main)
+[![codecov](https://codecov.io/gh/severinstrobl/overlap/branch/main/graph/badge.svg?token=GQ2L62OXXK)](https://codecov.io/gh/severinstrobl/overlap)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 [![DOI](https://img.shields.io/badge/DOI-10.1016/j.jcp.2016.02.003-blue.svg)](https://dx.doi.org/10.1016/j.jcp.2016.02.003)
@@ -50,11 +50,11 @@ existing codes rather easy, often even without the need to reorder nodes.
 
 The compile-time dependencies of this code are:
 
-- [Eigen3](http://eigen.tuxfamily.org), tested with versions 3.3.4 and above
+- [Eigen3](http://eigen.tuxfamily.org), tested with versions 3.3.4 and 3.4.0
 - [compiler supporting C++17](https://en.cppreference.com/w/cpp/compiler_support/17)
 
 The software is currently continuously compiled and tested with the following
-compilers:
+compilers on both x86-64 and ARM64:
 
 | Compiler   | Versions                                                       |
 | ---------- | -------------------------------------------------------------- |
