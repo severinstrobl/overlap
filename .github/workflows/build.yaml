@@ -1,51 +1,35 @@
 name: CI build Linux
 
 on:
-  - push
-  - pull_request
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
     name: ${{ matrix.config.name }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
         config:
         - {
-            name: "Ubuntu 20.04 - GCC 7.5.0",
-            cc: "gcc-7", cxx: "g++-7"
-          }
-        - {
-            name: "Ubuntu 20.04 - GCC 8.4.0",
-            cc: "gcc-8", cxx: "g++-8"
-          }
-        - {
-            name: "Ubuntu 20.04 - GCC 9.3.0",
+            name: "Ubuntu 22.04 - GCC 9.5.0",
             cc: "gcc-9", cxx: "g++-9"
           }
         - {
-            name: "Ubuntu 20.04 - GCC 10.3.0",
+            name: "Ubuntu 22.04 - GCC 10.5.0",
             cc: "gcc-10", cxx: "g++-10"
           }
         - {
-            name: "Ubuntu 20.04 - Clang 8.0.1",
-            cc: "clang-8", cxx: "clang++-8"
-          }
-        - {
-            name: "Ubuntu 20.04 - Clang 9.0.1",
-            cc: "clang-9", cxx: "clang++-9"
-          }
-        - {
-            name: "Ubuntu 20.04 - Clang 10.0.0",
-            cc: "clang-10", cxx: "clang++-10"
-          }
-        - {
-            name: "Ubuntu 20.04 - Clang 11.0.0",
+            name: "Ubuntu 22.04 - Clang 11.1.0",
             cc: "clang-11", cxx: "clang++-11"
           }
         - {
-            name: "Ubuntu 20.04 - Clang 12.0.0",
+            name: "Ubuntu 22.04 - Clang 12.0.1",
             cc: "clang-12", cxx: "clang++-12"
           }
 
@@ -58,7 +42,7 @@ jobs:
       - name: Dependencies
         run: |
           sudo apt update
-          sudo apt install g++-7 g++-8 clang-8 clang-9
+          sudo apt install ${{ matrix.config.cxx }} || sudo apt install ${{ matrix.config.cc }}
           sudo apt install libeigen3-dev
 
       - name: Configure
