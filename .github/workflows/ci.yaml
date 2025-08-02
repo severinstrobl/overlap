@@ -1,5 +1,8 @@
 name: CI
 on:
+  push:
+    branches:
+      - main
   pull_request:
   workflow_dispatch:
 
@@ -39,6 +42,7 @@ jobs:
     secrets: inherit
 
   benchmarks:
+      if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'push' }}
       name: Benchmarks
       needs: [cpp, python]
       uses: ./.github/workflows/benchmarks.yaml
