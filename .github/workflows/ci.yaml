@@ -25,9 +25,9 @@ jobs:
     uses: ./.github/workflows/cpp.yaml
 
   python:
-      name: Python build and test
-      needs: [cpp]
-      uses: ./.github/workflows/python.yaml
+    name: Python build and test
+    needs: [cpp]
+    uses: ./.github/workflows/python.yaml
 
   coverage:
     name: Code coverage
@@ -42,8 +42,35 @@ jobs:
     secrets: inherit
 
   benchmarks:
-      if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'push' }}
-      name: Benchmarks
-      needs: [cpp, python]
-      uses: ./.github/workflows/benchmarks.yaml
-      secrets: inherit
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'push' }}
+    name: Benchmarks
+    needs: [cpp, python]
+    uses: ./.github/workflows/benchmarks.yaml
+    secrets: inherit
+
+  conclusion:
+    name: Conclusion
+    if: always()
+    needs:
+      - pre-commit
+      - linting
+      - cpp
+      - python
+      - coverage
+      - static_analysis
+      - benchmarks
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Exit on failure
+        if: >-
+          contains(needs.*.result, 'failure') ||
+          contains(needs.*.result, 'cancelled') ||
+          (needs.benchmarks.result == 'failure')
+        run: |
+          echo "❌ Some required jobs failed"
+          echo "Results: ${{ toJSON(needs.*.result) }}"
+          exit 1
+
+      - name: Success message
+        run: |
+          echo "✅ All required jobs completed successfully"
