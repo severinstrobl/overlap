@@ -31,13 +31,13 @@ jobs:
 
   coverage:
     name: Code coverage
-    needs: [cpp]
+    needs: [linting]
     uses: ./.github/workflows/coverage.yaml
     secrets: inherit
 
   static_analysis:
     name: Static analysis
-    needs: [cpp]
+    needs: [linting]
     uses: ./.github/workflows/sonarcloud.yaml
     secrets: inherit
 
