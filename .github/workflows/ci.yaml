@@ -42,7 +42,7 @@ jobs:
     secrets: inherit
 
   benchmarks:
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'push' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' }}
     name: Benchmarks
     needs: [cpp, python]
     uses: ./.github/workflows/benchmarks.yaml
@@ -68,7 +68,6 @@ jobs:
           (needs.benchmarks.result == 'failure')
         run: |
           echo "❌ Some required jobs failed"
-          echo "Results: ${{ toJSON(needs.*.result) }}"
           exit 1
 
       - name: Success message
