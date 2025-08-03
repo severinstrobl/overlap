@@ -29,12 +29,6 @@ jobs:
     needs: [cpp]
     uses: ./.github/workflows/python.yaml
 
-  coverage:
-    name: Code coverage
-    needs: [linting]
-    uses: ./.github/workflows/coverage.yaml
-    secrets: inherit
-
   static_analysis:
     name: Static analysis
     needs: [linting]
@@ -56,7 +50,6 @@ jobs:
       - linting
       - cpp
       - python
-      - coverage
       - static_analysis
       - benchmarks
     runs-on: ubuntu-24.04
