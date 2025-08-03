@@ -49,7 +49,6 @@ const auto pi = Scalar{4} * std::atan(Scalar{1});
 
 static constexpr auto tiny_epsilon =
     Scalar{4} * std::numeric_limits<Scalar>::epsilon();  // 4 ulp at 1.0
-static constexpr auto medium_epsilon = Scalar{1e2} * tiny_epsilon;
 static constexpr auto large_epsilon = Scalar{1e-10};
 
 // Robust calculation of the normal vector of a polygon using Newell's method
