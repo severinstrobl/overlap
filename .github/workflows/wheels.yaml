@@ -38,7 +38,7 @@ jobs:
 
       - name: Checkout MR
         if: ${{ github.event.issue.pull_request }}
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: ${{ fromJSON(steps.get-pr.outputs.result).head.repo.full_name }}
           ref: ${{ fromJSON(steps.get-pr.outputs.result).head.sha }}
@@ -46,7 +46,7 @@ jobs:
 
       - name: Checkout
         if: ${{ github.event_name == 'workflow_dispatch' }}
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: true
 
@@ -159,7 +159,7 @@ jobs:
 
       - name: Checkout MR
         if: ${{ github.event.issue.pull_request }}
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: ${{ fromJSON(steps.get-pr.outputs.result).head.repo.full_name }}
           ref: ${{ fromJSON(steps.get-pr.outputs.result).head.sha }}
@@ -167,7 +167,7 @@ jobs:
 
       - name: Checkout
         if: ${{ github.event_name == 'workflow_dispatch' }}
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: true
 
