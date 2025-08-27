@@ -6,6 +6,7 @@
     ":semanticCommits",
     ":semanticCommitTypeAll(ci)"
   ],
+  "baseBranches": ["main", "0.1.x"],
   "enabledManagers": [
     "pre-commit",
     "github-actions",
@@ -40,6 +41,7 @@
     }
   ],
   "addLabels": [
-    "renovate"
+    "renovate",
+    "dependencies"
   ]
 }
