@@ -29,8 +29,8 @@ jobs:
           cmake \
             -Bbuild \
             -DCMAKE_BUILD_TYPE=Debug \
-            -DCMAKE_C_COMPILER=clang-14 \
-            -DCMAKE_CXX_COMPILER=clang++-14 \
+            -DCMAKE_C_COMPILER=clang-16 \
+            -DCMAKE_CXX_COMPILER=clang++-16 \
             -DOVERLAP_WITH_COVERAGE=ON
           build-wrapper-linux-x86-64 \
             --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} \
@@ -41,7 +41,7 @@ jobs:
           cd build
           ctest --output-on-failure
           ~/.local/bin/gcovr \
-            --gcov-executable 'llvm-cov-14 gcov' \
+            --gcov-executable 'llvm-cov-16 gcov' \
             --exclude-lines-by-pattern '.*overlap_assert.*' \
             --sonarqube coverage.xml \
             -r ../ \
