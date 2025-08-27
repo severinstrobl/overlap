@@ -17,20 +17,28 @@ jobs:
       matrix:
         config:
         - {
-            name: "Ubuntu 22.04 - GCC 9.5.0",
+            name: "Ubuntu 24.04 - GCC 9.5.0",
             cc: "gcc-9", cxx: "g++-9"
           }
         - {
-            name: "Ubuntu 22.04 - GCC 10.5.0",
+            name: "Ubuntu 24.04 - GCC 10.5.0",
             cc: "gcc-10", cxx: "g++-10"
           }
         - {
-            name: "Ubuntu 22.04 - Clang 11.1.0",
-            cc: "clang-11", cxx: "clang++-11"
+            name: "Ubuntu 24.04 - GCC 11.4.0",
+            cc: "gcc-11", cxx: "g++-11"
           }
         - {
-            name: "Ubuntu 22.04 - Clang 12.0.1",
-            cc: "clang-12", cxx: "clang++-12"
+            name: "Ubuntu 24.04 - GCC 12.3.0",
+            cc: "gcc-12", cxx: "g++-12"
+          }
+        - {
+            name: "Ubuntu 24.04 - Clang 14.0.6",
+            cc: "clang-14", cxx: "clang++-14"
+          }
+        - {
+            name: "Ubuntu 24.04 - Clang 15.0.7",
+            cc: "clang-15", cxx: "clang++-15"
           }
 
     steps:
