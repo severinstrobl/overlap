@@ -10,7 +10,7 @@ jobs:
   build_sdist:
     name: Build 🐍 sdist
     if: ${{(startsWith(github.event.comment.body, '/build_wheels') && github.event.issue.pull_request) || github.event_name == 'workflow_dispatch'}}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
 
     steps:
       # ref: https://github.com/actions/checkout/issues/331#issuecomment-707103442
@@ -69,7 +69,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.13'
 
       - name: Dependencies
         run: python -m pip install scikit-build twine
@@ -184,7 +184,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.13'
 
       - name: Dependencies
         run: |
