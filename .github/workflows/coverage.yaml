@@ -24,8 +24,8 @@ jobs:
           cmake \
             -Bbuild \
             -DCMAKE_BUILD_TYPE=Debug \
-            -DCMAKE_C_COMPILER=clang-14 \
-            -DCMAKE_CXX_COMPILER=clang++-14 \
+            -DCMAKE_C_COMPILER=clang-16 \
+            -DCMAKE_CXX_COMPILER=clang++-16 \
             -DOVERLAP_COVERAGE=ON
 
       - name: Build
@@ -36,7 +36,7 @@ jobs:
           cd build
           ctest --output-on-failure
           ~/.local/bin/gcovr \
-            --gcov-executable 'llvm-cov-14 gcov' \
+            --gcov-executable 'llvm-cov-16 gcov' \
             -r ../ \
             --xml -o coverage.xml \
             -e ../third_party/ -e ../test/
