@@ -6,7 +6,10 @@
     ":semanticCommits",
     ":semanticCommitTypeAll(ci)"
   ],
-  "baseBranches": ["main", "0.1.x"],
+  "baseBranchPatterns": [
+    "main",
+    "0.1.x"
+  ],
   "enabledManagers": [
     "pre-commit",
     "github-actions",
@@ -19,7 +22,11 @@
       "matchManagers": [
         "pre-commit"
       ],
-      "matchUpdateTypes": ["major", "minor", "patch"],
+      "matchUpdateTypes": [
+        "major",
+        "minor",
+        "patch"
+      ],
       "automerge": true,
       "automergeType": "pr",
       "groupName": "pre-commit"
@@ -28,14 +35,24 @@
       "matchManagers": [
         "github-actions"
       ],
-      "matchUpdateTypes": ["major", "minor", "patch"],
+      "matchUpdateTypes": [
+        "major",
+        "minor",
+        "patch"
+      ],
       "automerge": true,
       "automergeType": "pr",
       "groupName": "github-actions"
     },
     {
-      "matchManagers": ["pep621"],
-      "matchUpdateTypes": ["major", "minor", "patch"],
+      "matchManagers": [
+        "pep621"
+      ],
+      "matchUpdateTypes": [
+        "major",
+        "minor",
+        "patch"
+      ],
       "groupName": "python",
       "automerge": false
     }
