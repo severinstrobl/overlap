@@ -40,6 +40,7 @@ repos:
       - id: clang-format
         name: format C++ files with clang-format
         stages: [pre-commit]
+        types: [c++]
 
   # CMake
   - repo: https://github.com/cheshirekow/cmake-format-precommit
