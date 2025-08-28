@@ -81,7 +81,7 @@ repos:
         stages: [pre-commit]
 
   - repo: https://github.com/adamchainz/blacken-docs
-    rev: "78a9dcbecf4f755f65d1f3dec556bc249d723600"  # frozen: 1.19.1
+    rev: 0bc601e0cc771b26b206a46d3b298ef951b43c7c  # frozen: 1.19.1
     hooks:
     -   id: blacken-docs
         additional_dependencies:
@@ -97,7 +97,7 @@ repos:
 
   # docs
   - repo: https://github.com/executablebooks/mdformat
-    rev: ff29be1a1ba8029d9375882aa2c812b62112a593  # frozen: 0.7.22
+    rev: 83dc2ce5ca115d3390b9b5561d2898366faf0742  # frozen: 0.7.22
     hooks:
       - id: mdformat
         name: check formatting of Markdown files
