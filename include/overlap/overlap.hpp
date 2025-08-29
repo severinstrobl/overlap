@@ -49,7 +49,6 @@ const auto pi = Scalar{4} * std::atan(Scalar{1});
 
 static constexpr auto tiny_epsilon =
     Scalar{4} * std::numeric_limits<Scalar>::epsilon();  // 4 ulp at 1.0
-static constexpr auto medium_epsilon = Scalar{1e2} * tiny_epsilon;
 static constexpr auto large_epsilon = Scalar{1e-10};
 
 // Robust calculation of the normal vector of a polygon using Newell's method
@@ -277,17 +276,17 @@ class Polygon {
 
   template<typename... Types>
   explicit constexpr Polygon(const Vector& v0, Types... verts) :
-      Polygon{std::array<Vector, VertexCount>{v0, verts...}} {}
+      Polygon{std::array<Vector, vertex_count>{v0, verts...}} {}
 
-  explicit Polygon(std::array<Vector, VertexCount> verts) :
+  explicit Polygon(std::array<Vector, vertex_count> verts) :
       vertices(std::move(verts)) {
-    center = (Scalar{1} / Scalar{VertexCount}) *
+    center = (Scalar{1} / Scalar{vertex_count}) *
              std::accumulate(vertices.begin(), vertices.end(),
                              Vector::Zero().eval());
 
     // For a quadrilateral, Newell's method can be simplified significantly.
     // Ref: Christer Ericson - Real-Time Collision Detection (2005)
-    if constexpr (VertexCount == 4) {
+    if constexpr (vertex_count == 4) {
       normal = ((vertices[2] - vertices[0]).cross(vertices[3] - vertices[1]))
                    .normalized();
 
@@ -310,7 +309,7 @@ class Polygon {
 
   [[nodiscard]] auto is_planar(const Scalar tolerance = large_epsilon) const
       -> bool {
-    if constexpr (VertexCount == 3U) {
+    if constexpr (vertex_count == 3U) {
       return true;
     }
 
@@ -322,7 +321,7 @@ class Polygon {
 
  private:
   void update_area() {
-    if constexpr (VertexCount == 4) {
+    if constexpr (vertex_count == 4) {
       area = Scalar{0.5} *
              (((vertices[1] - vertices[0]).cross(vertices[2] - vertices[0]))
                   .stableNorm() +
