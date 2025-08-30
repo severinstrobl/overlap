@@ -17,17 +17,34 @@
   ],
   "platformCommit": "enabled",
   "separateMajorMinor": false,
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": [
+        "^\\.pre-commit-config\\.ya?ml$"
+      ],
+      "matchStrings": [
+        "\\s*-\\s+repo:\\s+(?<depName>https://github\\.com/[^/]+/[^\\s]+)\\s+rev:\\s+(?<currentDigest>[a-f0-9]{40})\\s*#\\s*frozen:\\s*(?<currentValue>v?[0-9]+\\.[0-9]+\\.[0-9]+(?:-[a-zA-Z0-9.-]+)?)"
+      ],
+      "datasourceTemplate": "github-tags",
+      "lookupNameTemplate": "{{#if (containsString depName 'https://github.com/')}}{{replace 'https://github.com/' '' depName}}{{else}}{{depName}}{{/if}}",
+      "depNameTemplate": "{{depName}}"
+    }
+  ],
   "packageRules": [
     {
       "matchManagers": [
-        "pre-commit"
+        "custom.regex"
+      ],
+      "matchFileNames": [
+        ".pre-commit-config.yaml"
       ],
       "matchUpdateTypes": [
         "major",
         "minor",
         "patch"
       ],
-      "automerge": true,
+      "automerge": false,
       "automergeType": "pr",
       "groupName": "pre-commit"
     },
