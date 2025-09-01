@@ -11,7 +11,6 @@
     "0.1.x"
   ],
   "enabledManagers": [
-    "pre-commit",
     "github-actions",
     "pep621"
   ],
@@ -20,14 +19,14 @@
   "customManagers": [
     {
       "customType": "regex",
-      "fileMatch": [
-        "^\\.pre-commit-config\\.ya?ml$"
+      "managerFilePatterns": [
+        "/^\\.pre-commit-config\\.ya?ml$/"
       ],
       "matchStrings": [
         "\\s*-\\s+repo:\\s+(?<depName>https://github\\.com/[^/]+/[^\\s]+)\\s+rev:\\s+(?<currentDigest>[a-f0-9]{40})\\s*#\\s*frozen:\\s*(?<currentValue>v?[0-9]+\\.[0-9]+\\.[0-9]+(?:-[a-zA-Z0-9.-]+)?)"
       ],
-      "datasourceTemplate": "github-tags",
-      "lookupNameTemplate": "{{#if (containsString depName 'https://github.com/')}}{{replace 'https://github.com/' '' depName}}{{else}}{{depName}}{{/if}}",
+      "datasourceTemplate": "github-releases",
+      "packageNameTemplate": "{{#if (containsString depName 'https://github.com/')}}{{replace 'https://github.com/' '' depName}}{{else}}{{depName}}{{/if}}",
       "depNameTemplate": "{{depName}}"
     }
   ],
@@ -37,7 +36,7 @@
         "custom.regex"
       ],
       "matchFileNames": [
-        ".pre-commit-config.yaml"
+        "^\\.pre-commit-config\\.ya?ml$"
       ],
       "matchUpdateTypes": [
         "major",

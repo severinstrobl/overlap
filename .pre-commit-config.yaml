@@ -95,6 +95,12 @@ repos:
         name: check GitHub workflow files
         stages: [pre-commit]
 
+  - repo: https://github.com/renovatebot/pre-commit-hooks
+    rev: d3c1cdd30e20811bcc6e1501945209ff161cafe4  # frozen: 41.91.2
+    hooks:
+      - id: renovate-config-validator
+        args: [--strict]
+
   # docs
   - repo: https://github.com/executablebooks/mdformat
     rev: 83dc2ce5ca115d3390b9b5561d2898366faf0742  # frozen: 0.7.22
