@@ -28,50 +28,36 @@
         "\\s*-\\s+repo:\\s+(?<depName>https://github\\.com/[^/]+/[^\\s]+)\\s+rev:\\s+(?<currentDigest>[a-f0-9]{40})\\s*#\\s*frozen:\\s*(?<currentValue>v?[0-9]+\\.[0-9]+\\.[0-9]+(?:-[a-zA-Z0-9.-]+)?)"
       ],
       "datasourceTemplate": "github-releases",
-      "packageNameTemplate": "{{#if (containsString depName 'https://github.com/')}}{{replace 'https://github.com/' '' depName}}{{else}}{{depName}}{{/if}}",
-      "depNameTemplate": "{{depName}}"
+      "depNameTemplate": "{{replace 'https://github.com/' '' depName}}"
     }
   ],
   "packageRules": [
     {
+      "groupName": "pre-commit dependencies",
       "matchManagers": [
         "custom.regex"
       ],
       "matchFileNames": [
         "^\\.pre-commit-config\\.ya?ml$"
       ],
-      "matchUpdateTypes": [
-        "major",
-        "minor",
-        "patch"
-      ],
       "automerge": false,
-      "automergeType": "pr",
-      "groupName": "pre-commit"
+      "addLabels": [
+        "pre-commit"
+      ]
     },
     {
+      "groupName": "github-actions",
       "matchManagers": [
         "github-actions"
       ],
-      "matchUpdateTypes": [
-        "major",
-        "minor",
-        "patch"
-      ],
       "automerge": true,
-      "automergeType": "pr",
-      "groupName": "github-actions"
+      "automergeType": "pr"
     },
     {
+      "groupName": "python dependencies",
       "matchManagers": [
         "pep621"
       ],
-      "matchUpdateTypes": [
-        "major",
-        "minor",
-        "patch"
-      ],
-      "groupName": "python",
       "automerge": false
     }
   ],
