@@ -1,8 +1,13 @@
 # Exact calculation of the overlap volume and area of spheres and mesh elements
 
-![Build Status](https://img.shields.io/github/actions/workflow/status/severinstrobl/overlap/ci.yaml?branch=main)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/severinstrobl/overlap/ci.yaml?branch=main)](https://github.com/severinstrobl/overlap/actions/workflows/ci.yaml)
 [![codecov](https://codecov.io/gh/severinstrobl/overlap/branch/main/graph/badge.svg?token=GQ2L62OXXK)](https://codecov.io/gh/severinstrobl/overlap)
-[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=severinstrobl_overlap&metric=alert_status)](https://sonarcloud.io/summary/overall?id=severinstrobl_overlap)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)\
+[![Release](https://img.shields.io/github/release/severinstrobl/overlap.svg)](https://github.com/severinstrobl/overlap/releases)
+[![PyPI](https://img.shields.io/pypi/v/overlap)](https://pypi.org/project/overlap/)\
+![C++](https://img.shields.io/badge/C%2B%2B-17%7C20%7C23-blue)
+[![Python Version](https://img.shields.io/pypi/pyversions/overlap)](https://pypi.org/project/overlap/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 [![DOI](https://img.shields.io/badge/DOI-10.1016/j.jcp.2016.02.003-blue.svg)](https://dx.doi.org/10.1016/j.jcp.2016.02.003)
 
@@ -67,6 +72,8 @@ LLVM-based oneAPI compilers are expected to work.
 
 ### C++
 
+[![Try it online](https://img.shields.io/badge/try-online-blue.svg)](https://godbolt.org/z/jc3GfeEnd)
+
 The library is implemented as a header-only library written in C++17. To use it
 in your code, simply include the header file `include/overlap/overlap.hpp` and
 make sure the **Eigen3** headers can be found by your compiler or build system.
@@ -77,26 +84,28 @@ principle, these types can be adjusted to specific needs, yet reducing the
 numerical precision of the scalar floating point type will have a significant
 impact on the precision and stability of the calculations.
 
-A minimal example calculating the overlap of a hexahedron with a side length of
-2 centered at the origin and a sphere with radius 1 centered at a corner of the
+A minimal example calculating the overlap volume of a hexahedron with a side length
+of 2 centered at the origin and a sphere with radius 1 centered at a corner of the
 hexahedron could look something like this:
 
 ```cpp
 using namespace overlap;
 
-Vector v0{-1, -1, -1};
-Vector v1{ 1, -1, -1};
-Vector v2{ 1,  1, -1};
-Vector v3{-1,  1, -1};
-Vector v4{-1, -1,  1};
-Vector v5{ 1, -1,  1};
-Vector v6{ 1,  1,  1};
-Vector v7{-1,  1,  1};
+const auto vertices = std::array<Vector, 8>{{
+    {-1, -1, -1},
+    { 1, -1, -1},
+    { 1,  1, -1},
+    {-1,  1, -1},
+    {-1, -1,  1},
+    { 1, -1,  1},
+    { 1,  1,  1},
+    {-1,  1,  1}
+}};
 
-Hexahedron hex{v0, v1, v2, v3, v4, v5, v6, v7};
-Sphere s{Vector::Constant(1), 1};
+const auto hex = Hexahedron{vertices};
+const auto sphere = Sphere{Vector::Constant(1), 1};
 
-const Scalar result = overlap_volume(s, hex);
+const auto volume = overlap_volume(sphere, hex);
 ```
 
 This code snippet calculates the correct result (π/6) for this simple
@@ -108,26 +117,30 @@ function `overlap_area()` can be employed as such:
 ```cpp
 using namespace overlap;
 
-Vector v0{-std::sqrt(3) / 6.0, -1.0 / 2.0, 0};
-Vector v1{std::sqrt(3) / 3.0, 0, 0};
-Vector v2{-std::sqrt(3) / 6.0, +1.0 / 2.0, 0};
-Vector v3{0, 0, std::sqrt(6) / 3.0};
+const auto vertices = std::array<Vector, 4>{{
+    {-std::sqrt(3) / 6.0, -1.0 / 2.0, 0},
+    { std::sqrt(3) / 3.0,  0.0, 0},
+    {-std::sqrt(3) / 6.0,  1.0 / 2.0, 0},
+    {0, 0, std::sqrt(6) / 3.0},
+}};
 
-Tetrahedron tet{v0, v1, v2, v3};
-Sphere s{{0, 0, 1.5}, 1.25};
+const auto tet = Tetrahedron{vertices};
+const auto sphere = Sphere{{0, 0, 1.5}, 1.25};
 
-const auto result = overlap_area(s, tet);
+const auto result = overlap_area(sphere, tet);
 
 std::cout << "surface area of sphere intersecting tetrahedron: " <<
-    result[0] << std::endl;
+    result.front() << "\n";
 
-std::cout << "overlap areas per face:" << std::endl;
-// The indices of the faces are NOT zero-based here!
-for(size_t f = 1; f < result.size() - 1; ++f)
-    std::cout << "  face #" << (f - 1) << ": " << result[f] << std::endl;
+std::cout << "overlap areas per face:\n";
+for(auto face_idx = 0u; face_idx < tet.faces.size(); ++face_idx) {
+    std::cout << "  face #" << face_idx << ": " <<
+        // the indices of the faces are NOT zero-based here!
+        result[face_idx + 1] << "\n";
+}
 
 std::cout << "total surface area of tetrahedron intersecting sphere: " <<
-    result.back() << std::endl;
+    result.back() << "\n";
 ```
 
 ### Python
