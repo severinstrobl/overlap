@@ -16,7 +16,7 @@ jobs:
       # ref: https://github.com/actions/checkout/issues/331#issuecomment-707103442
       - name: Get pull request
         if: ${{ github.event.issue.pull_request }}
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         id: get-pr
         with:
           script: |
@@ -49,7 +49,7 @@ jobs:
 
       - name: Trigger response
         if: ${{ github.event.issue.pull_request }}
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         id: trigger-response
         with:
           script: |
@@ -67,7 +67,7 @@ jobs:
             }
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.13'
 
@@ -84,7 +84,7 @@ jobs:
 
       - name: Notify via comment
         if: ${{ github.event.issue.pull_request }}
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           STEP_STATUS: ${{steps.check-metadata.outcome}}
         with:
@@ -131,7 +131,7 @@ jobs:
       # ref: https://github.com/actions/checkout/issues/331#issuecomment-707103442
       - name: Get pull request
         if: ${{ github.event.issue.pull_request }}
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         id: get-pr
         with:
           script: |
@@ -164,7 +164,7 @@ jobs:
 
       - name: Trigger response
         if: ${{ github.event.issue.pull_request }}
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         id: trigger-response
         with:
           script: |
@@ -182,7 +182,7 @@ jobs:
             }
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.13'
 
@@ -206,7 +206,7 @@ jobs:
 
       - name: Notify via comment
         if: ${{ github.event.issue.pull_request }}
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           STEP_STATUS: ${{steps.build-wheels.outcome}}
         with:
