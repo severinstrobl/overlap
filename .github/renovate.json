@@ -29,6 +29,17 @@
       ],
       "datasourceTemplate": "github-releases",
       "depNameTemplate": "{{replace 'https://github.com/' '' depName}}"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "CMakeLists\\.txt$"
+      ],
+      "matchStrings": [
+        "(?ms)fetchcontent_declare\\s*\\(\\s*(?<depName>[^\\s\\)]+).*?GIT_REPOSITORY\\s+(?<gitUrl>https://github\\.com/[^/\\s]+/[^/\\s]+)\\.git.*?GIT_TAG\\s+(?<currentDigest>[a-f0-9]{40})\\s*#\\s*(?<currentValue>v?[0-9]+\\.[0-9]+\\.[0-9]+(?:-[a-zA-Z0-9.-]+)?)"
+      ],
+      "datasourceTemplate": "github-releases",
+      "packageNameTemplate": "{{replace 'https://github.com/' '' gitUrl}}"
     }
   ],
   "packageRules": [
@@ -46,7 +57,17 @@
       ]
     },
     {
-      "groupName": "github-actions",
+      "groupName": "C++ dependencies",
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "matchFileNames": [
+        "CMakeLists\\.txt$"
+      ],
+      "automerge": false
+    },
+    {
+      "groupName": "Git Hub Actions",
       "matchManagers": [
         "github-actions"
       ],
@@ -54,7 +75,7 @@
       "automergeType": "pr"
     },
     {
-      "groupName": "python dependencies",
+      "groupName": "Python dependencies",
       "matchManagers": [
         "pep621"
       ],
