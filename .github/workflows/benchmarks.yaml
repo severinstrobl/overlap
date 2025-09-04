@@ -41,7 +41,7 @@ jobs:
 
       - name: Check if benchmark results for reference version exist
         id: check_ref_results
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           github-token: ${{ steps.benchmark_app_token.outputs.token }}
           script: |
@@ -89,7 +89,7 @@ jobs:
 
       - name: Obtain archived benchmark results for reference version
         if: ${{ fromJSON(needs.check_reference.outputs.reference_results_available) }}
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           github-token: ${{ steps.benchmark_app_token.outputs.token }}
           script: |
@@ -155,7 +155,7 @@ jobs:
 
       - name: Create/update PR comment
         if: ${{ github.event_name == 'pull_request'}}
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           github-token: ${{ steps.benchmark_app_token.outputs.token }}
           script: |
@@ -189,7 +189,7 @@ jobs:
 
       - name: Report via annotation
         if: ${{ github.event_name != 'pull_request' }}
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
