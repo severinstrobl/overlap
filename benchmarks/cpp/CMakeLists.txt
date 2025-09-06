@@ -29,7 +29,7 @@ if(NOT TARGET nanobench)
   fetchcontent_declare(
     nanobench
     GIT_REPOSITORY https://github.com/martinus/nanobench.git
-    GIT_TAG v4.3.11
+    GIT_TAG a5a50c2b33eea2ff1fcb355cacdface43eb42b25 # v4.3.11
     GIT_SHALLOW TRUE
     EXCLUDE_FROM_ALL
   )

@@ -21,6 +21,7 @@
   "customManagers": [
     {
       "customType": "regex",
+      "description": "pre-commit dependencies",
       "managerFilePatterns": [
         "/^\\.pre-commit-config\\.ya?ml$/"
       ],
@@ -32,14 +33,15 @@
     },
     {
       "customType": "regex",
+      "description": "C++ dependencies via CMake FetchContent",
       "managerFilePatterns": [
-        "CMakeLists\\.txt$"
+        "/CMakeLists\\.txt$/"
       ],
       "matchStrings": [
-        "(?ms)fetchcontent_declare\\s*\\(\\s*(?<depName>[^\\s\\)]+)\\s+GIT_REPOSITORY\\s+(?<gitUrl>https://github\\.com/[^/\\s]+/[^/\\s]+)\\.git\\s+GIT_TAG\\s+(?<currentDigest>[a-f0-9]{40})\\s*#\\s*(?<currentValue>v?[0-9]+\\.[0-9]+\\.[0-9]+(?:-[a-zA-Z0-9.-]+)?)"
+        "(?ms)fetchcontent_declare\\s*\\(\\s*(?<depName>[^\\s\\)]+)\\s+GIT_REPOSITORY\\s+(?<gitUrl>https://git(hub|lab)\\.com/[^/\\s]+/[^/\\s]+)\\.git\\s+GIT_TAG\\s+(?<currentDigest>[a-f0-9]{40})\\s*#\\s*(?<currentValue>v?[0-9]+\\.[0-9]+\\.[0-9]+(?:-[a-zA-Z0-9.-]+)?)"
       ],
-      "datasourceTemplate": "github-releases",
-      "packageNameTemplate": "{{replace 'https://github.com/' '' gitUrl}}"
+      "datasourceTemplate": "{{#if (containsString gitUrl 'gitlab.com')}}gitlab-releases{{else}}github-releases{{/if}}",
+      "packageNameTemplate": "{{replace 'https://github.com/' '' (replace 'https://gitlab.com/' '' gitUrl)}}"
     }
   ],
   "packageRules": [
