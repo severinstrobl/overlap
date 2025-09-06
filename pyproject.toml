@@ -47,12 +47,12 @@ metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
 sdist.include = [ "python/overlap/_version.py" ]
 
 [tool.cibuildwheel]
-test-requires = "pytest"
+test-requires = [ "pytest==7.4.4" ]
 test-command = "python -m pytest -vs {project}/tests/python"
 build-verbosity = 1
 environment-pass = [ "SETUPTOOLS_SCM_OVERRIDES_FOR_OVERLAP" ]
 enable = "pypy"
-skip = "pp310-manylinux_i686 pp311-manylinux_i686 cp314t-*"
+skip = "pp310-manylinux_i686 pp311-manylinux_i686 cp314t-* cp313-pyodide_wasm32"
 
 [tool.cibuildwheel.linux]
 archs = [ "auto64", "auto32" ]
@@ -69,6 +69,13 @@ environment.MACOSX_DEPLOYMENT_TARGET = "10.15"
 select = "*-macosx_arm64"
 inherit.environment = "append"
 environment.MACOSX_DEPLOYMENT_TARGET = "11.0"
+
+[[tool.cibuildwheel.overrides]]
+select = "*pyodide*"
+inherit.environment = "append"
+environment.CFLAGS = "-fexceptions"
+environment.LDFLAGS = "-fexceptions"
+build-frontend = { name = "build", args = [ "--exports", "whole_archive" ] }
 
 [tool.ruff]
 line-length = 100

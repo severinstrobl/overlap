@@ -201,6 +201,14 @@ jobs:
         with:
           output-dir: dist
 
+      - name: Build Pyodide wheels
+        if: matrix.os == 'ubuntu-24.04'
+        uses: pypa/cibuildwheel@v3.1.4
+        env:
+          CIBW_PLATFORM: pyodide
+        with:
+          output-dir: dist
+
       - name: Notify via comment
         if: ${{ github.event.issue.pull_request }}
         uses: actions/github-script@v8
