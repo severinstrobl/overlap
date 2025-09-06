@@ -196,7 +196,6 @@ jobs:
         shell: bash
 
       - name: Build wheels
-        if: matrix.os == 'macos-14'
         id: build-wheels
         uses: pypa/cibuildwheel@v3.1.4
         with:
@@ -210,36 +209,36 @@ jobs:
         with:
           output-dir: dist
 
-      # - name: Notify via comment
-      #   if: ${{ github.event.issue.pull_request }}
-      #   uses: actions/github-script@v8
-      #   env:
-      #     STEP_STATUS: ${{ steps.build-wheels.outcome }}
-      #   with:
-      #     script: |
-      #       try {
-      #         const result = await github.rest.issues.getComment({
-      #           owner: context.repo.owner,
-      #           repo: context.repo.repo,
-      #           comment_id: ${{ fromJSON(steps.trigger-response.outputs.result).id }},
-      #         });
+      - name: Notify via comment
+        if: ${{ github.event.issue.pull_request }}
+        uses: actions/github-script@v8
+        env:
+          STEP_STATUS: ${{ steps.build-wheels.outcome }}
+        with:
+          script: |
+            try {
+              const result = await github.rest.issues.getComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: ${{ fromJSON(steps.trigger-response.outputs.result).id }},
+              });
 
-      #         let msg = result.data.body;
-      #         if(process.env.STEP_STATUS == 'success') {
-      #           msg += 'successful :heavy_check_mark:';
-      #         } else {
-      #           msg += 'failed :x:';
-      #         }
+              let msg = result.data.body;
+              if(process.env.STEP_STATUS == 'success') {
+                msg += 'successful :heavy_check_mark:';
+              } else {
+                msg += 'failed :x:';
+              }
 
-      #         github.rest.issues.updateComment({
-      #           owner: context.repo.owner,
-      #           repo: context.repo.repo,
-      #           comment_id: ${{ fromJSON(steps.trigger-response.outputs.result).id }},
-      #           body: msg,
-      #         });
-      #       } catch (err) {
-      #         core.setFailed(`Request failed with error ${err}`);
-      #       }
+              github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: ${{ fromJSON(steps.trigger-response.outputs.result).id }},
+                body: msg,
+              });
+            } catch (err) {
+              core.setFailed(`Request failed with error ${err}`);
+            }
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
