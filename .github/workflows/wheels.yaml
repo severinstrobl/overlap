@@ -195,12 +195,12 @@ jobs:
         run: echo SETUPTOOLS_SCM_OVERRIDES_FOR_OVERLAP='{ local_scheme = "no-local-version" }' >> "$GITHUB_ENV"
         shell: bash
 
-      # temporarily disabled to speed up CI
-      # - name: Build wheels
-      #   id: build-wheels
-      #   uses: pypa/cibuildwheel@v3.1.4
-      #   with:
-      #     output-dir: dist
+      - name: Build wheels
+        if: matrix.os == 'macos-14'
+        id: build-wheels
+        uses: pypa/cibuildwheel@v3.1.4
+        with:
+          output-dir: dist
 
       - name: Build Pyodide wheels
         if: matrix.os == 'ubuntu-24.04'
