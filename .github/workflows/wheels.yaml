@@ -19,7 +19,7 @@ jobs:
       # ref: https://github.com/actions/checkout/issues/331#issuecomment-707103442
       - name: Get pull request
         if: ${{ github.event.issue.pull_request }}
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         id: get-pr
         with:
           script: |
@@ -38,7 +38,7 @@ jobs:
 
       - name: Checkout MR
         if: ${{ github.event.issue.pull_request }}
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           repository: ${{ fromJSON(steps.get-pr.outputs.result).head.repo.full_name }}
           ref: ${{ fromJSON(steps.get-pr.outputs.result).head.sha }}
@@ -46,7 +46,7 @@ jobs:
 
       - name: Checkout
         if: ${{ github.event_name == 'workflow_dispatch' }}
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           submodules: true
 
@@ -57,7 +57,7 @@ jobs:
 
       - name: Trigger response
         if: ${{ github.event.issue.pull_request }}
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         id: trigger-response
         with:
           script: |
@@ -74,7 +74,7 @@ jobs:
               core.setFailed(`Request failed with error ${err}`);
             }
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
         with:
           python-version: "3.13"
 
@@ -91,7 +91,7 @@ jobs:
 
       - name: Notify via comment
         if: ${{ github.event.issue.pull_request }}
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         env:
           STEP_STATUS: ${{steps.check-metadata.outcome}}
         with:
@@ -121,7 +121,7 @@ jobs:
             }
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: ${{ github.event.repository.name }}-sdist
           path: dist/*.tar.gz
@@ -140,7 +140,7 @@ jobs:
       # ref: https://github.com/actions/checkout/issues/331#issuecomment-707103442
       - name: Get pull request
         if: ${{ github.event.issue.pull_request }}
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         id: get-pr
         with:
           script: |
@@ -159,7 +159,7 @@ jobs:
 
       - name: Checkout MR
         if: ${{ github.event.issue.pull_request }}
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           repository: ${{ fromJSON(steps.get-pr.outputs.result).head.repo.full_name }}
           ref: ${{ fromJSON(steps.get-pr.outputs.result).head.sha }}
@@ -167,13 +167,13 @@ jobs:
 
       - name: Checkout
         if: ${{ github.event_name == 'workflow_dispatch' }}
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           submodules: true
 
       - name: Trigger response
         if: ${{ github.event.issue.pull_request }}
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         id: trigger-response
         with:
           script: |
@@ -197,13 +197,13 @@ jobs:
 
       - name: Build wheels
         id: build-wheels
-        uses: pypa/cibuildwheel@v3.1.4
+        uses: pypa/cibuildwheel@c923d83ad9c1bc00211c5041d0c3f73294ff88f6 # v3.1.4
         with:
           output-dir: dist
 
       - name: Build Pyodide wheels
         if: matrix.os == 'ubuntu-24.04'
-        uses: pypa/cibuildwheel@v3.1.4
+        uses: pypa/cibuildwheel@c923d83ad9c1bc00211c5041d0c3f73294ff88f6 # v3.1.4
         env:
           CIBW_PLATFORM: pyodide
         with:
@@ -211,7 +211,7 @@ jobs:
 
       - name: Notify via comment
         if: ${{ github.event.issue.pull_request }}
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         env:
           STEP_STATUS: ${{ steps.build-wheels.outcome }}
         with:
@@ -241,7 +241,7 @@ jobs:
             }
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: ${{ github.event.repository.name }}-wheels-${{ matrix.os }}
           path: ./dist/*.whl
@@ -259,7 +259,7 @@ jobs:
 
     steps:
       - name: Download sdist/wheels
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
         with:
           pattern: ${{ github.event.repository.name }}-*
           path: dist
@@ -271,16 +271,16 @@ jobs:
         shell: bash
 
       - name: Generate artifact attestations
-        uses: actions/attest-build-provenance@v3
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
         with:
           subject-path: "dist/*"
 
       - name: Publish package to TestPyPI
         if: github.event_name == 'workflow_dispatch'
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
         with:
           repository-url: https://test.pypi.org/legacy/
 
       - name: Publish package to PyPI
         if: github.event_name == 'release' && github.event.action == 'published'
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
