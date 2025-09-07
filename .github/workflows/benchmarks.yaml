@@ -21,7 +21,7 @@ jobs:
       reference_results_available: ${{ steps.check_ref_results.outputs.available }}
       artifact_id: ${{ steps.check_ref_results.outputs.artifact_id }}
     steps:
-      - uses: actions/create-github-app-token@v2
+      - uses: actions/create-github-app-token@a8d616148505b5069dccd32f177bb87d7f39123b # v2.1.1
         id: benchmark_app_token
         with:
           app-id: ${{ vars.OVERLAP_BENCHMARK_APP_ID }}
@@ -41,7 +41,7 @@ jobs:
 
       - name: Check if benchmark results for reference version exist
         id: check_ref_results
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         with:
           github-token: ${{ steps.benchmark_app_token.outputs.token }}
           script: |
@@ -81,7 +81,7 @@ jobs:
         run: |
           python -m pip install pyperf
 
-      - uses: actions/create-github-app-token@v2
+      - uses: actions/create-github-app-token@a8d616148505b5069dccd32f177bb87d7f39123b # v2.1.1
         id: benchmark_app_token
         with:
           app-id: ${{ vars.OVERLAP_BENCHMARK_APP_ID }}
@@ -89,7 +89,7 @@ jobs:
 
       - name: Obtain archived benchmark results for reference version
         if: ${{ fromJSON(needs.check_reference.outputs.reference_results_available) }}
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         with:
           github-token: ${{ steps.benchmark_app_token.outputs.token }}
           script: |
@@ -111,14 +111,14 @@ jobs:
 
       - name: Obtain new benchmark results for reference version
         if: ${{ !fromJSON(needs.check_reference.outputs.reference_results_available) }}
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
         with:
           pattern: benchmarks-*-${{ needs.check_reference.outputs.reference_sha }}
           path: ${{ needs.check_reference.outputs.reference_sha }}
           merge-multiple: true
 
       - name: Obtain benchmark results for current version
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
         with:
           pattern: benchmarks-*-${{ github.sha }}
           path: ${{ github.sha }}
@@ -146,7 +146,7 @@ jobs:
 
       - name: Check for existing PR comment
         if: ${{ github.event_name == 'pull_request' }}
-        uses: peter-evans/find-comment@v3
+        uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3.1.0
         id: find_existing_comment
         with:
           issue-number: ${{ github.event.pull_request.number }}
@@ -155,7 +155,7 @@ jobs:
 
       - name: Create/update PR comment
         if: ${{ github.event_name == 'pull_request'}}
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         with:
           github-token: ${{ steps.benchmark_app_token.outputs.token }}
           script: |
@@ -189,7 +189,7 @@ jobs:
 
       - name: Report via annotation
         if: ${{ github.event_name != 'pull_request' }}
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         with:
           script: |
             const fs = require('fs');
