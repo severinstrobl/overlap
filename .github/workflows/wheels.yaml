@@ -265,6 +265,11 @@ jobs:
           path: dist
           merge-multiple: true
 
+        # PyPI does not support publishing of Pyodide wheels yet
+      - name: Remove Pyodide wheels
+        run: rm dist/*pyodide*.whl || true
+        shell: bash
+
       - name: Generate artifact attestations
         uses: actions/attest-build-provenance@v3
         with:
