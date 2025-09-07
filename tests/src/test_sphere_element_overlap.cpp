@@ -37,7 +37,8 @@ TEST_SUITE("SphereElementOverlap") {
 
   // Sphere outside of hexahedron, touching one edge.
   TEST_CASE("EdgeTouching") {
-    const auto offset = 1.0 + 0.5 * std::sqrt(2.0) - detail::medium_epsilon;
+    const auto offset =
+        1.0 + 0.5 * std::sqrt(2.0) - Scalar{1e2} * detail::tiny_epsilon;
     const auto sphere = Sphere{Vector{offset, offset, 0}, 1};
 
     validate_overlap_volume(sphere, unit_hexahedron(), epsilon, Scalar{0});
@@ -100,7 +101,8 @@ TEST_SUITE("SphereElementOverlap") {
 
   // Sphere outside of hexahedron, slightly overlapping one vertex.
   TEST_CASE("VertexTinyOverlap") {
-    const auto offset = 1.0 + 0.5 * std::sqrt(2.0) - detail::medium_epsilon;
+    const auto offset =
+        1.0 + 0.5 * std::sqrt(2.0) - Scalar{1e2} * detail::tiny_epsilon;
     const auto sphere = Sphere{Vector{offset, offset, 1}, 1};
 
     validate_overlap_volume(sphere, unit_hexahedron(), epsilon, Scalar{0});
