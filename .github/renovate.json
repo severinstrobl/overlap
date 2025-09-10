@@ -53,6 +53,10 @@
       "matchFileNames": [
         "^\\.pre-commit-config\\.ya?ml$"
       ],
+      "matchUpdateTypes": [
+        "major",
+        "minor"
+      ],
       "automerge": false,
       "addLabels": [
         "pre-commit"
@@ -84,7 +88,7 @@
       "automerge": false
     }
   ],
-  "addLabels": [
+  "labels": [
     "renovate",
     "dependencies"
   ]
