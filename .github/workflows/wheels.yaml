@@ -197,13 +197,13 @@ jobs:
 
       - name: Build wheels
         id: build-wheels
-        uses: pypa/cibuildwheel@c923d83ad9c1bc00211c5041d0c3f73294ff88f6 # v3.1.4
+        uses: pypa/cibuildwheel@7c619efba910c04005a835b110b057fc28fd6e93 # v3.2.0
         with:
           output-dir: dist
 
       - name: Build Pyodide wheels
         if: matrix.os == 'ubuntu-24.04'
-        uses: pypa/cibuildwheel@c923d83ad9c1bc00211c5041d0c3f73294ff88f6 # v3.1.4
+        uses: pypa/cibuildwheel@7c619efba910c04005a835b110b057fc28fd6e93 # v3.2.0
         env:
           CIBW_PLATFORM: pyodide
         with:
