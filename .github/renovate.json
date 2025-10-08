@@ -63,6 +63,19 @@
       ]
     },
     {
+      "groupName": "Ignore patch updates for pre-commit dependencies",
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "matchFileNames": [
+        "^\\.pre-commit-config\\.ya?ml$"
+      ],
+      "matchUpdateTypes": [
+        "patch"
+      ],
+      "enabled": false
+    },
+    {
       "groupName": "C++ dependencies",
       "matchManagers": [
         "custom.regex"
