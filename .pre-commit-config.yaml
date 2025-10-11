@@ -89,7 +89,7 @@ repos:
 
   # CI
   - repo: https://github.com/rhysd/actionlint
-    rev: 03d0035246f3e81f36aed592ffb4bebf33a03106  # frozen: v1.7.7
+    rev: e7d448ef7507c20fc4c88a95d0c448b848cd6127  # frozen: v1.7.8
     hooks:
       - id: actionlint
         name: check GitHub workflow files
