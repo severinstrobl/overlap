@@ -121,7 +121,7 @@ jobs:
           # LLVM/Clang on macOS/arm64 using libc++
           - {
               name: "Clang 15.0.0 (macOS, AArch64)",
-              os: "macos-14",
+              os: "macos-15",
               cc: "clang",
               cxx: "clang++",
             }
