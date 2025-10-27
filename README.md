@@ -1,7 +1,7 @@
 # Exact calculation of the overlap volume and area of spheres and mesh elements
 
 [![Build Status](https://img.shields.io/github/actions/workflow/status/severinstrobl/overlap/ci.yaml?branch=main)](https://github.com/severinstrobl/overlap/actions/workflows/ci.yaml)
-[![codecov](https://codecov.io/gh/severinstrobl/overlap/branch/main/graph/badge.svg?token=GQ2L62OXXK)](https://codecov.io/gh/severinstrobl/overlap)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=severinstrobl_overlap&metric=coverage)](https://sonarcloud.io/summary/overall?id=severinstrobl_overlap)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=severinstrobl_overlap&metric=alert_status)](https://sonarcloud.io/summary/overall?id=severinstrobl_overlap)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)\
 [![Release](https://img.shields.io/github/release/severinstrobl/overlap.svg)](https://github.com/severinstrobl/overlap/releases)
