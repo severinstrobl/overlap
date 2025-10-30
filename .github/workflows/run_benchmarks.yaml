@@ -61,7 +61,7 @@ jobs:
 
       - name: Store benchmark results for selected revision
         if: ${{ steps.benchmark_step.outcome == 'success' }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: benchmarks-cpp-${{ steps.benchmark_step.outputs.ref_sha }}
           path: benchmarks-cpp.json
@@ -96,7 +96,7 @@ jobs:
 
       - name: Store benchmark results for selected revision
         if: ${{ steps.benchmark_step.outcome == 'success' }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: benchmarks-python-${{ steps.benchmark_step.outputs.ref_sha }}
           path: benchmarks-python.json
