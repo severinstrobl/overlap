@@ -36,6 +36,8 @@ jobs:
       - name: Build and run benchmark for selected revision
         id: benchmark_step
         continue-on-error: ${{ inputs.allow_failure }}
+        env:
+          GIT_REF: ${{ inputs.ref }}
         run: |
           cmake \
             -Bbuild \
@@ -55,7 +57,7 @@ jobs:
             mv combined.json benchmarks-cpp.json
           done
 
-          echo "ref_sha=$(git rev-parse ${{ inputs.ref }})" >> "$GITHUB_OUTPUT"
+          echo "ref_sha=$(git rev-parse "$GIT_REF")" >> "$GITHUB_OUTPUT"
 
       - name: Store benchmark results for selected revision
         if: ${{ steps.benchmark_step.outcome == 'success' }}
@@ -63,6 +65,7 @@ jobs:
         with:
           name: benchmarks-cpp-${{ steps.benchmark_step.outputs.ref_sha }}
           path: benchmarks-cpp.json
+
   benchmark_python:
     name: Python benchmarks
     runs-on: ubuntu-24.04
@@ -82,12 +85,14 @@ jobs:
       - name: Build and run benchmark for selected revision
         id: benchmark_step
         continue-on-error: ${{ inputs.allow_failure }}
+        env:
+          GIT_REF: ${{ inputs.ref }}
         run: |
           python -m pip install .
           python benchmarks/python/run_benchmarks.py
           cp benchmarks/python/overlap_python.json benchmarks-python.json
 
-          echo "ref_sha=$(git rev-parse ${{ inputs.ref }})" >> "$GITHUB_OUTPUT"
+          echo "ref_sha=$(git rev-parse "$GIT_REF")" >> "$GITHUB_OUTPUT"
 
       - name: Store benchmark results for selected revision
         if: ${{ steps.benchmark_step.outcome == 'success' }}
