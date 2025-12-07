@@ -64,7 +64,7 @@ repos:
         stages: [pre-commit]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: aad66557af3b56ba6d4d69cd1b6cba87cef50cbb  # frozen: v0.14.3
+    rev: 1a1f58ba4c35362efe8fed2279715a905baee93d  # frozen: v0.14.8
     hooks:
       - id: ruff
         name: check Python files with ruff
