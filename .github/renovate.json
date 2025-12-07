@@ -54,8 +54,7 @@
         "^\\.pre-commit-config\\.ya?ml$"
       ],
       "matchUpdateTypes": [
-        "major",
-        "minor"
+        "major"
       ],
       "automerge": false,
       "addLabels": [
@@ -63,7 +62,7 @@
       ]
     },
     {
-      "groupName": "Ignore patch updates for pre-commit dependencies",
+      "groupName": "Ignore minor and patch updates for pre-commit dependencies",
       "matchManagers": [
         "custom.regex"
       ],
@@ -71,6 +70,7 @@
         "^\\.pre-commit-config\\.ya?ml$"
       ],
       "matchUpdateTypes": [
+        "minor",
         "patch"
       ],
       "enabled": false
@@ -86,7 +86,7 @@
       "automerge": false
     },
     {
-      "groupName": "Git Hub Actions",
+      "groupName": "GitHub Actions",
       "matchManagers": [
         "github-actions"
       ],
