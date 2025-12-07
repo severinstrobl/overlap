@@ -121,7 +121,7 @@ repos:
 
   # commit messages
   - repo: https://github.com/espressif/conventional-precommit-linter
-    rev: 7bc85936608ba0ae03887bb6e110555535d1c3ac  # frozen: v1.10.0
+    rev: aeba78b29b06233289a1a6ed80371a337e893e19  # frozen: v1.11.0
     hooks:
       - id: conventional-precommit-linter
         name: check commit messages for conventional format
