@@ -21,7 +21,7 @@ jobs:
       reference_results_available: ${{ steps.check_ref_results.outputs.available }}
       artifact_id: ${{ steps.check_ref_results.outputs.artifact_id }}
     steps:
-      - uses: actions/create-github-app-token@7e473efe3cb98aa54f8d4bac15400b15fad77d94 # v2.2.0
+      - uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf # v2.2.1
         id: benchmark_app_token
         with:
           app-id: ${{ vars.OVERLAP_BENCHMARK_APP_ID }}
@@ -81,7 +81,7 @@ jobs:
         run: |
           python -m pip install pyperf
 
-      - uses: actions/create-github-app-token@7e473efe3cb98aa54f8d4bac15400b15fad77d94 # v2.2.0
+      - uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf # v2.2.1
         id: benchmark_app_token
         with:
           app-id: ${{ vars.OVERLAP_BENCHMARK_APP_ID }}
