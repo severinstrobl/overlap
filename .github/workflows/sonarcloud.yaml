@@ -19,7 +19,8 @@ jobs:
       - name: Dependencies
         run: |
           sudo apt install libeigen3-dev
-          python -m pip install gcovr
+          # https://github.com/gcovr/gcovr/issues/1228
+          python -m pip install gcovr==8.4
 
       - name: Install SonarSource build-wrapper
         uses: SonarSource/sonarqube-scan-action/install-build-wrapper@a31c9398be7ace6bbfaf30c0bd5d415f843d45e9 # v7.0.0
