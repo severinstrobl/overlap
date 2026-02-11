@@ -19,7 +19,6 @@ keywords = [
   "numerical-simulations",
 ]
 license = { text = "MIT" }
-authors = [ { name = "Severin Strobl", email = "git@severin-strobl.de" } ]
 requires-python = ">=3.9"
 classifiers = [
   "Programming Language :: Python :: 3 :: Only",
@@ -31,21 +30,28 @@ classifiers = [
   "Programming Language :: Python :: 3.14",
   "Topic :: Scientific/Engineering",
 ]
-
 dynamic = [ "version" ]
 dependencies = [ "numpy" ]
-optional-dependencies.test = [ "pytest>=6" ]
-urls.github = "https://github.com/severinstrobl/overlap"
-urls.issues = "https://github.com/severinstrobl/overlap/issues"
-urls.source = "https://github.com/severinstrobl/overlap.git"
+[[project.authors]]
+name = "Severin Strobl"
+email = "git@severin-strobl.de"
+[project.optional-dependencies]
+test = [ "pytest>=6" ]
+[project.urls]
+github = "https://github.com/severinstrobl/overlap"
+issues = "https://github.com/severinstrobl/overlap/issues"
+source = "https://github.com/severinstrobl/overlap.git"
 
 [tool.setuptools_scm]
 write_to = "python/overlap/_version.py"
 
 [tool.scikit-build]
-cmake.version = ">=3.18"
-metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
-sdist.include = [ "python/overlap/_version.py" ]
+[tool.scikit-build.cmake]
+version = ">=3.18"
+[tool.scikit-build.metadata]
+version.provider = "scikit_build_core.metadata.setuptools_scm"
+[tool.scikit-build.sdist]
+include = [ "python/overlap/_version.py" ]
 
 [tool.cibuildwheel]
 test-requires = [ "pytest==7.4.4" ]
@@ -54,41 +60,36 @@ build-verbosity = 1
 environment-pass = [ "SETUPTOOLS_SCM_OVERRIDES_FOR_OVERLAP" ]
 enable = "pypy"
 skip = "pp311-manylinux_i686 cp314t-* cp313-pyodide_wasm32"
-
 [tool.cibuildwheel.linux]
 archs = [ "auto64", "auto32" ]
-
-[tool.cibuildwheel.windows]
-archs = [ "auto64", "auto32" ]
-
 [[tool.cibuildwheel.overrides]]
 select = "*-macosx_x86_64"
 inherit.environment = "append"
 environment.MACOSX_DEPLOYMENT_TARGET = "10.15"
-
 [[tool.cibuildwheel.overrides]]
 select = "*-macosx_arm64"
 inherit.environment = "append"
 environment.MACOSX_DEPLOYMENT_TARGET = "11.0"
-
 [[tool.cibuildwheel.overrides]]
 select = "*pyodide*"
 inherit.environment = "append"
 environment.CFLAGS = "-fexceptions"
 environment.LDFLAGS = "-fexceptions"
 build-frontend = { name = "build", args = [ "--exports", "whole_archive" ] }
+[tool.cibuildwheel.windows]
+archs = [ "auto64", "auto32" ]
 
 [tool.ruff]
 line-length = 100
 indent-width = 4
 fix = true
 output-format = "github"
-
-format.indent-style = "space"
-format.quote-style = "double"
-
+[tool.ruff.format]
+indent-style = "space"
+quote-style = "double"
+[tool.ruff.lint]
 # ref: https://docs.astral.sh/ruff/rules/
-lint.select = [
+select = [
   "A",   # flake8-builtins
   "ANN", # flake8-annotations
   "B",   # flake8-bugbear
@@ -108,17 +109,18 @@ lint.select = [
   "UP",  # pyupgrade
   "W",   # pycodestyle warnings
 ]
-
 # disable some rules for benchmarks/tests
-lint.per-file-ignores."benchmarks/*" = [
+per-file-ignores."benchmarks/*" = [
   "D", # pycodestyle
 ]
-lint.per-file-ignores."tests/*" = [
+per-file-ignores."tests/*" = [
   "ANN201", # missing-return-type-undocumented-public-function
   "D",      # pycodestyle
 ]
+pydocstyle.convention = "google"
 
-lint.pydocstyle.convention = "google"
+[tool.pyproject-fmt]
+table_format = "long"
 
 [tool.pytest.ini_options]
 minversion = "6"
