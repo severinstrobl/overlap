@@ -1747,6 +1747,11 @@ auto overlap_area(const Sphere& sphere, const Element& element)
 
   const auto circular_segment_area = [](const Scalar radius_sq,
                                         const Scalar chord_length) {
+    if (std::abs(radius_sq - Scalar{0.25} * chord_length * chord_length) <=
+        tiny_epsilon) {
+      return Scalar{0.5} * radius_sq * pi;
+    }
+
     const auto apothem = std::sqrt(std::max(
         Scalar{0}, radius_sq - Scalar{0.25} * chord_length * chord_length));
 

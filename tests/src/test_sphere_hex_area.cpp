@@ -41,27 +41,25 @@ TEST_SUITE("SphereHexAreaTest") {
     result_exact[4] = result_exact[3];
     result_exact[7] = 2 * result_exact[3];
 
-#if defined(__aarch64__)
-    // A larger epsilon is required here as we seem to hit an edge case where
-    // the calculation of the intersection points between the sphere and the
-    // edge suffers from numerical inaccuracies when using GCC or Clang on
-    // AArch64. For Clang, using either ffp-contract=fast or ffp-contract=on the
-    // expected result is obtained.
-    const auto epsilon = std::sqrt(std::numeric_limits<Scalar>::epsilon() *
-                                   sphere.surface_area());
-#else
-    const auto epsilon = std::numeric_limits<Scalar>::epsilon();
-#endif
-
     for (auto i = 0u; i < result_exact.size(); ++i) {
-      INFO("result: ", result[i], ", expected: ", result_exact[i],
-           ", delta:", result[i] - result_exact[i]);
-      CHECK(result[i] == Approx(result_exact[i]).epsilon(epsilon));
+      INFO("index: ", i, ", result: ", result[i],
+           ", expected: ", result_exact[i],
+           ", delta: ", result[i] - result_exact[i]);
+      CHECK(result[i] == Approx(result_exact[i])
+                             .epsilon(std::numeric_limits<Scalar>::epsilon()));
     }
   }
 
   // Sphere intersects one edge (and thus 1 edge and 2 faces).
   TEST_CASE("EdgeOffCenter") {
+    // Here, we seem to hit an edge case where the calculation of the
+    // intersection points between the sphere and the edge suffers from
+    // numerical inaccuracies when using Clang on AArch64. Using either
+    // ffp-contract=fast or ffp-contract=on, the expected result is obtained.
+#if defined(__aarch64__) && defined(__clang__)
+#pragma clang fp contract(on)
+#endif
+
     const auto hex = unit_hexahedron();
     const auto sphere = Sphere{{1.25, 0, 1}, 0.75};
 
