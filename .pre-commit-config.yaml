@@ -74,7 +74,7 @@ repos:
         stages: [pre-commit]
 
   - repo: https://github.com/tox-dev/pyproject-fmt
-    rev: 037bfd99e287a47aa6b52f91a27d006a5c5c7e6b  # frozen: v2.15.2
+    rev: b7fa7c655ce7b89804034228e1677f8cc1dca92a  # frozen: v2.16.1
     hooks:
       - id: pyproject-fmt
         name: check formatting of pyproject.toml
