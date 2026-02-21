@@ -5,6 +5,14 @@
 // Exact calculation of the overlap volume of spheres and mesh elements.
 // http://dx.doi.org/10.1016/j.jcp.2016.02.003
 
+// In "EdgeOffCenter" we seem to hit an edge case where the calculation of the
+// intersection points between the sphere and the edge suffers from numerical
+// inaccuracies when using Clang on AArch64. Using ffp-contract=off, the
+// expected result is obtained.
+#if defined(__aarch64__) && defined(__clang__)
+#pragma clang fp contract(off)
+#endif
+
 #include "common.hpp"
 
 TEST_SUITE("SphereHexAreaTest") {
@@ -52,14 +60,6 @@ TEST_SUITE("SphereHexAreaTest") {
 
   // Sphere intersects one edge (and thus 1 edge and 2 faces).
   TEST_CASE("EdgeOffCenter") {
-    // Here, we seem to hit an edge case where the calculation of the
-    // intersection points between the sphere and the edge suffers from
-    // numerical inaccuracies when using Clang on AArch64. Using either
-    // ffp-contract=fast or ffp-contract=on, the expected result is obtained.
-#if defined(__aarch64__) && defined(__clang__)
-#pragma clang fp contract(on)
-#endif
-
     const auto hex = unit_hexahedron();
     const auto sphere = Sphere{{1.25, 0, 1}, 0.75};
 
