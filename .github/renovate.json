@@ -51,7 +51,7 @@
         "custom.regex"
       ],
       "matchFileNames": [
-        "^\\.pre-commit-config\\.ya?ml$"
+        "/^\\.pre-commit-config\\.ya?ml$/"
       ],
       "matchUpdateTypes": [
         "major"
@@ -67,7 +67,7 @@
         "custom.regex"
       ],
       "matchFileNames": [
-        "^\\.pre-commit-config\\.ya?ml$"
+        "/^\\.pre-commit-config\\.ya?ml$/"
       ],
       "matchUpdateTypes": [
         "minor",
@@ -81,7 +81,7 @@
         "custom.regex"
       ],
       "matchFileNames": [
-        "CMakeLists\\.txt$"
+        "/CMakeLists\\.txt$/"
       ],
       "automerge": false
     },
