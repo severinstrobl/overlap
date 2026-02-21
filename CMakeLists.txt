@@ -30,7 +30,7 @@ include(FetchContent)
 fetchcontent_declare(
   eigen3
   GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
-  GIT_TAG 3147391d946bb4b6c68edd901f2add6ac1f31f8c # v3.4.0
+  GIT_TAG bc3b39870ecb690a623a3f49149a358b95c5781d # 5.0.1
   GIT_SHALLOW TRUE
   SOURCE_SUBDIR
   cmake # set to invalid path to avoid building and registering tests

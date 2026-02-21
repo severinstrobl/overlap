@@ -5,6 +5,14 @@
 // Exact calculation of the overlap volume of spheres and mesh elements.
 // http://dx.doi.org/10.1016/j.jcp.2016.02.003
 
+// In "EdgeOffCenter" we seem to hit an edge case where the calculation of the
+// intersection points between the sphere and the edge suffers from numerical
+// inaccuracies when using Clang on AArch64. Using ffp-contract=off, the
+// expected result is obtained.
+#if defined(__aarch64__) && defined(__clang__)
+#pragma clang fp contract(off)
+#endif
+
 #include "common.hpp"
 
 TEST_SUITE("SphereHexAreaTest") {
@@ -41,22 +49,12 @@ TEST_SUITE("SphereHexAreaTest") {
     result_exact[4] = result_exact[3];
     result_exact[7] = 2 * result_exact[3];
 
-#if defined(__aarch64__)
-    // A larger epsilon is required here as we seem to hit an edge case where
-    // the calculation of the intersection points between the sphere and the
-    // edge suffers from numerical inaccuracies when using GCC or Clang on
-    // AArch64. For Clang, using either ffp-contract=fast or ffp-contract=on the
-    // expected result is obtained.
-    const auto epsilon = std::sqrt(std::numeric_limits<Scalar>::epsilon() *
-                                   sphere.surface_area());
-#else
-    const auto epsilon = std::numeric_limits<Scalar>::epsilon();
-#endif
-
     for (auto i = 0u; i < result_exact.size(); ++i) {
-      INFO("result: ", result[i], ", expected: ", result_exact[i],
-           ", delta:", result[i] - result_exact[i]);
-      CHECK(result[i] == Approx(result_exact[i]).epsilon(epsilon));
+      INFO("index: ", i, ", result: ", result[i],
+           ", expected: ", result_exact[i],
+           ", delta: ", result[i] - result_exact[i]);
+      CHECK(result[i] == Approx(result_exact[i])
+                             .epsilon(std::numeric_limits<Scalar>::epsilon()));
     }
   }
 
