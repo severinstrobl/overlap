@@ -1,9 +1,17 @@
-// Copyright (C) 2015-2025 Severin Strobl <git@severin-strobl.de>
+// Copyright (C) 2015-2026 Severin Strobl <git@severin-strobl.de>
 //
 // SPDX-License-Identifier: MIT
 //
 // Exact calculation of the overlap volume of spheres and mesh elements.
 // http://dx.doi.org/10.1016/j.jcp.2016.02.003
+
+// In "EdgeOffCenter" we seem to hit an edge case where the calculation of the
+// intersection points between the sphere and the edge suffers from numerical
+// inaccuracies when using Clang on AArch64. Using 'ffp-contract=off', the
+// expected result is obtained.
+#if defined(__aarch64__) && defined(__clang__)
+#pragma clang fp contract(off)
+#endif
 
 #include "common.hpp"
 
