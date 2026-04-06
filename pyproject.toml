@@ -36,6 +36,7 @@ dependencies = [ "numpy" ]
 name = "Severin Strobl"
 email = "git@severin-strobl.de"
 [project.optional-dependencies]
+benchmark = [ "pyperf" ]
 test = [ "pytest>=6" ]
 [project.urls]
 github = "https://github.com/severinstrobl/overlap"

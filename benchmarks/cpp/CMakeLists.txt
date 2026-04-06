@@ -38,7 +38,9 @@ if(NOT TARGET nanobench)
 endif()
 
 # list of benchmarks
-set(_benchmarks details hex_overlap_volume tet_overlap_volume)
+set(_benchmarks details element_construction hex_overlap_volume
+                tet_overlap_volume
+)
 
 # register the individual benchmarks
 foreach(benchmark ${_benchmarks})
