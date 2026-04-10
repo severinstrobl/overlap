@@ -41,7 +41,7 @@ jobs:
 
       - name: Check if benchmark results for reference version exist
         id: check_ref_results
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           github-token: ${{ steps.benchmark_app_token.outputs.token }}
           script: |
@@ -89,7 +89,7 @@ jobs:
 
       - name: Obtain archived benchmark results for reference version
         if: ${{ fromJSON(needs.check_reference.outputs.reference_results_available) }}
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           github-token: ${{ steps.benchmark_app_token.outputs.token }}
           script: |
@@ -155,7 +155,7 @@ jobs:
 
       - name: Create/update PR comment
         if: ${{ github.event_name == 'pull_request'}}
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           github-token: ${{ steps.benchmark_app_token.outputs.token }}
           script: |
@@ -189,7 +189,7 @@ jobs:
 
       - name: Report via annotation
         if: ${{ github.event_name != 'pull_request' }}
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             const fs = require('fs');
