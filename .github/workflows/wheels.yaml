@@ -43,12 +43,14 @@ jobs:
           repository: ${{ fromJSON(steps.get-pr.outputs.result).head.repo.full_name }}
           ref: ${{ fromJSON(steps.get-pr.outputs.result).head.sha }}
           submodules: true
+          fetch-depth: 0
 
       - name: Checkout
         if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'release' }}
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: true
+          fetch-depth: 0
 
       - name: Disable local version for TestPyPI upload
         if: github.event_name == 'workflow_dispatch'
@@ -164,12 +166,14 @@ jobs:
           repository: ${{ fromJSON(steps.get-pr.outputs.result).head.repo.full_name }}
           ref: ${{ fromJSON(steps.get-pr.outputs.result).head.sha }}
           submodules: true
+          fetch-depth: 0
 
       - name: Checkout
         if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'release' }}
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: true
+          fetch-depth: 0
 
       - name: Trigger response
         if: ${{ github.event.issue.pull_request }}
