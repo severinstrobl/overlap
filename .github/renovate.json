@@ -21,7 +21,7 @@
   "customManagers": [
     {
       "customType": "regex",
-      "description": "pre-commit dependencies",
+      "description": "prek dependencies",
       "managerFilePatterns": [
         "/^\\.pre-commit-config\\.ya?ml$/"
       ],
@@ -46,7 +46,7 @@
   ],
   "packageRules": [
     {
-      "groupName": "pre-commit dependencies",
+      "groupName": "prek dependencies",
       "matchManagers": [
         "custom.regex"
       ],
@@ -58,11 +58,11 @@
       ],
       "automerge": false,
       "addLabels": [
-        "pre-commit"
+        "prek"
       ]
     },
     {
-      "groupName": "Ignore minor and patch updates for pre-commit dependencies",
+      "groupName": "Ignore minor and patch updates for prek dependencies",
       "matchManagers": [
         "custom.regex"
       ],

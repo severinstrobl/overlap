@@ -11,9 +11,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  pre-commit:
-    name: pre-commit
-    uses: ./.github/workflows/pre-commit.yaml
+  prek:
+    name: Prek
+    uses: ./.github/workflows/prek.yaml
 
   linting:
     name: Linting
@@ -46,7 +46,7 @@ jobs:
     name: Conclusion
     if: always()
     needs:
-      - pre-commit
+      - prek
       - linting
       - cpp
       - python
