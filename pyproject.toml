@@ -35,13 +35,16 @@ dependencies = [ "numpy" ]
 [[project.authors]]
 name = "Severin Strobl"
 email = "git@severin-strobl.de"
-[project.optional-dependencies]
-benchmark = [ "pyperf" ]
-test = [ "pytest>=6" ]
 [project.urls]
 github = "https://github.com/severinstrobl/overlap"
 issues = "https://github.com/severinstrobl/overlap/issues"
 source = "https://github.com/severinstrobl/overlap.git"
+
+[dependency-groups]
+dev = [
+  "pyperf>=2.10",
+  "pytest>=6",
+]
 
 [tool.setuptools_scm]
 write_to = "python/overlap/_version.py"

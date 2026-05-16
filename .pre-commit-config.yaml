@@ -1,10 +1,10 @@
 minimum_pre_commit_version: 4.0.0
 default_install_hook_types: [pre-commit, commit-msg]
 ci:
-  autoupdate_commit_msg: 'chore: update pre-commit hooks'
+  autoupdate_commit_msg: "chore: update pre-commit hooks"
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c  # frozen: v6.0.0
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c # frozen: v6.0.0
     hooks:
       - id: check-added-large-files
         stages: [pre-commit]
@@ -35,7 +35,7 @@ repos:
 
   # C++
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: 182152eb8c5ce1cf5299b956b04392c86bd8a126  # frozen: v20.1.8
+    rev: 182152eb8c5ce1cf5299b956b04392c86bd8a126 # frozen: v20.1.8
     hooks:
       - id: clang-format
         name: format C++ files with clang-format
@@ -44,27 +44,33 @@ repos:
 
   # CMake
   - repo: https://github.com/cheshirekow/cmake-format-precommit
-    rev: e2c2116d86a80e72e7146a06e68b7c228afc6319  # frozen: v0.6.13
+    rev: e2c2116d86a80e72e7146a06e68b7c228afc6319 # frozen: v0.6.13
     hooks:
-    - id: cmake-format
-      name: check formatting of CMake files
-      stages: [pre-commit]
-      additional_dependencies: [pyyaml>=5.1]
-    - id: cmake-lint
-      name: lint CMake files
-      stages: [pre-commit]
-      additional_dependencies: [pyyaml>=5.1]
+      - id: cmake-format
+        name: check formatting of CMake files
+        stages: [pre-commit]
+        additional_dependencies: [pyyaml>=5.1]
+      - id: cmake-lint
+        name: lint CMake files
+        stages: [pre-commit]
+        additional_dependencies: [pyyaml>=5.1]
 
   # Python
   - repo: https://github.com/asottile/setup-cfg-fmt
-    rev: 79cc0ae5abfa1ba092b5938cd811a6069710ad77  # frozen: v2.8.0
+    rev: 79cc0ae5abfa1ba092b5938cd811a6069710ad77 # frozen: v2.8.0
     hooks:
       - id: setup-cfg-fmt
         name: check formatting of setup.cfg
         stages: [pre-commit]
 
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 92791afd0b37b081bdc48d250ecc6aed11b6beac # frozen: v0.11.13
+    hooks:
+      - id: uv-lock
+        stages: [pre-commit]
+
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 0470f7c8a653e950f7cc5a653204ceb3fde4c02a  # frozen: v0.15.0
+    rev: 0470f7c8a653e950f7cc5a653204ceb3fde4c02a # frozen: v0.15.0
     hooks:
       - id: ruff
         name: check Python files with ruff
@@ -74,36 +80,36 @@ repos:
         stages: [pre-commit]
 
   - repo: https://github.com/tox-dev/pyproject-fmt
-    rev: 037bfd99e287a47aa6b52f91a27d006a5c5c7e6b  # frozen: v2.15.2
+    rev: 037bfd99e287a47aa6b52f91a27d006a5c5c7e6b # frozen: v2.15.2
     hooks:
       - id: pyproject-fmt
         name: check formatting of pyproject.toml
         stages: [pre-commit]
 
   - repo: https://github.com/adamchainz/blacken-docs
-    rev: 0bc601e0cc771b26b206a46d3b298ef951b43c7c  # frozen: 1.19.1
+    rev: 0bc601e0cc771b26b206a46d3b298ef951b43c7c # frozen: 1.19.1
     hooks:
-    -   id: blacken-docs
+      - id: blacken-docs
         additional_dependencies:
-        - black==25.1.0
+          - black==25.1.0
 
   # CI
   - repo: https://github.com/rhysd/actionlint
-    rev: 0933c147c9d6587653d45fdcb4c497c57a65f9af  # frozen: v1.7.10
+    rev: 0933c147c9d6587653d45fdcb4c497c57a65f9af # frozen: v1.7.10
     hooks:
       - id: actionlint
         name: check GitHub workflow files
         stages: [pre-commit]
 
   - repo: https://github.com/renovatebot/pre-commit-hooks
-    rev: 2a61efb7b539e7aa9fa5fed32d8998f7e743bdc7  # frozen: 43.2.4
+    rev: 2a61efb7b539e7aa9fa5fed32d8998f7e743bdc7 # frozen: 43.2.4
     hooks:
       - id: renovate-config-validator
         args: [--strict]
 
   # docs
   - repo: https://github.com/executablebooks/mdformat
-    rev: 83dc2ce5ca115d3390b9b5561d2898366faf0742  # frozen: 0.7.22
+    rev: 83dc2ce5ca115d3390b9b5561d2898366faf0742 # frozen: 0.7.22
     hooks:
       - id: mdformat
         name: check formatting of Markdown files
@@ -113,7 +119,7 @@ repos:
 
   # spell checking
   - repo: https://github.com/codespell-project/codespell
-    rev: 63c8f8312b7559622c0d82815639671ae42132ac  # frozen: v2.4.1
+    rev: 63c8f8312b7559622c0d82815639671ae42132ac # frozen: v2.4.1
     hooks:
       - id: codespell
         name: check for common spelling errors
@@ -121,7 +127,7 @@ repos:
 
   # commit messages
   - repo: https://github.com/espressif/conventional-precommit-linter
-    rev: aeba78b29b06233289a1a6ed80371a337e893e19  # frozen: v1.11.0
+    rev: aeba78b29b06233289a1a6ed80371a337e893e19 # frozen: v1.11.0
     hooks:
       - id: conventional-precommit-linter
         name: check commit messages for conventional format
