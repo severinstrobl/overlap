@@ -7,7 +7,7 @@
 
 [build-system]
 build-backend = "scikit_build_core.build"
-requires = [ "scikit-build-core" ]
+requires = [ "scikit-build-core>=1" ]
 
 [project]
 name = "overlap"
@@ -49,8 +49,6 @@ write_to = "python/overlap/_version.py"
 [tool.scikit-build]
 [tool.scikit-build.cmake]
 version = ">=3.18"
-[tool.scikit-build.metadata]
-version.provider = "scikit_build_core.metadata.setuptools_scm"
 [tool.scikit-build.sdist]
 include = [ "python/overlap/_version.py" ]
 
@@ -130,3 +128,6 @@ addopts = [ "-ra", "--strict-config", "--strict-markers" ]
 filterwarnings = [ "error" ]
 log_cli_level = "INFO"
 xfail_strict = true
+
+[[tool.dynamic-metadata]]
+provider = "scikit_build_core.metadata.setuptools_scm"
