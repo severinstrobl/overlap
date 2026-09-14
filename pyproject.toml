@@ -58,9 +58,10 @@ test-command = "python -m pytest -vs {project}/tests/python"
 build-verbosity = 1
 environment-pass = [ "SETUPTOOLS_SCM_OVERRIDES_FOR_OVERLAP" ]
 enable = "pypy"
-skip = "pp311-manylinux_i686 cp314t-* cp313-pyodide_wasm32"
+skip = "pp311-manylinux_i686 cp3??t-* cp313-pyodide_wasm32"
 [tool.cibuildwheel.linux]
 archs = [ "auto64", "auto32" ]
+manylinux-armv7l-image = "manylinux_2_35"
 [[tool.cibuildwheel.overrides]]
 select = "*-macosx_x86_64"
 inherit.environment = "append"
