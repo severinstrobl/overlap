@@ -4,7 +4,7 @@ if(NOT TARGET doctest::doctest)
   fetchcontent_declare(
     doctest
     GIT_REPOSITORY https://github.com/doctest/doctest.git
-    GIT_TAG 415855d33e88146425c2d8db1825797e7b1a4c85 # v2.5.1
+    GIT_TAG 2d0a9359a60c51affe2a9bebb1be1dca47868151 # v2.5.3
     GIT_SHALLOW TRUE
     EXCLUDE_FROM_ALL
   )
@@ -19,7 +19,7 @@ if(NOT TARGET nanobench)
   fetchcontent_declare(
     nanobench
     GIT_REPOSITORY https://github.com/martinus/nanobench.git
-    GIT_TAG a5a50c2b33eea2ff1fcb355cacdface43eb42b25 # v4.3.11
+    GIT_TAG b709728dba4df0356d467abfb0ba20781a8031c0 # v4.6.0
     GIT_SHALLOW TRUE
     EXCLUDE_FROM_ALL
   )
