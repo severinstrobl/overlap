@@ -13,7 +13,7 @@ jobs:
   create_sdist:
     name: Create 🐍 sdist
     if: ${{ (startsWith(github.event.comment.body, '/build_wheels') && github.event.issue.pull_request) || github.event_name == 'workflow_dispatch' || github.event_name == 'release' }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     steps:
       # ref: https://github.com/actions/checkout/issues/331#issuecomment-707103442
@@ -254,7 +254,7 @@ jobs:
   publish:
     name: Upload release to PyPI
     needs: [create_sdist, build_wheels]
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     environment: ${{ github.event_name == 'release' && github.event.action == 'published' && 'pypi' || 'testpypi' }}
     permissions:
       id-token: write
