@@ -10,7 +10,7 @@ jobs:
   build_sdist:
     name: Build 🐍 sdist
     if: ${{(startsWith(github.event.comment.body, '/build_wheels') && github.event.issue.pull_request) || github.event_name == 'workflow_dispatch'}}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     steps:
       # ref: https://github.com/actions/checkout/issues/331#issuecomment-707103442

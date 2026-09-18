@@ -6,7 +6,7 @@ on:
 jobs:
   build:
     name: "🐍 Ubuntu 24.04 - Python ${{ matrix.python-version }}"
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     strategy:
       fail-fast: false
       matrix:
