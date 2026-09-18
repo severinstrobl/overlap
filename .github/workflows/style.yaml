@@ -6,7 +6,7 @@ on:
 jobs:
   format:
     name: "Code formatting via clang-format"
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     env:
       CLANG_FORMAT_VERSION: 19
       UBUNTU_RELEASE_NAME: noble
