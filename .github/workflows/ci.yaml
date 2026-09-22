@@ -52,7 +52,7 @@ jobs:
       - python
       - static_analysis
       - benchmarks
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - name: Exit on failure
         if: >-

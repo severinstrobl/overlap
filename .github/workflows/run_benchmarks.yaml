@@ -19,7 +19,7 @@ on:
 jobs:
   benchmark_cpp:
     name: C++ benchmarks
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     outputs:
       outcome: ${{ steps.benchmark_step.outcome }}
     steps:
@@ -68,7 +68,7 @@ jobs:
 
   benchmark_python:
     name: Python benchmarks
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     outputs:
       outcome: ${{ steps.benchmark_step.outcome }}
     steps:
