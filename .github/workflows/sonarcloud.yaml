@@ -18,7 +18,7 @@ jobs:
 
       - name: Dependencies
         run: |
-          sudo apt install libeigen3-dev
+          sudo apt update && sudo apt install -y clang-21 llvm-21 libeigen3-dev
           # https://github.com/gcovr/gcovr/issues/1228
           python -m pip install gcovr==8.4
 
@@ -30,8 +30,8 @@ jobs:
           cmake \
             -Bbuild \
             -DCMAKE_BUILD_TYPE=Debug \
-            -DCMAKE_C_COMPILER=clang-16 \
-            -DCMAKE_CXX_COMPILER=clang++-16 \
+            -DCMAKE_C_COMPILER=clang-21 \
+            -DCMAKE_CXX_COMPILER=clang++-21 \
             -DOVERLAP_WITH_COVERAGE=ON
           build-wrapper-linux-x86-64 \
             --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} \
@@ -42,7 +42,7 @@ jobs:
           cd build
           ctest --output-on-failure
           ~/.local/bin/gcovr \
-            --gcov-executable 'llvm-cov-16 gcov' \
+            --gcov-executable 'llvm-cov-21 gcov' \
             --exclude-lines-by-pattern '.*overlap_assert.*' \
             --sonarqube coverage.xml \
             -r ../ \
