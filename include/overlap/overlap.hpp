@@ -51,6 +51,25 @@ static constexpr auto tiny_epsilon =
     Scalar{4} * std::numeric_limits<Scalar>::epsilon();  // 4 ulp at 1.0
 static constexpr auto large_epsilon = Scalar{1e-10};
 
+// Returns true if the context cannot be determined, so callers fall back to the
+// code path valid in constant evaluation.
+constexpr auto is_constant_evaluated() noexcept -> bool {
+#if defined(__cpp_lib_is_constant_evaluated)
+  return std::is_constant_evaluated();
+#elif defined(__has_builtin)
+#if __has_builtin(__builtin_is_constant_evaluated)
+  return __builtin_is_constant_evaluated();
+#else
+  return true;
+#endif
+#elif (defined(__GNUC__) && __GNUC__ >= 9 && !defined(__INTEL_COMPILER)) || \
+    (defined(_MSC_VER) && _MSC_VER >= 1925)
+  return __builtin_is_constant_evaluated();
+#else
+  return true;
+#endif
+}
+
 // Robust calculation of the normal vector of a polygon using Newell's method
 // and a pre-calculated center.
 // Ref: Christer Ericson - Real-Time Collision Detection (2005)
@@ -136,15 +155,18 @@ class DoublePrecision {
 
   [[nodiscard]] static constexpr auto two_product(const T x, const T y)
       -> DoublePrecision {
+    const auto p = x * y;
+
 #if defined(__FMA__) || (defined(_MSC_VER) && defined(__AVX2__))
-    const auto p = x * y;
-    const auto e = x * y - p;
-#else  // FMA not supported
-    const auto p = x * y;
+    // std::fma is not constexpr before C++23
+    if (!is_constant_evaluated()) {
+      return DoublePrecision{p, std::fma(x, y, -p)};
+    }
+#endif
+
     const auto [x_h, x_l] = split(x);
     const auto [y_h, y_l] = split(y);
     const auto e = ((x_h * y_h - p) + x_h * y_l + x_l * y_h) + x_l * y_l;
-#endif
 
     return DoublePrecision{p, e};
   }
