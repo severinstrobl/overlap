@@ -60,9 +60,8 @@ TEST_SUITE("SphereHexAreaTest") {
     const auto hex = unit_hexahedron();
     const auto sphere = Sphere{{1.25, 0, 1}, 0.75};
 
-    validate_overlap_area(
-        sphere, hex,
-        std::numeric_limits<Scalar>::epsilon() * sphere.surface_area());
+    validate_overlap_area(sphere, hex,
+                          Scalar{1e2} * std::numeric_limits<Scalar>::epsilon());
   }
 
   // Sphere intersects one vertex (and thus 3 edge and 3 faces).

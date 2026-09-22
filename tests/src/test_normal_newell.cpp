@@ -53,7 +53,7 @@ TEST_SUITE("NormalNewell") {
         overlap::detail::normal_newell(points.begin(), points.end(), center);
 
     const auto expected =
-        Vector{0.8482081353353663, 0.1064961653160474, 0.5188463413419023};
+        Vector{0.84820813533536643, 0.1064961653160474, 0.51884634134190233};
 
     REQUIRE_MESSAGE(
         (normal - expected).norm() < std::numeric_limits<Scalar>::epsilon(),
