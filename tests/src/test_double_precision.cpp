@@ -58,6 +58,29 @@ TEST_SUITE("DoublePrecision") {
 #endif
   }
 
+  // (1 + eps) * (1 - eps) = 1 - eps^2 rounds to 1 with residual -eps^2.
+  TEST_CASE_TEMPLATE("TwoProductResidual", T, float, double) {
+    constexpr auto eps = std::numeric_limits<T>::epsilon();
+
+    // volatile prevents the compiler from evaluating the product at compile
+    // time
+    volatile auto a = T{1} + eps;
+    volatile auto b = T{1} - eps;
+
+    const auto result = detail::DoublePrecision<T>::two_product(a, b);
+    CHECK_EQ(result.high(), T{1});
+    CHECK_EQ(result.low(), -eps * eps);
+  }
+
+  TEST_CASE_TEMPLATE("ConstExprTwoProductResidual", T, float, double) {
+    constexpr auto eps = std::numeric_limits<T>::epsilon();
+
+    constexpr auto result =
+        detail::DoublePrecision<T>::two_product(T{1} + eps, T{1} - eps);
+    static_assert(result.high() == T{1});
+    static_assert(result.low() == -eps * eps);
+  }
+
   TEST_CASE_TEMPLATE("Add", T, float, double) {
     using DoublePrecision = detail::DoublePrecision<T>;
 
