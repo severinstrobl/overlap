@@ -31,7 +31,7 @@ jobs:
 
       - name: Dependencies
         run: |
-          python -m pip install pyperf
+          python -m pip install --only-binary :all: pyperf
 
       - name: Build and run benchmark for selected revision
         id: benchmark_step
@@ -80,7 +80,7 @@ jobs:
 
       - name: Dependencies
         run: |
-          python -m pip install pyperf
+          python -m pip install --only-binary :all: pyperf
 
       - name: Build and run benchmark for selected revision
         id: benchmark_step
