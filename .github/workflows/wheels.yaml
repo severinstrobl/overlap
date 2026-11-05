@@ -81,7 +81,8 @@ jobs:
           python-version: "3.14"
 
       - name: Dependencies
-        run: python -m pip install build twine
+        run: |
+          python -m pip install --only-binary :all: build twine
 
       - name: Create sdist
         id: build-sdist
