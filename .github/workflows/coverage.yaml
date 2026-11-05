@@ -6,7 +6,7 @@ on:
 jobs:
   build:
     name: Codecov
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     steps:
       - name: Checkout
@@ -16,7 +16,7 @@ jobs:
 
       - name: Dependencies
         run: |
-          sudo apt install libeigen3-dev
+          sudo apt update && sudo apt install -y clang-21 llvm-21 libeigen3-dev
           python -m pip install gcovr
 
       - name: Configure
@@ -24,8 +24,8 @@ jobs:
           cmake \
             -Bbuild \
             -DCMAKE_BUILD_TYPE=Debug \
-            -DCMAKE_C_COMPILER=clang-16 \
-            -DCMAKE_CXX_COMPILER=clang++-16 \
+            -DCMAKE_C_COMPILER=clang-21 \
+            -DCMAKE_CXX_COMPILER=clang++-21 \
             -DOVERLAP_COVERAGE=ON
 
       - name: Build
@@ -36,7 +36,7 @@ jobs:
           cd build
           ctest --output-on-failure
           ~/.local/bin/gcovr \
-            --gcov-executable 'llvm-cov-16 gcov' \
+            --gcov-executable 'llvm-cov-21 gcov' \
             -r ../ \
             --xml -o coverage.xml \
             -e ../third_party/ -e ../test/
