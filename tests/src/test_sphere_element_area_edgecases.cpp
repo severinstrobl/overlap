@@ -5,11 +5,14 @@
 // Exact calculation of the overlap volume of spheres and mesh elements.
 // http://dx.doi.org/10.1016/j.jcp.2016.02.003
 
-#include "common.hpp"
-
 #ifdef OVERLAP_HAVE_FEENABLEEXCEPT
+// Vectorized Eigen (>= 5.0) evaluates unused lanes of partial packets, which
+// can raise floating-point exceptions unrelated to the computed values.
+#define EIGEN_DONT_VECTORIZE
 #include <cfenv>
 #endif
+
+#include "common.hpp"
 
 TEST_SUITE("SphereElementOverlapArea") {
   TEST_CASE("EdgeCases") {

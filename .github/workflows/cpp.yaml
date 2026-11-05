@@ -50,6 +50,14 @@ jobs:
               cxx: "g++-14",
               use_eigen_source: true,
             }
+          - {
+              name: "GCC 14.0.1 (x86-64-v3, Eigen 5.0)",
+              os: "ubuntu-24.04",
+              cc: "gcc-14",
+              cxx: "g++-14",
+              use_eigen_source: true,
+              cxx_flags: "-march=x86-64-v3",
+            }
           # GCC on arm64
           - {
               name: "GCC 12.3.0 (AArch64)",
@@ -126,6 +134,14 @@ jobs:
               cxx: "clang++-18",
               use_eigen_source: true,
             }
+          - {
+              name: "Clang 18.1.3 (x86-64-v3, Eigen 5.0)",
+              os: "ubuntu-24.04",
+              cc: "clang-18",
+              cxx: "clang++-18",
+              use_eigen_source: true,
+              cxx_flags: "-march=x86-64-v3",
+            }
           # LLVM/Clang on arm64
           - {
               name: "Clang 15.0.7 (AArch64)",
@@ -176,7 +192,8 @@ jobs:
             -Bbuild \
             -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
             -DCMAKE_C_COMPILER=${{ matrix.config.cc }} \
-            -DCMAKE_CXX_COMPILER=${{ matrix.config.cxx }}
+            -DCMAKE_CXX_COMPILER=${{ matrix.config.cxx }} \
+            -DCMAKE_CXX_FLAGS="${{ matrix.config.cxx_flags }}"
 
       - name: Build
         run: cmake --build build
