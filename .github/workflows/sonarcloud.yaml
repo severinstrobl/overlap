@@ -16,11 +16,15 @@ jobs:
           submodules: true
           fetch-depth: 0
 
+      - name: Setup uv
+        uses: astral-sh/setup-uv@18d369b23da25a81e9458561248e1aafff6a70fa # v10.3.1
+        with:
+          activate-environment: true
+
       - name: Dependencies
         run: |
           sudo apt update && sudo apt install -y clang-21 llvm-21 libeigen3-dev
-          # https://github.com/gcovr/gcovr/issues/1228
-          python -m pip install --only-binary :all: gcovr==8.4
+          uv sync --frozen --no-build --only-group coverage
 
       - name: Install SonarSource build-wrapper
         uses: SonarSource/sonarqube-scan-action/install-build-wrapper@e805d875275f728fac1885b413934be6d7c63f65 # v8.4
@@ -41,7 +45,7 @@ jobs:
         run: |
           cd build
           ctest --output-on-failure
-          ~/.local/bin/gcovr \
+          gcovr \
             --gcov-executable 'llvm-cov-21 gcov' \
             --exclude-lines-by-pattern '.*overlap_assert.*' \
             --sonarqube coverage.xml \

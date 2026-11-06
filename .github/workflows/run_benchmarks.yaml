@@ -23,15 +23,34 @@ jobs:
     outputs:
       outcome: ${{ steps.benchmark_step.outcome }}
     steps:
-      - name: Checkout
+      - &checkout
+        name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.ref }}
           submodules: true
 
-      - name: Dependencies
+      # The selected revision may predate uv.lock, use the lock file of the workflow revision
+      - &checkout-lock-file
+        name: Checkout lock file
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: .tooling
+          sparse-checkout: |
+            pyproject.toml
+            uv.lock
+          sparse-checkout-cone-mode: false
+
+      - &setup-uv
+        name: Setup uv
+        uses: astral-sh/setup-uv@18d369b23da25a81e9458561248e1aafff6a70fa # v10.3.1
+        with:
+          activate-environment: true
+
+      - &dependencies
+        name: Dependencies
         run: |
-          python -m pip install --only-binary :all: pyperf
+          uv sync --project .tooling --active --frozen --no-build --no-install-project --group benchmark
 
       - name: Build and run benchmark for selected revision
         id: benchmark_step
@@ -72,15 +91,10 @@ jobs:
     outputs:
       outcome: ${{ steps.benchmark_step.outcome }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ inputs.ref }}
-          submodules: true
-
-      - name: Dependencies
-        run: |
-          python -m pip install --only-binary :all: pyperf
+      - *checkout
+      - *checkout-lock-file
+      - *setup-uv
+      - *dependencies
 
       - name: Build and run benchmark for selected revision
         id: benchmark_step
@@ -88,7 +102,7 @@ jobs:
         env:
           GIT_REF: ${{ inputs.ref }}
         run: |
-          python -m pip install .
+          uv pip install --no-deps .
           python benchmarks/python/run_benchmarks.py
           cp benchmarks/python/overlap_python.json benchmarks-python.json
 

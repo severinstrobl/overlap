@@ -63,6 +63,13 @@ repos:
         name: check formatting of setup.cfg
         stages: [pre-commit]
 
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: eeca16c54e09b4d9a848259e46bae14737944348  # frozen: 0.13.5
+    hooks:
+      - id: uv-lock
+        name: check uv.lock is up to date
+        stages: [pre-commit]
+
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: 0470f7c8a653e950f7cc5a653204ceb3fde4c02a  # frozen: v0.15.0
     hooks:
