@@ -4,7 +4,7 @@
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=severinstrobl_overlap&metric=coverage)](https://sonarcloud.io/summary/overall?id=severinstrobl_overlap)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=severinstrobl_overlap&metric=alert_status)](https://sonarcloud.io/summary/overall?id=severinstrobl_overlap)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)\
-[![Release](https://img.shields.io/github/release/severinstrobl/overlap.svg)](https://github.com/severinstrobl/overlap/releases)
+[![Release](https://img.shields.io/github/v/release/severinstrobl/overlap)](https://github.com/severinstrobl/overlap/releases)
 [![PyPI](https://img.shields.io/pypi/v/overlap)](https://pypi.org/project/overlap/)\
 ![C++](https://img.shields.io/badge/C%2B%2B-17%7C20%7C23-blue)
 [![Python Version](https://img.shields.io/pypi/pyversions/overlap)](https://pypi.org/project/overlap/)
