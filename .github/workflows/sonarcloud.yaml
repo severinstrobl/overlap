@@ -23,7 +23,7 @@ jobs:
           python -m pip install --only-binary :all: gcovr==8.4
 
       - name: Install SonarSource build-wrapper
-        uses: SonarSource/sonarqube-scan-action/install-build-wrapper@ba9859eae8dd6bd29e412f25ddbbef3d032000f4 # v8.2
+        uses: SonarSource/sonarqube-scan-action/install-build-wrapper@e805d875275f728fac1885b413934be6d7c63f65 # v8.4
 
       - name: Run build wrapper
         run: |
@@ -49,7 +49,7 @@ jobs:
             -e ../third_party/ -e ../tests/src
 
       - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@ba9859eae8dd6bd29e412f25ddbbef3d032000f4 # v8.2
+        uses: SonarSource/sonarqube-scan-action@e805d875275f728fac1885b413934be6d7c63f65 # v8.4
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
