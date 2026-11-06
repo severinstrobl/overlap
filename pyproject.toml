@@ -43,6 +43,12 @@ github = "https://github.com/severinstrobl/overlap"
 issues = "https://github.com/severinstrobl/overlap/issues"
 source = "https://github.com/severinstrobl/overlap.git"
 
+[dependency-groups]
+test = [ "pytest>=6" ]
+benchmark = [ "pyperf" ]
+coverage = [ "gcovr>=8.6; python_version>='3.10'" ]
+release = [ "build", "twine" ]
+
 [tool.setuptools_scm]
 write_to = "python/overlap/_version.py"
 

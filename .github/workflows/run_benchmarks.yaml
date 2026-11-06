@@ -29,9 +29,14 @@ jobs:
           ref: ${{ inputs.ref }}
           submodules: true
 
+      - name: Setup uv
+        uses: astral-sh/setup-uv@18d369b23da25a81e9458561248e1aafff6a70fa # v10.3.1
+        with:
+          activate-environment: true
+
       - name: Dependencies
         run: |
-          python -m pip install --only-binary :all: pyperf
+          uv sync --frozen --no-build --only-group benchmark
 
       - name: Build and run benchmark for selected revision
         id: benchmark_step
@@ -78,9 +83,14 @@ jobs:
           ref: ${{ inputs.ref }}
           submodules: true
 
+      - name: Setup uv
+        uses: astral-sh/setup-uv@18d369b23da25a81e9458561248e1aafff6a70fa # v10.3.1
+        with:
+          activate-environment: true
+
       - name: Dependencies
         run: |
-          python -m pip install --only-binary :all: pyperf
+          uv sync --frozen --no-build --only-group benchmark
 
       - name: Build and run benchmark for selected revision
         id: benchmark_step
@@ -88,7 +98,7 @@ jobs:
         env:
           GIT_REF: ${{ inputs.ref }}
         run: |
-          python -m pip install .
+          uv sync --frozen --no-build --no-editable --group benchmark
           python benchmarks/python/run_benchmarks.py
           cp benchmarks/python/overlap_python.json benchmarks-python.json
 
