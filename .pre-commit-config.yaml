@@ -67,7 +67,7 @@ repos:
     rev: eeca16c54e09b4d9a848259e46bae14737944348  # frozen: 0.13.5
     hooks:
       - id: uv-lock
-        name: check uv.lock is up to date
+        name: update uv.lock
         stages: [pre-commit]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit

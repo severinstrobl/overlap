@@ -47,7 +47,7 @@ source = "https://github.com/severinstrobl/overlap.git"
 test = [ "pytest>=6" ]
 benchmark = [ "pyperf" ]
 coverage = [ "gcovr>=8.6; python_version>='3.10'" ]
-release = [ "build", "twine" ]
+release = [ "twine" ]
 
 [tool.setuptools_scm]
 write_to = "python/overlap/_version.py"

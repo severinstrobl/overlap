@@ -87,7 +87,7 @@ jobs:
 
       - name: Create sdist
         id: build-sdist
-        run: python -m build --sdist
+        run: uv build --sdist --no-build
 
       - name: Check metadata
         id: check-metadata
