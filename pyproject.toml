@@ -49,6 +49,7 @@ write_to = "python/overlap/_version.py"
 [tool.scikit-build]
 [tool.scikit-build.cmake]
 version = ">=3.18"
+define.OVERLAP_WITH_TESTS = false
 [tool.scikit-build.sdist]
 include = [ "python/overlap/_version.py" ]
 

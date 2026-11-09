@@ -181,9 +181,9 @@ jobs:
         if: ${{ startsWith(matrix.config.os, 'ubuntu') }}
         run: |
           sudo apt update
-          sudo apt install ${{ matrix.config.cxx }} || sudo apt install ${{ matrix.config.cc }}
+          sudo apt install --no-install-recommends ${{ matrix.config.cxx }} || sudo apt install --no-install-recommends ${{ matrix.config.cc }}
           if [ "${{ matrix.config.use_eigen_source }}" != "true" ]; then
-            sudo apt install libeigen3-dev
+            sudo apt install --no-install-recommends libeigen3-dev
           fi
 
       - name: Configure
@@ -196,7 +196,7 @@ jobs:
             -DCMAKE_CXX_FLAGS="${{ matrix.config.cxx_flags }}"
 
       - name: Build
-        run: cmake --build build
+        run: cmake --build build --parallel 4
 
       - name: Test
         run: |
