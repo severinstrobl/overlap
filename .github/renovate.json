@@ -99,6 +99,19 @@
         "pep621"
       ],
       "automerge": false
+    },
+    {
+      "groupName": "Ignore patch updates for Python tool dependencies",
+      "matchManagers": [
+        "pep621"
+      ],
+      "matchDepTypes": [
+        "dependency-groups"
+      ],
+      "matchUpdateTypes": [
+        "patch"
+      ],
+      "enabled": false
     }
   ],
   "labels": [
