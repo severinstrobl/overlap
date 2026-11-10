@@ -39,7 +39,7 @@ jobs:
             -DOVERLAP_WITH_COVERAGE=ON
           build-wrapper-linux-x86-64 \
             --out-dir ${{ env.BUILD_WRAPPER_OUT_DIR }} \
-            cmake --build build --config Debug
+            cmake --build build --config Debug --parallel 4
 
       - name: Run tests and collect coverage information
         run: |
