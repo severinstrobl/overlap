@@ -75,18 +75,19 @@ jobs:
             } catch (err) {
               core.setFailed(`Request failed with error ${err}`);
             }
-      - name: Setup Python
-        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+      - name: Setup Python and uv
+        uses: astral-sh/setup-uv@18d369b23da25a81e9458561248e1aafff6a70fa # v10.3.1
         with:
           python-version: "3.15"
+          activate-environment: true
 
       - name: Dependencies
         run: |
-          python -m pip install --only-binary :all: build twine
+          uv sync --frozen --no-build --only-group release
 
       - name: Create sdist
         id: build-sdist
-        run: python -m build --sdist
+        run: uv build --sdist --no-build
 
       - name: Check metadata
         id: check-metadata
