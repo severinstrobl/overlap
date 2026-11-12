@@ -48,6 +48,7 @@ jobs:
           gcovr \
             --gcov-executable 'llvm-cov-21 gcov' \
             --exclude-lines-by-pattern '.*overlap_assert.*' \
+            --merge-lines \
             --sonarqube coverage.xml \
             -r ../ \
             -e ../third_party/ -e ../tests/src
