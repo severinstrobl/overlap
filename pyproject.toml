@@ -19,10 +19,9 @@ keywords = [
   "numerical-simulations",
 ]
 license = { text = "MIT" }
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 classifiers = [
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
@@ -46,7 +45,7 @@ source = "https://github.com/severinstrobl/overlap.git"
 [dependency-groups]
 test = [ "pytest>=6" ]
 benchmark = [ "pyperf" ]
-coverage = [ "gcovr>=8.6; python_version>='3.10'" ]
+coverage = [ "gcovr>=8.6" ]
 release = [ "twine" ]
 
 [tool.setuptools_scm]
